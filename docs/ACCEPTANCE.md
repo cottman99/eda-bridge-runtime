@@ -16,8 +16,9 @@ credentials, host address, or task-specific geometry is included here.
 ## AnsysEM durable path
 
 - AEDT 2026.1 and PyAEDT 1.4.0 accepted a detached read-only job on virtual display 4.
-- Submission returned an accepted receipt in 443 ms. The job reached `passed`; two later status
-  polls took 15 ms and 16 ms without replaying the operation.
+- Across acceptance runs, submission returned an accepted receipt in 443--725 ms. The final a3
+  job reached `passed`; its two later status polls took 14 ms and 16 ms without replaying the
+  operation.
 - Ledger evidence retained the declared purpose, selected runtime profile, observed display,
   adapter version, and terminal result.
 
