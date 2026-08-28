@@ -80,3 +80,24 @@ def test_durable_worker_normalizes_exception(tmp_path):
     response = run_job_worker(store, submitted["job_id"], handler)
     assert response.status == "failed"
     assert store.get(submitted["job_id"])["state"] == "failed"
+
+
+def test_recovery_marks_dead_worker_orphaned_without_replay(tmp_path, monkeypatch):
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    submitted = store.submit(request())
+    store.record_event(submitted["job_id"], {"event": "worker.spawned", "pid": 987654321})
+    store.transition(submitted["job_id"], "running", {"event": "worker.started", "pid": 987654321})
+    monkeypatch.setattr("eda_bridge_runtime.jobs._pid_is_alive", lambda _pid: False)
+    recovered = store.recover_orphans()
+    assert [job["job_id"] for job in recovered] == [submitted["job_id"]]
+    assert store.get(submitted["job_id"])["state"] == "orphaned"
+    assert store.events(submitted["job_id"])[-1]["detail"]["event"] == "worker.orphaned"
+
+
+def test_recovery_leaves_live_worker_running(tmp_path, monkeypatch):
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    submitted = store.submit(request())
+    store.transition(submitted["job_id"], "running", {"event": "worker.started", "pid": 123})
+    monkeypatch.setattr("eda_bridge_runtime.jobs._pid_is_alive", lambda _pid: True)
+    assert store.recover_orphans() == []
+    assert store.get(submitted["job_id"])["state"] == "running"

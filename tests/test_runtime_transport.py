@@ -84,6 +84,28 @@ def test_json_lines_server_uses_same_envelope(tmp_path):
     assert responses[1]["status"] == "passed"
 
 
+def test_json_lines_server_isolates_bad_frame_and_continues(tmp_path):
+    runtime = make_runtime(tmp_path)
+    request = read_request()
+    source = io.StringIO("not-json\n" + json.dumps(request.to_dict()) + "\n")
+    destination = io.StringIO()
+    serve_json_lines(source, destination, runtime.execute)
+    responses = [json.loads(line) for line in destination.getvalue().splitlines()]
+    assert responses[0]["status"] == "failed"
+    assert responses[0]["error"]["code"] == "JSONDecodeError"
+    assert responses[1]["status"] == "passed"
+
+
+def test_json_lines_handshake_rejects_unsupported_version(tmp_path):
+    destination = io.StringIO()
+    serve_json_lines(
+        io.StringIO(json.dumps({"protocol": "eda-runtime.handshake/v1", "versions": [9]}) + "\n"),
+        destination,
+        make_runtime(tmp_path).execute,
+    )
+    assert json.loads(destination.getvalue())["selected"] is None
+
+
 def test_mutation_is_not_executed_twice_for_same_key(tmp_path):
     runtime = Runtime(ExecutionLedger(tmp_path / "ledger.sqlite3"))
     adapter = CountingAdapter()
@@ -143,3 +165,4 @@ def test_ssh_transport_uses_one_remote_command_string():
         "eda.example",
         "ads-agent runtime serve --ledger '/tmp/a b.sqlite3'",
     ]
+    assert transport.timeout_seconds == 30

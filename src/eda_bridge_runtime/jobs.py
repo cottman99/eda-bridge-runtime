@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import uuid
 from pathlib import Path
@@ -12,7 +13,7 @@ from .protocol import RequestEnvelope, utc_now
 from .redaction import redact
 
 _TRANSITIONS = {
-    "queued": {"running", "cancelled"},
+    "queued": {"running", "cancelled", "orphaned"},
     "running": {"passed", "failed", "cancelled", "orphaned"},
     "orphaned": {"running", "failed", "cancelled"},
     "passed": set(),
@@ -136,6 +137,40 @@ class JobStore:
             self._event(job_id, str(row["state"]), detail)
         return self.events(job_id)[-1]
 
+    def recover_orphans(self) -> list[dict[str, Any]]:
+        """Mark jobs whose recorded detached worker no longer exists.
+
+        Recovery is deliberately observational: it never replays a job. An adapter or
+        operator must explicitly decide whether an orphan is safe to resume.
+        """
+        rows = self.connection.execute(
+            "SELECT job_id, state FROM jobs WHERE state IN ('queued', 'running')"
+        ).fetchall()
+        recovered = []
+        for row in rows:
+            job_id = str(row["job_id"])
+            worker = self.connection.execute(
+                """SELECT detail_json FROM job_events
+                WHERE job_id = ? ORDER BY cursor DESC""",
+                (job_id,),
+            ).fetchall()
+            pid = None
+            for event in worker:
+                detail = json.loads(event["detail_json"])
+                if detail.get("event") in {"worker.started", "worker.spawned"}:
+                    pid = detail.get("pid")
+                    break
+            if pid is None or _pid_is_alive(int(pid)):
+                continue
+            recovered.append(
+                self.transition(
+                    job_id,
+                    "orphaned",
+                    {"event": "worker.orphaned", "last_pid": int(pid)},
+                )
+            )
+        return recovered
+
     @staticmethod
     def _job(row: sqlite3.Row) -> dict[str, Any]:
         return {
@@ -148,3 +183,15 @@ class JobStore:
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
         }
+
+
+def _pid_is_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
