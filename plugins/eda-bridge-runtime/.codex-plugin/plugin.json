@@ -1,0 +1,28 @@
+{
+  "name": "eda-bridge-runtime",
+  "version": "0.1.0-alpha.3",
+  "description": "Stable local and SSH execution path for EDA agent bridges",
+  "author": {
+    "name": "Pengfei Li",
+    "url": "https://github.com/cottman99"
+  },
+  "homepage": "https://github.com/cottman99/eda-bridge-runtime",
+  "repository": "https://github.com/cottman99/eda-bridge-runtime",
+  "license": "MIT",
+  "keywords": ["eda", "runtime", "ads", "ansys", "mcp"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "EDA Bridge Runtime",
+    "shortDescription": "Stable local and SSH execution for EDA bridges.",
+    "longDescription": "Routes typed ADS and AnsysEM operations through persistent connections, durable jobs, secret-free context, and an append-only execution ledger.",
+    "developerName": "Pengfei Li",
+    "category": "Developer Tools",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": [
+      "Use the selected EDA design and inspect available operations.",
+      "Submit this EDA change through the stable Runtime path.",
+      "Reconnect to the running EDA job and report its status."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}

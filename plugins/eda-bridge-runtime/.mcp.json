@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "eda-bridge-runtime": {
+      "command": "eda-runtime",
+      "args": ["mcp", "serve"]
+    }
+  }
+}

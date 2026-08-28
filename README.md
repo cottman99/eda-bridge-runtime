@@ -22,9 +22,9 @@ took, and what result or artifact was produced.
 
 ## Current alpha
 
-`0.1.0a2` adds registered persistent local/SSH connections and the first
-agent-neutral MCP entry point to the a1 contracts. ADS and AnsysEM now use the
-same intent, identity, timing, reconnect, and durable-job model.
+`0.1.0a3` adds the minimal Codex plugin and completes the registered persistent
+local/SSH entry point. ADS and AnsysEM now use the same intent, identity,
+timing, reconnect, and durable-job model.
 
 ```powershell
 python -m venv .venv
@@ -37,3 +37,4 @@ See [Architecture](docs/ARCHITECTURE.md) and the
 
 The repository also includes a minimal [MCP and Codex plugin](docs/MCP_AND_CODEX.md). It resolves
 named local/SSH connections without asking the agent to assemble transport commands on each call.
+Sanitized real-host evidence is recorded in [acceptance results](docs/ACCEPTANCE.md).
