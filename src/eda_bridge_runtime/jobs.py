@@ -118,6 +118,24 @@ class JobStore:
             for row in rows
         ]
 
+    def request(self, job_id: str) -> RequestEnvelope:
+        row = self.connection.execute(
+            "SELECT request_json FROM jobs WHERE job_id = ?", (job_id,)
+        ).fetchone()
+        if row is None:
+            raise KeyError(job_id)
+        return RequestEnvelope.from_dict(json.loads(row["request_json"]))
+
+    def record_event(self, job_id: str, detail: dict[str, Any]) -> dict[str, Any]:
+        row = self.connection.execute(
+            "SELECT state FROM jobs WHERE job_id = ?", (job_id,)
+        ).fetchone()
+        if row is None:
+            raise KeyError(job_id)
+        with self.connection:
+            self._event(job_id, str(row["state"]), detail)
+        return self.events(job_id)[-1]
+
     @staticmethod
     def _job(row: sqlite3.Row) -> dict[str, Any]:
         return {

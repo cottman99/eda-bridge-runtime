@@ -4,7 +4,8 @@ import pytest
 
 from eda_bridge_runtime.jobs import JobStore
 from eda_bridge_runtime.lease import LeaseStore
-from eda_bridge_runtime.protocol import RequestEnvelope
+from eda_bridge_runtime.protocol import RequestEnvelope, ResponseEnvelope
+from eda_bridge_runtime.supervisor import run_job_worker
 
 
 def request(key="same-key"):
@@ -48,3 +49,34 @@ def test_lease_blocks_other_live_owner(tmp_path):
     store.acquire("eda:slot-1", "worker-a")
     with pytest.raises(RuntimeError, match="leased"):
         store.acquire("eda:slot-1", "worker-b")
+
+
+def test_durable_worker_reloads_request_and_persists_result(tmp_path):
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    submitted = store.submit(request())
+
+    def handler(envelope):
+        return ResponseEnvelope(
+            request_id=envelope.request_id,
+            run_id=envelope.run_id,
+            status="passed",
+            result={"observed": 7},
+        )
+
+    response = run_job_worker(store, submitted["job_id"], handler)
+    assert response.status == "passed"
+    completed = store.get(submitted["job_id"])
+    assert completed["state"] == "passed"
+    assert completed["result"]["result"] == {"observed": 7}
+
+
+def test_durable_worker_normalizes_exception(tmp_path):
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    submitted = store.submit(request())
+
+    def handler(_envelope):
+        raise RuntimeError("synthetic failure")
+
+    response = run_job_worker(store, submitted["job_id"], handler)
+    assert response.status == "failed"
+    assert store.get(submitted["job_id"])["state"] == "failed"
