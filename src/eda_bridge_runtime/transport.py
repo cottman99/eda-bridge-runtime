@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import queue
+import shlex
 import subprocess
 import threading
 from abc import ABC, abstractmethod
+from collections import deque
 from collections.abc import Callable, Sequence
 from typing import Any, TextIO
 
@@ -41,6 +44,8 @@ class PersistentStdioTransport(Transport):
         self.timeout_seconds = timeout_seconds
         self._lock = threading.Lock()
         self._process: subprocess.Popen[str] | None = None
+        self._stdout_queue: queue.Queue[str | None] = queue.Queue()
+        self._stderr_tail: deque[str] = deque(maxlen=40)
 
     def _start(self) -> None:
         if self._process and self._process.poll() is None:
@@ -54,18 +59,38 @@ class PersistentStdioTransport(Transport):
             encoding="utf-8",
             bufsize=1,
         )
+        self._stdout_queue = queue.Queue()
+        self._stderr_tail = deque(maxlen=40)
+        threading.Thread(target=self._read_stdout, daemon=True).start()
+        threading.Thread(target=self._read_stderr, daemon=True).start()
         handshake = self._exchange({"protocol": HANDSHAKE_PROTOCOL, "versions": [1]})
         if handshake.get("protocol") != HANDSHAKE_PROTOCOL or handshake.get("selected") != 1:
             self.close()
             raise RuntimeError("runtime handshake failed")
 
+    def _read_stdout(self) -> None:
+        assert self._process and self._process.stdout
+        for line in self._process.stdout:
+            self._stdout_queue.put(line)
+        self._stdout_queue.put(None)
+
+    def _read_stderr(self) -> None:
+        assert self._process and self._process.stderr
+        for line in self._process.stderr:
+            self._stderr_tail.append(line.rstrip())
+
     def _exchange(self, payload: dict[str, Any]) -> dict[str, Any]:
-        assert self._process and self._process.stdin and self._process.stdout
+        assert self._process and self._process.stdin
         self._process.stdin.write(json.dumps(payload, separators=(",", ":")) + "\n")
         self._process.stdin.flush()
-        line = self._process.stdout.readline()
+        try:
+            line = self._stdout_queue.get(timeout=self.timeout_seconds)
+        except queue.Empty as exc:
+            raise TimeoutError(
+                f"runtime stdio timed out after {self.timeout_seconds:g} seconds"
+            ) from exc
         if not line:
-            error = self._process.stderr.read() if self._process.stderr else ""
+            error = "\n".join(self._stderr_tail)
             raise ConnectionError(f"runtime stdio closed: {error[-1000:]}")
         return json.loads(line)
 
@@ -74,8 +99,13 @@ class PersistentStdioTransport(Transport):
             self._start()
             try:
                 data = self._exchange(request.to_dict())
-            except (BrokenPipeError, ConnectionError):
+            except (BrokenPipeError, ConnectionError) as exc:
                 self.close()
+                if request.is_mutating:
+                    raise ConnectionError(
+                        "connection was lost during a mutating request; query with the same "
+                        "idempotency key instead of blindly replaying it"
+                    ) from exc
                 self._start()
                 data = self._exchange(request.to_dict())
             return ResponseEnvelope(**data)
@@ -101,7 +131,7 @@ class SSHStdioTransport(PersistentStdioTransport):
     ):
         if not host or host.startswith("-"):
             raise ValueError("invalid SSH host")
-        command = [ssh_binary, *ssh_options, host, "--", *remote_command]
+        command = [ssh_binary, *ssh_options, host, shlex.join(remote_command)]
         super().__init__(command)
 
 

@@ -20,6 +20,15 @@ class FakeAdapter(Adapter):
         return AdapterResult(status="passed", result={"value": 42})
 
 
+class CountingAdapter(FakeAdapter):
+    def __init__(self):
+        self.calls = 0
+
+    def execute(self, request, context):
+        self.calls += 1
+        return super().execute(request, context)
+
+
 def make_runtime(tmp_path):
     runtime = Runtime(ExecutionLedger(tmp_path / "ledger.sqlite3"))
     runtime.register("fake", FakeAdapter())
@@ -73,3 +82,64 @@ def test_json_lines_server_uses_same_envelope(tmp_path):
     responses = [json.loads(line) for line in destination.getvalue().splitlines()]
     assert responses[0]["selected"] == 1
     assert responses[1]["status"] == "passed"
+
+
+def test_mutation_is_not_executed_twice_for_same_key(tmp_path):
+    runtime = Runtime(ExecutionLedger(tmp_path / "ledger.sqlite3"))
+    adapter = CountingAdapter()
+    runtime.register("fake", adapter)
+    first = RequestEnvelope(
+        purpose="Change sanitized design",
+        target={"eda": "fake"},
+        operation="set",
+        payload={"mutating": True, "value": 1},
+        idempotency_key="stable-key",
+    )
+    assert runtime.execute(first).status == "passed"
+    retry = RequestEnvelope(
+        purpose=first.purpose,
+        target=first.target,
+        operation=first.operation,
+        payload=first.payload,
+        idempotency_key=first.idempotency_key,
+    )
+    response = runtime.execute(retry)
+    assert response.status == "passed"
+    assert response.result["deduplicated"] is True
+    assert adapter.calls == 1
+
+
+def test_mutation_key_conflict_is_rejected(tmp_path):
+    runtime = Runtime(ExecutionLedger(tmp_path / "ledger.sqlite3"))
+    runtime.register("fake", CountingAdapter())
+    first = RequestEnvelope(
+        purpose="Change sanitized design",
+        target={"eda": "fake"},
+        operation="set",
+        payload={"mutating": True, "value": 1},
+        idempotency_key="stable-key",
+    )
+    runtime.execute(first)
+    conflict = RequestEnvelope(
+        purpose="Change sanitized design again",
+        target={"eda": "fake"},
+        operation="set",
+        payload={"mutating": True, "value": 2},
+        idempotency_key="stable-key",
+    )
+    response = runtime.execute(conflict)
+    assert response.status == "failed"
+    assert response.error["code"] == "idempotency_conflict"
+
+
+def test_ssh_transport_uses_one_remote_command_string():
+    from eda_bridge_runtime.transport import SSHStdioTransport
+
+    transport = SSHStdioTransport(
+        "eda.example", ["ads-agent", "runtime", "serve", "--ledger", "/tmp/a b.sqlite3"]
+    )
+    assert transport.command == [
+        "ssh",
+        "eda.example",
+        "ads-agent runtime serve --ledger '/tmp/a b.sqlite3'",
+    ]

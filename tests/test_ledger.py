@@ -4,6 +4,7 @@ import sqlite3
 import pytest
 
 from eda_bridge_runtime.ledger import ExecutionLedger
+from eda_bridge_runtime.protocol import RequestEnvelope
 
 
 def test_ledger_hash_chain_and_finalization(tmp_path):
@@ -52,3 +53,26 @@ def test_export_is_valid_ndjson(tmp_path):
     destination = tmp_path / "events.ndjson"
     ledger.export_ndjson(destination)
     assert json.loads(destination.read_text())["payload"] == {"x": 1}
+
+
+def test_idempotency_claim_is_persistent_and_detects_conflict(tmp_path):
+    ledger = ExecutionLedger(tmp_path / "ledger.sqlite3")
+    request = RequestEnvelope(
+        purpose="Change one property",
+        target={"eda": "fake"},
+        operation="set",
+        payload={"value": 1},
+        idempotency_key="property-1",
+    )
+    assert ledger.claim_idempotency(request)["state"] == "claimed"
+    assert ledger.claim_idempotency(request)["state"] == "in_progress"
+    ledger.complete_idempotency(request, {"status": "passed", "request_id": request.request_id})
+    assert ledger.claim_idempotency(request)["state"] == "completed"
+    conflicting = RequestEnvelope(
+        purpose="Change another property",
+        target={"eda": "fake"},
+        operation="set",
+        payload={"value": 2},
+        idempotency_key="property-1",
+    )
+    assert ledger.claim_idempotency(conflicting)["state"] == "conflict"

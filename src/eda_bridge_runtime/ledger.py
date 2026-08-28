@@ -47,6 +47,14 @@ class ExecutionLedger:
                 finalized_at TEXT NOT NULL,
                 final_hash TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS idempotency_state (
+                idempotency_key TEXT PRIMARY KEY,
+                request_fingerprint TEXT NOT NULL,
+                state TEXT NOT NULL,
+                first_request_id TEXT NOT NULL,
+                response_json TEXT,
+                updated_at TEXT NOT NULL
+            );
             CREATE TRIGGER IF NOT EXISTS events_no_update
             BEFORE UPDATE ON events BEGIN SELECT RAISE(ABORT, 'ledger events are append-only'); END;
             CREATE TRIGGER IF NOT EXISTS events_no_delete
@@ -54,6 +62,62 @@ class ExecutionLedger:
             """
         )
         self._connection.commit()
+
+    @staticmethod
+    def request_fingerprint(request: RequestEnvelope) -> str:
+        material = {
+            "target": request.target,
+            "operation": request.operation,
+            "payload": redact(request.payload),
+            "expected_effect": request.expected_effect,
+        }
+        canonical = json.dumps(material, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    def claim_idempotency(self, request: RequestEnvelope) -> dict[str, Any]:
+        if not request.idempotency_key:
+            raise ValueError("idempotency key is required")
+        fingerprint = self.request_fingerprint(request)
+        with self._lock, self._connection:
+            row = self._connection.execute(
+                "SELECT * FROM idempotency_state WHERE idempotency_key = ?",
+                (request.idempotency_key,),
+            ).fetchone()
+            if row is None:
+                self._connection.execute(
+                    "INSERT INTO idempotency_state VALUES (?, ?, 'in_progress', ?, NULL, ?)",
+                    (
+                        request.idempotency_key,
+                        fingerprint,
+                        request.request_id,
+                        utc_now(),
+                    ),
+                )
+                return {"state": "claimed", "fingerprint": fingerprint}
+            if row["request_fingerprint"] != fingerprint:
+                return {"state": "conflict", "fingerprint": fingerprint}
+            if row["state"] == "completed":
+                return {"state": "completed", "response": json.loads(row["response_json"])}
+            return {"state": "in_progress", "first_request_id": row["first_request_id"]}
+
+    def complete_idempotency(self, request: RequestEnvelope, response: dict[str, Any]) -> None:
+        if not request.idempotency_key:
+            return
+        fingerprint = self.request_fingerprint(request)
+        with self._lock, self._connection:
+            cursor = self._connection.execute(
+                """UPDATE idempotency_state
+                SET state = 'completed', response_json = ?, updated_at = ?
+                WHERE idempotency_key = ? AND request_fingerprint = ? AND state = 'in_progress'""",
+                (
+                    json.dumps(redact(response), sort_keys=True, ensure_ascii=False),
+                    utc_now(),
+                    request.idempotency_key,
+                    fingerprint,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise RuntimeError("idempotency claim is missing or stale")
 
     def append(
         self,

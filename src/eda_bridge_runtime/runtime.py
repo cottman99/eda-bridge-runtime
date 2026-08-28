@@ -26,6 +26,12 @@ class Runtime:
         request.require_idempotency()
         started = time.monotonic()
         self.ledger.record_request(request, self.facts.to_dict())
+        if request.is_mutating:
+            claim = self.ledger.claim_idempotency(request)
+            if claim["state"] != "claimed":
+                response = self._idempotency_response(request, claim)
+                self._record_completed(request, response, started)
+                return response
         eda = str(request.target.get("eda", ""))
         adapter = self._adapters.get(eda)
         if adapter is None:
@@ -35,6 +41,8 @@ class Runtime:
                 status="failed",
                 error={"code": "adapter_not_found", "message": f"no adapter registered for {eda}"},
             )
+            if request.is_mutating:
+                self.ledger.complete_idempotency(request, response.to_dict())
             self._record_completed(request, response, started)
             return response
 
@@ -69,8 +77,46 @@ class Runtime:
                 status="failed",
                 error={"code": type(exc).__name__, "message": str(exc)},
             )
+        if request.is_mutating:
+            self.ledger.complete_idempotency(request, response.to_dict())
         self._record_completed(request, response, started)
         return response
+
+    @staticmethod
+    def _idempotency_response(request: RequestEnvelope, claim: dict[str, Any]) -> ResponseEnvelope:
+        if claim["state"] == "completed":
+            previous = claim["response"]
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status=previous["status"],
+                result={
+                    "deduplicated": True,
+                    "original_request_id": previous["request_id"],
+                    "original_result": previous.get("result", {}),
+                },
+                error=previous.get("error"),
+            )
+        if claim["state"] == "in_progress":
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status="accepted",
+                result={
+                    "deduplicated": True,
+                    "state": "in_progress",
+                    "first_request_id": claim["first_request_id"],
+                },
+            )
+        return ResponseEnvelope(
+            request_id=request.request_id,
+            run_id=request.run_id,
+            status="failed",
+            error={
+                "code": "idempotency_conflict",
+                "message": "idempotency key was reused for a different operation",
+            },
+        )
 
     def _record_completed(
         self, request: RequestEnvelope, response: ResponseEnvelope, started: float
