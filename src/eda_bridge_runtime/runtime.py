@@ -6,7 +6,7 @@ import time
 from typing import Any
 
 from ._version import __version__
-from .adapter import Adapter, AdapterContext
+from .adapter import Adapter, AdapterContext, AdapterResult
 from .ledger import ExecutionLedger
 from .protocol import RequestEnvelope, ResponseEnvelope, RuntimeFacts
 
@@ -63,7 +63,15 @@ class Runtime:
 
         try:
             emit("adapter.started", {"adapter": adapter.name, "version": adapter.version})
-            result = adapter.execute(request, AdapterContext(emit=emit))
+            if request.operation == "runtime.capabilities":
+                capabilities = adapter.capabilities(request.target)
+                emit(
+                    "adapter.capabilities.observed",
+                    {"adapter": adapter.name, "version": adapter.version},
+                )
+                result = AdapterResult(status="passed", result={"capabilities": capabilities})
+            else:
+                result = adapter.execute(request, AdapterContext(emit=emit))
             response = ResponseEnvelope(
                 request_id=request.request_id,
                 run_id=request.run_id,
@@ -93,6 +101,7 @@ class Runtime:
                 result={
                     "deduplicated": True,
                     "original_request_id": previous["request_id"],
+                    "original_run_id": previous["run_id"],
                     "original_result": previous.get("result", {}),
                 },
                 error=previous.get("error"),

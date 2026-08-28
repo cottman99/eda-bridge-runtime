@@ -3,7 +3,7 @@ import json
 
 from eda_bridge_runtime.adapter import Adapter, AdapterResult
 from eda_bridge_runtime.ledger import ExecutionLedger
-from eda_bridge_runtime.protocol import RequestEnvelope
+from eda_bridge_runtime.protocol import RequestEnvelope, project_run
 from eda_bridge_runtime.runtime import Runtime
 from eda_bridge_runtime.transport import LocalTransport, serve_json_lines
 
@@ -12,7 +12,7 @@ class FakeAdapter(Adapter):
     name = "fake"
     version = "1"
 
-    def capabilities(self):
+    def capabilities(self, target=None):
         return {"operations": ["inspect"], "escape_lanes": []}
 
     def execute(self, request, context):
@@ -51,6 +51,23 @@ def test_local_transport_and_intent_inheritance(tmp_path):
     events = runtime.ledger.events(run_id=response.run_id)
     observation = next(event for event in events if event["event_type"] == "adapter.observation")
     assert observation["payload"]["inherited_intent"]["purpose"] == "Inspect sanitized design"
+    assert runtime.ledger.verify(response.run_id)
+
+
+def test_runtime_exposes_adapter_capabilities_without_adapter_execute(tmp_path):
+    runtime = Runtime(ExecutionLedger(tmp_path / "ledger.sqlite3"))
+    adapter = CountingAdapter()
+    runtime.register("fake", adapter)
+    request = RequestEnvelope(
+        purpose="Discover available operations",
+        target={"eda": "fake", "profile": "test"},
+        operation="runtime.capabilities",
+        payload={"mutating": False},
+    )
+    response = runtime.execute(request)
+    assert response.status == "passed"
+    assert response.result["data"]["capabilities"]["operations"] == ["inspect"]
+    assert adapter.calls == 0
     assert runtime.ledger.verify(response.run_id)
 
 
@@ -128,6 +145,7 @@ def test_mutation_is_not_executed_twice_for_same_key(tmp_path):
     response = runtime.execute(retry)
     assert response.status == "passed"
     assert response.result["deduplicated"] is True
+    assert project_run(response.to_dict())["run_id"] == first.run_id
     assert adapter.calls == 1
 
 

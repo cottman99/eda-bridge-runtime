@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cottman99/eda-bridge-runtime/run-view-v1.schema.json",
+  "title": "EDA Runtime Run View v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "run_id", "request_id", "job_id", "state", "terminal", "updated_at", "evidence_refs"],
+  "properties": {
+    "protocol": {"const": "eda-runtime.run-view/v1"},
+    "run_id": {"type": "string"},
+    "request_id": {"type": "string"},
+    "job_id": {"type": ["string", "null"]},
+    "state": {"enum": ["accepted", "queued", "running", "orphaned", "passed", "failed", "cancelled", "unknown"]},
+    "terminal": {"type": "boolean"},
+    "updated_at": {"type": ["string", "null"]},
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["logical_name"],
+        "properties": {
+          "logical_name": {"type": "string"},
+          "sha256": {"type": "string"},
+          "size": {"type": "integer", "minimum": 0},
+          "media_type": {"type": "string"},
+          "retention_days": {"type": "integer", "minimum": 0}
+        }
+      }
+    }
+  }
+}

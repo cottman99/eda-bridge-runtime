@@ -9,12 +9,15 @@ import uuid
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from pathlib import PurePath
 from typing import Any
 
 REQUEST_PROTOCOL = "eda-runtime.request/v1"
 RESPONSE_PROTOCOL = "eda-runtime.response/v1"
 EVENT_PROTOCOL = "eda-runtime.event/v1"
 HANDSHAKE_PROTOCOL = "eda-runtime.handshake/v1"
+RUN_VIEW_PROTOCOL = "eda-runtime.run-view/v1"
+TERMINAL_RUN_STATES = frozenset({"passed", "failed", "cancelled"})
 
 
 def utc_now() -> str:
@@ -155,3 +158,89 @@ class RuntimeFacts:
 
     def to_dict(self) -> dict[str, str | None]:
         return asdict(self)
+
+
+def project_run(response: Mapping[str, Any]) -> dict[str, Any]:
+    """Project synchronous responses and durable jobs into one compact run view.
+
+    The wire response remains unchanged. This additive projection gives clients a
+    stable observation shape without forcing vendor bridges to share one execution
+    model or returning raw artifact paths to the agent.
+    """
+    result = response.get("result")
+    result = result if isinstance(result, Mapping) else {}
+    job = result.get("job")
+    job = job if isinstance(job, Mapping) else {}
+    state = str(job.get("state") or response.get("status") or "unknown")
+    run_id = str(
+        job.get("run_id") or result.get("original_run_id") or response.get("run_id") or ""
+    )
+    request_id = str(
+        job.get("request_id")
+        or result.get("original_request_id")
+        or response.get("request_id")
+        or ""
+    )
+    job_id = str(job.get("job_id") or result.get("job_id") or "") or None
+    updated_at = str(
+        job.get("updated_at") or response.get("completed_at") or response.get("created_at") or ""
+    ) or None
+    return {
+        "protocol": RUN_VIEW_PROTOCOL,
+        "run_id": run_id,
+        "request_id": request_id,
+        "job_id": job_id,
+        "state": state,
+        "terminal": state in TERMINAL_RUN_STATES,
+        "updated_at": updated_at,
+        "evidence_refs": _evidence_refs(result),
+    }
+
+
+def _evidence_refs(value: Any, *, depth: int = 0) -> list[dict[str, Any]]:
+    if depth > 6:
+        return []
+    references: list[dict[str, Any]] = []
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            if key == "artifacts" and isinstance(item, list):
+                references.extend(
+                    reference
+                    for artifact in item
+                    if isinstance(artifact, Mapping)
+                    if (reference := _artifact_reference(artifact)) is not None
+                )
+            else:
+                references.extend(_evidence_refs(item, depth=depth + 1))
+    elif isinstance(value, list):
+        for item in value:
+            references.extend(_evidence_refs(item, depth=depth + 1))
+    unique: dict[tuple[Any, ...], dict[str, Any]] = {}
+    for reference in references:
+        key = (
+            reference.get("logical_name"),
+            reference.get("sha256"),
+            reference.get("size"),
+        )
+        unique[key] = reference
+    return list(unique.values())
+
+
+def _artifact_reference(artifact: Mapping[str, Any]) -> dict[str, Any] | None:
+    digest = artifact.get("sha256") or artifact.get("bundle_sha256")
+    path = artifact.get("path")
+    logical_name = artifact.get("logical_name") or artifact.get("name")
+    if not logical_name and path:
+        logical_name = PurePath(str(path).replace("\\", "/")).name
+    if not any((logical_name, digest, artifact.get("size"))):
+        return None
+    reference: dict[str, Any] = {"logical_name": str(logical_name or "artifact")}
+    if digest:
+        reference["sha256"] = str(digest)
+    if artifact.get("size") is not None:
+        reference["size"] = int(artifact["size"])
+    if artifact.get("media_type"):
+        reference["media_type"] = str(artifact["media_type"])
+    if artifact.get("retention_days") is not None:
+        reference["retention_days"] = int(artifact["retention_days"])
+    return reference

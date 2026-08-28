@@ -88,6 +88,24 @@ class FailingTransport(FakeTransport):
         self.closed = True
 
 
+class DurableTransport(FakeTransport):
+    def request(self, request):
+        self.requests.append(request)
+        return ResponseEnvelope(
+            request_id=request.request_id,
+            run_id=request.run_id,
+            status="passed",
+            result={
+                "job": {
+                    "job_id": "job-one",
+                    "request_id": "original-request",
+                    "run_id": "original-run",
+                    "state": "running",
+                }
+            },
+        )
+
+
 def _rpc(request_id, method, params=None):
     value = {"jsonrpc": "2.0", "id": request_id, "method": method}
     if params is not None:
@@ -108,6 +126,15 @@ def test_mcp_supports_legacy_and_modern_discovery():
     modern = server.handle(_rpc(2, "server/discover"))
     assert modern["result"]["supportedVersions"] == ["2026-07-28"]
     assert modern["result"]["_meta"]["io.modelcontextprotocol/serverInfo"]["name"]
+    tools = server.handle(_rpc(3, "tools/list"))["result"]["tools"]
+    assert [item["name"] for item in tools] == [
+        "eda.context.resolve",
+        "eda.connections.list",
+        "eda.capabilities",
+        "eda.submit",
+        "eda.job.status",
+        "eda.job.events",
+    ]
 
 
 def test_mcp_context_resolution_and_submit_preserve_purpose():
@@ -142,7 +169,72 @@ def test_mcp_context_resolution_and_submit_preserve_purpose():
     assert registry.transport.requests[0].purpose == "Inspect the selected design"
     assert registry.transport.requests[0].target["context_id"] == "ctx1"
     assert registry.transport.requests[0].target["profile"] == "de"
+    assert registry.transport.requests[0].target["connection_id"] == "ansys-one"
     assert registry.transport.requests[0].actor.harness.value == "mcp"
+
+
+def test_mcp_initialize_supplies_client_identity_and_compact_run_projection():
+    registry = FakeRegistry()
+    registry.transport = DurableTransport()
+    server = MCPRuntimeServer(registry)
+    server.handle(
+        _rpc(
+            1,
+            "initialize",
+            {
+                "protocolVersion": "2025-11-25",
+                "capabilities": {},
+                "clientInfo": {"name": "codex-desktop", "version": "1"},
+            },
+        )
+    )
+    response = server.handle(
+        _rpc(
+            2,
+            "tools/call",
+            {
+                "name": "eda.job.status",
+                "arguments": {
+                    "purpose": "Observe durable operation",
+                    "job_id": "job-one",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    request = registry.transport.requests[0]
+    value = response["result"]["structuredContent"]
+    assert request.actor.client.value == "codex-desktop"
+    assert value["run"]["state"] == "running"
+    assert value["run"]["run_id"] == "original-run"
+    assert value["run"]["job_id"] == "job-one"
+    assert response["result"]["content"][0]["text"].endswith(
+        "ansys-one | original-run | job-one"
+    )
+
+
+def test_mcp_capability_discovery_is_read_only_and_summary_is_bounded():
+    registry = FakeRegistry()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Discover available operations",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    request = registry.transport.requests[0]
+    assert request.operation == "runtime.capabilities"
+    assert request.payload == {"mutating": False}
+    text = response["result"]["content"][0]["text"]
+    assert text == f"EDA Runtime result: passed | ansys-one | {request.run_id}"
+    assert json.dumps(response["result"]["structuredContent"], sort_keys=True) not in text
 
 
 def test_mcp_stdio_bad_frame_does_not_kill_server():
@@ -151,7 +243,7 @@ def test_mcp_stdio_bad_frame_does_not_kill_server():
     serve_mcp(source, destination, registry=FakeRegistry())
     responses = [json.loads(line) for line in destination.getvalue().splitlines()]
     assert responses[0]["error"]["code"] == -32700
-    assert len(responses[1]["result"]["tools"]) == 5
+    assert len(responses[1]["result"]["tools"]) == 6
 
 
 def test_mcp_discards_failed_connection_without_replaying_request():

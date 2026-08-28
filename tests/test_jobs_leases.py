@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from eda_bridge_runtime import jobs
 from eda_bridge_runtime.jobs import JobStore
 from eda_bridge_runtime.lease import LeaseStore
 from eda_bridge_runtime.protocol import RequestEnvelope, ResponseEnvelope
@@ -19,9 +20,11 @@ def request(key="same-key"):
 
 def test_job_submission_is_idempotent(tmp_path):
     store = JobStore(tmp_path / "jobs.sqlite3")
-    first = store.submit(request())
+    envelope = request()
+    first = store.submit(envelope)
     second = store.submit(request())
     assert second["job_id"] == first["job_id"]
+    assert first["run_id"] == envelope.run_id
 
 
 def test_job_transitions_and_cursor(tmp_path):
@@ -101,3 +104,11 @@ def test_recovery_leaves_live_worker_running(tmp_path, monkeypatch):
     monkeypatch.setattr("eda_bridge_runtime.jobs._pid_is_alive", lambda _pid: True)
     assert store.recover_orphans() == []
     assert store.get(submitted["job_id"])["state"] == "running"
+
+
+def test_pid_probe_treats_generic_os_error_as_dead(monkeypatch):
+    def invalid_pid(_pid, _signal):
+        raise OSError("invalid pid")
+
+    monkeypatch.setattr("eda_bridge_runtime.jobs.os.kill", invalid_pid)
+    assert jobs._pid_is_alive(123) is False

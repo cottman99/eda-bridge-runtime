@@ -33,7 +33,8 @@ python -m venv .venv
 ```
 
 See [Architecture](docs/ARCHITECTURE.md) and the
-[protocol schema](docs/schemas/request-v1.schema.json).
+[protocol schema](docs/schemas/request-v1.schema.json). Host placement is
+defined by the [agent-client, eda-worker, and combined deployment roles](docs/DEPLOYMENT_ROLES.md).
 
 The repository also includes a minimal [MCP and Codex plugin](docs/MCP_AND_CODEX.md). It resolves
 named local/SSH connections without asking the agent to assemble transport commands on each call.

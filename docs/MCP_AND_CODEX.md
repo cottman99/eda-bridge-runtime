@@ -2,15 +2,27 @@
 
 The bundled plugin is a thin discovery layer. It starts `eda-runtime mcp serve`, while the Runtime
 keeps transport, idempotency, durable jobs, and the execution ledger independent of Codex.
+The plugin and Skill belong on the Agent host. A remote EDA host needs only the
+shared Runtime protocol plus its vendor bridge and adapter service unless an
+Agent also runs there.
 
 The stdio server supports both the legacy MCP initialization era through `2025-11-25` and the
-stateless `2026-07-28` discovery era. It exposes five tools:
+stateless `2026-07-28` discovery era. It exposes six tools:
 
 - `eda.context.resolve`
 - `eda.connections.list`
+- `eda.capabilities`
 - `eda.submit`
 - `eda.job.status`
 - `eda.job.events`
+
+Operation, status, and event calls include an additive compact `run` object.
+It projects synchronous responses and durable jobs into one observation shape
+and lists content-addressed evidence metadata without exposing artifact paths.
+
+For a greenfield task, discover the selected adapter's capabilities and submit its typed create
+operation. ADS and AnsysEM intentionally keep different creation schemas; both return an opaque,
+reusable `EDA_CONTEXT` without exposing the remote project path in the token.
 
 The tools never accept a raw local or SSH launch command. They select a previously registered
 connection by `connection_id`, by a hint in `EDA_CONTEXT`, or by an unambiguous EDA match.

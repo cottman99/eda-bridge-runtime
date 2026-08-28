@@ -173,12 +173,14 @@ class JobStore:
 
     @staticmethod
     def _job(row: sqlite3.Row) -> dict[str, Any]:
+        request = json.loads(row["request_json"])
         return {
             "job_id": row["job_id"],
             "request_id": row["request_id"],
+            "run_id": request["run_id"],
             "idempotency_key": row["idempotency_key"],
             "state": row["state"],
-            "request": json.loads(row["request_json"]),
+            "request": request,
             "result": json.loads(row["result_json"]) if row["result_json"] else None,
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
@@ -194,4 +196,8 @@ def _pid_is_alive(pid: int) -> bool:
         return False
     except PermissionError:
         return True
+    except OSError:
+        # Windows reports an invalid or stale PID as a generic OSError
+        # (commonly WinError 87) rather than ProcessLookupError.
+        return False
     return True

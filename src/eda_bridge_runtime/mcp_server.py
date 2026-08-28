@@ -11,7 +11,7 @@ from typing import Any, TextIO
 from ._version import __version__
 from .connections import ConnectionRegistry
 from .context import EDAContext
-from .protocol import ActorIdentity, RequestEnvelope
+from .protocol import ActorIdentity, RequestEnvelope, project_run
 
 MODERN_PROTOCOL = "2026-07-28"
 LEGACY_PROTOCOL = "2025-11-25"
@@ -50,6 +50,25 @@ TOOLS = [
         "title": "List EDA Connections",
         "description": "List configured connection identifiers and EDA types without opening them.",
         "inputSchema": _object_schema({}),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
+    },
+    {
+        "name": "eda.capabilities",
+        "title": "Discover EDA Capabilities",
+        "description": (
+            "Read the typed operations advertised by one registered EDA adapter. Use this before "
+            "guessing an operation or researching a vendor API. Does not mutate the EDA."
+        ),
+        "inputSchema": _object_schema(
+            {
+                "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
+                "target": {"type": "object"},
+                "context": {"type": "string"},
+                "connection_id": {"type": "string"},
+                "eda": {"type": "string"},
+            },
+            ["purpose"],
+        ),
         "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
     },
     {
@@ -115,6 +134,7 @@ class MCPRuntimeServer:
     def __init__(self, registry: ConnectionRegistry | None = None):
         self.registry = registry or ConnectionRegistry()
         self._transports: dict[str, Any] = {}
+        self._client = "mcp-client"
 
     def close(self) -> None:
         for transport in self._transports.values():
@@ -128,6 +148,8 @@ class MCPRuntimeServer:
             return None
         method = message.get("method")
         if method == "initialize":
+            client_info = message.get("params", {}).get("clientInfo") or {}
+            self._client = str(client_info.get("name") or self._client)
             requested = message.get("params", {}).get("protocolVersion")
             selected = (
                 requested if requested in {LEGACY_PROTOCOL, "2025-06-18"} else LEGACY_PROTOCOL
@@ -213,21 +235,29 @@ class MCPRuntimeServer:
             connection_id=str(arguments.get("connection_id") or hinted or "") or None,
             eda=eda,
         )
-        if name == "eda.submit":
+        if name in {"eda.submit", "eda.capabilities"}:
             supplied_target = arguments.get("target") or {}
             if not isinstance(supplied_target, dict):
                 raise ValueError("target must be an object")
             supplied_eda = supplied_target.get("eda")
             if supplied_eda and supplied_eda != spec.eda:
                 raise ValueError("target EDA does not match the selected connection")
-            target: dict[str, Any] = {**supplied_target, "eda": spec.eda}
+            target: dict[str, Any] = {
+                **supplied_target,
+                "eda": spec.eda,
+                "connection_id": spec.connection_id,
+            }
             if context:
                 target["context"] = arguments["context"]
                 for key, value in context.locator.items():
                     if key != "connection_id":
                         target.setdefault(key, value)
-            operation = str(arguments["operation"])
-            payload = dict(arguments["payload"])
+            if name == "eda.capabilities":
+                operation = "runtime.capabilities"
+                payload = {"mutating": False}
+            else:
+                operation = str(arguments["operation"])
+                payload = dict(arguments["payload"])
         else:
             operation = "runtime.job_status" if name == "eda.job.status" else "runtime.job_events"
             payload = {"mutating": False, "job_id": str(arguments["job_id"])}
@@ -257,17 +287,18 @@ class MCPRuntimeServer:
             self._transports.pop(spec.connection_id, None)
             transport.close()
             raise
+        response_value = response.to_dict()
         return {
             "connection_id": spec.connection_id,
             "client_transport_ms": round((time.monotonic() - started) * 1000, 3),
-            "response": response.to_dict(),
+            "run": project_run(response_value),
+            "response": response_value,
         }
 
-    @staticmethod
-    def _client_name(message: dict[str, Any]) -> str:
+    def _client_name(self, message: dict[str, Any]) -> str:
         meta = (message.get("params") or {}).get("_meta") or {}
         info = meta.get("io.modelcontextprotocol/clientInfo") or {}
-        return str(info.get("name") or "mcp-client")
+        return str(info.get("name") or self._client)
 
     @staticmethod
     def _modern(message: dict[str, Any]) -> bool:
@@ -276,12 +307,34 @@ class MCPRuntimeServer:
 
     @staticmethod
     def _tool_result(value: dict[str, Any], *, is_error: bool = False) -> dict[str, Any]:
-        text = json.dumps(value, sort_keys=True, ensure_ascii=False)
+        text = MCPRuntimeServer._summary(value)
         return {
             "content": [{"type": "text", "text": text}],
             "structuredContent": value,
             "isError": is_error,
         }
+
+    @staticmethod
+    def _summary(value: dict[str, Any]) -> str:
+        status = str(value.get("status") or "")
+        connection_id = str(value.get("connection_id") or "")
+        run = value.get("run") if isinstance(value.get("run"), dict) else {}
+        response = value.get("response") if isinstance(value.get("response"), dict) else {}
+        response_status = str(run.get("state") or response.get("status") or "")
+        run_id = str(run.get("run_id") or response.get("run_id") or "")
+        job_id = str(run.get("job_id") or "")
+        identity = (status or response_status, connection_id, run_id, job_id)
+        parts = [item for item in identity if item]
+        if parts:
+            return "EDA Runtime result: " + " | ".join(parts)
+        if "connections" in value:
+            return f"EDA Runtime connections: {len(value.get('connections') or [])}"
+        if "context" in value:
+            return "EDA Runtime context resolved"
+        if "error" in value:
+            error = value.get("error") or {}
+            return f"EDA Runtime error: {error.get('code', 'error')}"
+        return "EDA Runtime result available in structured content"
 
     @staticmethod
     def _result(request_id: Any, result: dict[str, Any], *, modern: bool) -> dict[str, Any]:

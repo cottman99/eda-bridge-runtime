@@ -5,6 +5,7 @@ from eda_bridge_runtime.protocol import (
     RequestEnvelope,
     ResponseEnvelope,
     RuntimeFacts,
+    project_run,
 )
 
 
@@ -58,3 +59,41 @@ def test_round_trip_request():
 def test_runtime_facts_capture_display_without_agent_work(monkeypatch):
     monkeypatch.setenv("DISPLAY", ":4.0")
     assert RuntimeFacts("test").display == ":4.0"
+
+
+def test_run_projection_normalizes_durable_state_and_redacts_artifact_path():
+    view = project_run(
+        {
+            "request_id": "status-request",
+            "run_id": "status-run",
+            "status": "passed",
+            "result": {
+                "job": {
+                    "job_id": "job-1",
+                    "request_id": "original-request",
+                    "run_id": "original-run",
+                    "state": "running",
+                    "updated_at": "2026-08-28T00:00:00Z",
+                    "result": {
+                        "result": {
+                            "artifacts": [
+                                {
+                                    "path": "/private/customer/result.csv",
+                                    "sha256": "a" * 64,
+                                    "size": 12,
+                                }
+                            ]
+                        }
+                    },
+                }
+            },
+        }
+    )
+    assert view["state"] == "running"
+    assert view["terminal"] is False
+    assert view["run_id"] == "original-run"
+    assert view["job_id"] == "job-1"
+    assert view["evidence_refs"] == [
+        {"logical_name": "result.csv", "sha256": "a" * 64, "size": 12}
+    ]
+    assert "private" not in str(view)

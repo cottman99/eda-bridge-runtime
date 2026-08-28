@@ -6,7 +6,7 @@ from .connections import ConnectionRegistry, ConnectionSpec
 from .context import EDAContext
 from .jobs import JobStore
 from .ledger import ExecutionLedger
-from .protocol import ActorIdentity, RequestEnvelope, ResponseEnvelope
+from .protocol import ActorIdentity, RequestEnvelope, ResponseEnvelope, project_run
 from .runtime import Runtime
 from .supervisor import run_job_worker, spawn_detached_worker
 
@@ -24,6 +24,7 @@ __all__ = [
     "RequestEnvelope",
     "ResponseEnvelope",
     "Runtime",
+    "project_run",
     "run_job_worker",
     "spawn_detached_worker",
 ]

@@ -28,8 +28,8 @@ class Adapter(ABC):
     version: str
 
     @abstractmethod
-    def capabilities(self) -> dict[str, Any]:
-        """Return typed operations and explicit escape lanes."""
+    def capabilities(self, target: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Return typed operations and explicit escape lanes for an optional target."""
 
     @abstractmethod
     def execute(self, request: RequestEnvelope, context: AdapterContext) -> AdapterResult:
