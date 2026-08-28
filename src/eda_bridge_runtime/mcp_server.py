@@ -56,8 +56,8 @@ TOOLS = [
         "name": "eda.capabilities",
         "title": "Discover EDA Capabilities",
         "description": (
-            "Read the typed operations advertised by one registered EDA adapter. Use this before "
-            "guessing an operation or researching a vendor API. Does not mutate the EDA."
+            "Read typed operations when the selected Skill and Context do not already establish "
+            "the operation contract, or when a capability digest is stale. Does not mutate the EDA."
         ),
         "inputSchema": _object_schema(
             {
@@ -75,8 +75,11 @@ TOOLS = [
         "name": "eda.submit",
         "title": "Submit Typed EDA Operation",
         "description": (
-            "Submit one typed operation through a registered Runtime connection. A concise purpose "
-            "is mandatory. Mutations require an idempotency_key and are never blindly replayed."
+            "Submit one typed operation through a registered Runtime connection. When Context and "
+            "the selected Skill establish the operation, call this directly without separate "
+            "resolve "
+            "or capability probes. A concise purpose is mandatory; mutations require a stable "
+            "idempotency_key and are never blindly replayed."
         ),
         "inputSchema": _object_schema(
             {
@@ -215,9 +218,11 @@ class MCPRuntimeServer:
         if name == "eda.context.resolve":
             context = EDAContext.decode(str(arguments["context"]))
             hinted = context.locator.get("connection_id")
+            origin_id = str(context.origin.get("origin_id") or "") or None
             spec = self.registry.resolve(
                 connection_id=str(arguments.get("connection_id") or hinted or "") or None,
                 eda=context.eda,
+                origin_id=origin_id,
             )
             return {
                 "status": "ready",
@@ -231,9 +236,11 @@ class MCPRuntimeServer:
         context = EDAContext.decode(str(arguments["context"])) if arguments.get("context") else None
         eda = str(arguments.get("eda") or (context.eda if context else "")) or None
         hinted = context.locator.get("connection_id") if context else None
+        origin_id = str(context.origin.get("origin_id") or "") or None if context else None
         spec = self.registry.resolve(
             connection_id=str(arguments.get("connection_id") or hinted or "") or None,
             eda=eda,
+            origin_id=origin_id,
         )
         if name in {"eda.submit", "eda.capabilities"}:
             supplied_target = arguments.get("target") or {}

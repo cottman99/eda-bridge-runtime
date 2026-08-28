@@ -22,9 +22,10 @@ took, and what result or artifact was produced.
 
 ## Current alpha
 
-`0.1.0a3` adds the minimal Codex plugin and completes the registered persistent
-local/SSH entry point. ADS and AnsysEM now use the same intent, identity,
-timing, reconnect, and durable-job model.
+`0.1.0a4` adds rich bounded Context snapshots, stable origin routing, direct
+one-submit execution, and automatic origin binding during connection setup.
+Vendor Skills can declare the Runtime MCP directly, so users select one
+task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
 python -m venv .venv

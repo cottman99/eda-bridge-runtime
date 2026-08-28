@@ -21,6 +21,25 @@ credentials, host address, or task-specific geometry is included here.
   into detached workers. The Bridge now inherits this profile automatically; a regression test and
   the successful real-host rerun cover the failure path.
 
+## 2026-08-28 Context v2 and dual-role acceptance
+
+- Both vendor Bridges emitted bounded `EDA_CONTEXT:v2` tokens containing a stable origin, session
+  state, target summary, capability digest, and freshness state. Runtime selected the correct
+  registered connection from the origin without a connection hint; legacy v1 decoding remains
+  covered by tests.
+- One ADS documentation query completed with a single `eda.submit` over the SSH route in 529 ms.
+  One AnsysEM documentation query completed over the production SSH route in 860 ms. Neither path
+  launched the EDA or required separate context-resolution and capability calls.
+- The same Runtime and AnsysEM adapter completed a documentation-status request through a local
+  connection in 72 ms when the EDA worker also acted as the Agent host. Only the connection record
+  differed between the local and SSH paths.
+- Acceptance caught that an SSH child initially inherited the host's default virtual display even
+  though the captured Context named another display. The production connection commands now bind
+  the display before launching either Bridge; the ledgers then observed the required display for
+  both adapters.
+- Connection setup probed each Bridge once and persisted its origin. Subsequent Context-driven
+  requests did not spend an extra round trip rediscovering the target.
+
 ## Evidence boundary
 
 - Both append-only ledgers verified their hash chains after the real operations.

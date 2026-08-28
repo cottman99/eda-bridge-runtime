@@ -3,9 +3,12 @@
 ## One execution path
 
 An agent, CLI, MCP server, or EDA UI creates a versioned request envelope. The
-runtime resolves an explicit `EDA_CONTEXT/v1` token or a deterministic local
+runtime reads an explicit `EDA_CONTEXT` snapshot or a deterministic registered
 binding, opens either a local or SSH transport, and submits the request to an
-EDA adapter. The adapter translates typed capabilities to the vendor bridge.
+EDA adapter. A v2 Context adds bounded origin, session, target, selection,
+capability, and freshness facts; v1 remains accepted. When the selected Skill
+already establishes a typed operation, `eda.submit` performs routing, freshness
+validation, and execution in one client call.
 
 All paths emit the same event model into one logical execution ledger:
 

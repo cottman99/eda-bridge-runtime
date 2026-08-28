@@ -20,12 +20,18 @@ Operation, status, and event calls include an additive compact `run` object.
 It projects synchronous responses and durable jobs into one observation shape
 and lists content-addressed evidence metadata without exposing artifact paths.
 
-For a greenfield task, discover the selected adapter's capabilities and submit its typed create
-operation. ADS and AnsysEM intentionally keep different creation schemas; both return an opaque,
-reusable `EDA_CONTEXT` without exposing the remote project path in the token.
+For a greenfield task, use the create operation established by the selected vendor Skill; discover
+capabilities only when that operation is not known. ADS and AnsysEM intentionally keep different
+creation schemas; both return a bounded, reusable `EDA_CONTEXT` without exposing credentials or
+large private artifacts.
+
+When a selected Skill and Context establish the operation, call `eda.submit` directly. Separate
+`eda.context.resolve` and `eda.capabilities` calls are diagnostic and discovery tools, not mandatory
+preflight. The adapter still validates the Context generation and target before execution.
 
 The tools never accept a raw local or SSH launch command. They select a previously registered
-connection by `connection_id`, by a hint in `EDA_CONTEXT`, or by an unambiguous EDA match.
+connection by `connection_id`, by a stable `origin_id` in `EDA_CONTEXT`, or by an unambiguous EDA
+match. Each Agent host may map the same origin to a different local or SSH route.
 
 ## One-time connection registration
 
@@ -40,6 +46,10 @@ eda-runtime connection set --eda ansys-electronics-desktop --kind ssh \
 eda-runtime connection set --eda keysight-ads --kind local \
   ads-local ads-agent runtime serve
 ```
+
+Registration probes the adapter once and stores its stable `origin_id`; engineers do not create or
+maintain that identifier. `--origin-id` is an administrative override and `--no-origin-probe`
+exists only for repair or legacy adapters.
 
 The default registry is `~/.eda-bridge-runtime/connections.json`. Set `EDA_RUNTIME_HOME` to move
 the whole Runtime control directory. Do not store credentials in the registry; SSH authentication

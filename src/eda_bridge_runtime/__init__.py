@@ -2,8 +2,8 @@
 
 from ._version import __version__
 from .adapter import Adapter, AdapterContext, AdapterResult
-from .connections import ConnectionRegistry, ConnectionSpec
-from .context import EDAContext
+from .connections import ConnectionRegistry, ConnectionSpec, discover_connection_origin
+from .context import EDAContext, capability_digest, stable_origin_id
 from .jobs import JobStore
 from .ledger import ExecutionLedger
 from .protocol import ActorIdentity, RequestEnvelope, ResponseEnvelope, project_run
@@ -18,7 +18,9 @@ __all__ = [
     "AdapterResult",
     "ConnectionRegistry",
     "ConnectionSpec",
+    "discover_connection_origin",
     "EDAContext",
+    "capability_digest",
     "ExecutionLedger",
     "JobStore",
     "RequestEnvelope",
@@ -27,4 +29,5 @@ __all__ = [
     "project_run",
     "run_job_worker",
     "spawn_detached_worker",
+    "stable_origin_id",
 ]

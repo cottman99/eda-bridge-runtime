@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cottman99/eda-bridge-runtime/docs/schemas/eda-context-v2.schema.json",
+  "title": "EDA Context v2 payload",
+  "type": "object",
+  "required": ["protocol", "eda", "target_kind", "locator", "generation", "created_at"],
+  "properties": {
+    "protocol": {"const": "eda-context/v2"},
+    "eda": {"type": "string", "minLength": 1},
+    "target_kind": {"type": "string", "minLength": 1},
+    "locator": {"type": "object", "minProperties": 1},
+    "display_name": {"type": ["string", "null"]},
+    "generation": {"type": "integer", "minimum": 1},
+    "capabilities_hint": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "created_at": {"type": "string"},
+    "origin": {
+      "type": "object",
+      "properties": {"origin_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"}},
+      "additionalProperties": true
+    },
+    "session": {"type": "object"},
+    "target": {"type": "object"},
+    "selection": {"type": "object"},
+    "capabilities": {"type": "object"},
+    "freshness": {"type": "object"}
+  },
+  "additionalProperties": false
+}

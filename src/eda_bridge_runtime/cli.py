@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from ._version import __version__
-from .connections import ConnectionRegistry, ConnectionSpec
+from .connections import ConnectionRegistry, ConnectionSpec, discover_connection_origin
 from .context import EDAContext
 from .ledger import ExecutionLedger
 from .protocol import ActorIdentity, RuntimeFacts
@@ -42,6 +42,8 @@ def _parser() -> argparse.ArgumentParser:
             item.add_argument("--eda", required=True)
             item.add_argument("--kind", choices=("local", "ssh"), required=True)
             item.add_argument("--host")
+            item.add_argument("--origin-id")
+            item.add_argument("--no-origin-probe", action="store_true")
             item.add_argument("--ssh-option", action="append", default=[])
             item.add_argument("--timeout-seconds", type=float, default=30)
             item.add_argument("launch_command", nargs=argparse.REMAINDER)
@@ -61,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
                     "status": "ok",
                     "runtime": RuntimeFacts(__version__).to_dict(),
                     "actor": ActorIdentity.detect().to_dict(),
-                    "protocols": {"request": 1, "context": 1, "handshake": 1},
+                    "protocols": {"request": 1, "context": [1, 2], "handshake": 1},
                 },
                 indent=2,
             )
@@ -98,7 +100,10 @@ def main(argv: list[str] | None = None) -> int:
             host=args.host,
             ssh_options=tuple(args.ssh_option),
             timeout_seconds=args.timeout_seconds,
+            origin_id=args.origin_id,
         )
+        if not spec.origin_id and not args.no_origin_probe:
+            spec = discover_connection_origin(spec)
         registry.upsert(spec)
         print(json.dumps({"status": "ready", "connection": spec.to_dict()}, indent=2))
         return 0

@@ -6,10 +6,11 @@ import json
 import os
 import re
 import tempfile
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
 
+from .protocol import RequestEnvelope
 from .transport import PersistentStdioTransport, SSHStdioTransport, Transport
 
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
@@ -32,6 +33,7 @@ class ConnectionSpec:
     host: str | None = None
     ssh_options: tuple[str, ...] = ()
     timeout_seconds: float = 30
+    origin_id: str | None = None
 
     def __post_init__(self) -> None:
         if not _ID.fullmatch(self.connection_id):
@@ -46,6 +48,8 @@ class ConnectionSpec:
             raise ValueError("local connections must not define host")
         if self.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
+        if self.origin_id and not _ID.fullmatch(self.origin_id):
+            raise ValueError("origin_id must be 1..64 safe identifier characters")
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
@@ -69,6 +73,33 @@ class ConnectionSpec:
             ssh_options=self.ssh_options,
             timeout_seconds=self.timeout_seconds,
         )
+
+
+def discover_connection_origin(
+    spec: ConnectionSpec, *, transport: Transport | None = None
+) -> ConnectionSpec:
+    """Read one adapter identity during connection setup and bind its stable origin."""
+
+    owned = transport is None
+    selected = transport or spec.open()
+    try:
+        response = selected.request(
+            RequestEnvelope(
+                purpose="Bind one registered EDA connection to its stable origin",
+                target={"eda": spec.eda, "connection_id": spec.connection_id},
+                operation="runtime.capabilities",
+                payload={"mutating": False},
+            )
+        )
+    finally:
+        if owned:
+            selected.close()
+    data = response.result.get("data") if isinstance(response.result, dict) else None
+    capabilities = data.get("capabilities") if isinstance(data, dict) else None
+    origin_id = str((capabilities or {}).get("origin_id") or "")
+    if response.status != "passed" or not _ID.fullmatch(origin_id):
+        raise ValueError("EDA adapter did not return a valid stable origin_id")
+    return replace(spec, origin_id=origin_id)
 
 
 class ConnectionRegistry:
@@ -100,7 +131,11 @@ class ConnectionRegistry:
         return removed
 
     def resolve(
-        self, *, connection_id: str | None = None, eda: str | None = None
+        self,
+        *,
+        connection_id: str | None = None,
+        eda: str | None = None,
+        origin_id: str | None = None,
     ) -> ConnectionSpec:
         values = self.list()
         if connection_id:
@@ -109,7 +144,24 @@ class ConnectionRegistry:
                 raise ValueError(f"unknown EDA connection: {connection_id}")
             if eda and match.eda != eda:
                 raise ValueError(f"connection {connection_id} does not target {eda}")
+            if origin_id and match.origin_id not in {None, origin_id}:
+                raise ValueError(f"connection {connection_id} does not target origin {origin_id}")
             return match
+        if origin_id:
+            matches = [
+                item
+                for item in values
+                if item.origin_id == origin_id and (not eda or item.eda == eda)
+            ]
+            if len(matches) == 1:
+                return matches[0]
+            legacy = [item for item in values if not eda or item.eda == eda]
+            if len(matches) == 0 and len(legacy) == 1 and legacy[0].origin_id is None:
+                return legacy[0]
+            raise ValueError(
+                f"origin {origin_id} resolves to {len(matches)} connections; "
+                "register one exact origin binding"
+            )
         matches = [item for item in values if not eda or item.eda == eda]
         if len(matches) != 1:
             target = eda or "requested EDA"

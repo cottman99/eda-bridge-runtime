@@ -16,12 +16,16 @@ Runtime merely because SSH is absent.
 
 ## Route quickly
 
-- If the user copied `EDA_CONTEXT`, call `eda.context.resolve` first. Use the resolved connection
-  and do not rediscover the project, slot, design, display, or host in shell commands.
+- Treat a copied `EDA_CONTEXT` as a bounded execution snapshot, not merely an opaque locator. When
+  it and the selected vendor Skill establish one typed operation, call `eda.submit` directly; the
+  Runtime resolves the origin and the adapter validates freshness inside that request.
+- Use `eda.context.resolve` only to inspect a Context without executing, diagnose an invalid or
+  ambiguous binding, or expose its bounded snapshot to the user.
 - Without context, call `eda.connections.list`. If exactly one connection matches the requested
   EDA, use it. Ask one short question only when multiple connections remain genuinely ambiguous.
-- Before guessing an operation or researching a vendor API, call `eda.capabilities` once for the
-  resolved target. Use the advertised operation schema and mutation classification.
+- Call `eda.capabilities` only when the operation is not established by the selected Skill or
+  Context, its capability digest is stale, or a prior response reports an unsupported operation.
+  Do not make it a routine preflight.
 - If the user has no existing project, select the matching advertised `*.create` operation, create
   one isolated non-existing target, and continue with the returned `EDA_CONTEXT`. Do not search for
   a reference project or ask the user to maintain routing metadata merely to start from scratch.
@@ -30,7 +34,7 @@ Runtime merely because SSH is absent.
 
 ## Execute safely
 
-- Prefer a typed adapter operation. Inspect capabilities once when support is uncertain; do not
+- Prefer a typed adapter operation. Inspect capabilities once only when support is uncertain; do not
   repeat doctor, environment, or full-state probes when the connection and target are unchanged.
 - For a mutation, use one stable `idempotency_key` for the same intended change. A retry observes
   the same operation instead of starting a duplicate.

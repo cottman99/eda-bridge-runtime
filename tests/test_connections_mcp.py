@@ -5,7 +5,11 @@ from types import SimpleNamespace
 import pytest
 
 from eda_bridge_runtime import EDAContext, ResponseEnvelope
-from eda_bridge_runtime.connections import ConnectionRegistry, ConnectionSpec
+from eda_bridge_runtime.connections import (
+    ConnectionRegistry,
+    ConnectionSpec,
+    discover_connection_origin,
+)
 from eda_bridge_runtime.mcp_server import MCPRuntimeServer, serve_mcp
 
 
@@ -16,10 +20,12 @@ def test_connection_registry_round_trip_and_deterministic_resolution(tmp_path):
         eda="keysight-ads",
         kind="local",
         command=("ads-agent", "runtime", "serve"),
+        origin_id="origin-ads",
     )
     registry.upsert(local)
     assert registry.resolve(eda="keysight-ads") == local
     assert registry.resolve(connection_id="ads-local") == local
+    assert registry.resolve(origin_id="origin-ads", eda="keysight-ads") == local
     assert registry.remove("ads-local") is True
     assert registry.list() == []
 
@@ -39,6 +45,23 @@ def test_connection_registry_refuses_ambiguous_eda(tmp_path):
         registry.resolve(eda="ansys-electronics-desktop")
 
 
+def test_connection_registry_resolves_same_eda_by_origin(tmp_path):
+    registry = ConnectionRegistry(tmp_path / "connections.json")
+    for suffix in ("a", "b"):
+        registry.upsert(
+            ConnectionSpec(
+                connection_id=f"ansys-{suffix}",
+                eda="ansys-electronics-desktop",
+                kind="local",
+                command=("ansysem-agent", "runtime", "serve"),
+                origin_id=f"origin-{suffix}",
+            )
+        )
+    assert registry.resolve(
+        eda="ansys-electronics-desktop", origin_id="origin-b"
+    ).connection_id == "ansys-b"
+
+
 class FakeTransport:
     def __init__(self):
         self.requests = []
@@ -56,6 +79,31 @@ class FakeTransport:
         return None
 
 
+class OriginTransport(FakeTransport):
+    def request(self, request):
+        self.requests.append(request)
+        return ResponseEnvelope(
+            request_id=request.request_id,
+            run_id=request.run_id,
+            status="passed",
+            result={"data": {"capabilities": {"origin_id": "origin-remote"}}},
+        )
+
+
+def test_connection_setup_can_bind_origin_without_user_metadata():
+    spec = ConnectionSpec(
+        connection_id="ads-remote",
+        eda="keysight-ads",
+        kind="ssh",
+        host="eda-host",
+        command=("ads-agent", "runtime", "serve"),
+    )
+    transport = OriginTransport()
+    bound = discover_connection_origin(spec, transport=transport)
+    assert bound.origin_id == "origin-remote"
+    assert transport.requests[0].operation == "runtime.capabilities"
+
+
 class FakeRegistry:
     def __init__(self):
         self.transport = FakeTransport()
@@ -69,9 +117,10 @@ class FakeRegistry:
     def list(self):
         return [self.spec]
 
-    def resolve(self, *, connection_id=None, eda=None):
+    def resolve(self, *, connection_id=None, eda=None, origin_id=None):
         assert connection_id in {None, "ansys-one"}
         assert eda in {None, "ansys-electronics-desktop"}
+        assert origin_id in {None, "origin-ansys"}
         return self.spec
 
 
@@ -144,6 +193,7 @@ def test_mcp_context_resolution_and_submit_preserve_purpose():
         eda="ansys-electronics-desktop",
         target_kind="design",
         locator={"context_id": "ctx1", "connection_id": "ansys-one"},
+        origin={"origin_id": "origin-ansys"},
     ).encode()
     resolved = server.handle(
         _rpc(1, "tools/call", {"name": "eda.context.resolve", "arguments": {"context": token}})
