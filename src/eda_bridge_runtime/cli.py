@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from ._version import __version__
+from .connections import ConnectionRegistry, ConnectionSpec
 from .context import EDAContext
 from .ledger import ExecutionLedger
 from .protocol import ActorIdentity, RuntimeFacts
@@ -30,6 +31,24 @@ def _parser() -> argparse.ArgumentParser:
     export = ledger_sub.add_parser("export")
     export.add_argument("database", type=Path)
     export.add_argument("destination", type=Path)
+    connection = sub.add_parser("connection")
+    connection_sub = connection.add_subparsers(dest="connection_command", required=True)
+    for action in ("list", "set", "remove"):
+        item = connection_sub.add_parser(action)
+        item.add_argument("--registry", type=Path)
+        if action in {"set", "remove"}:
+            item.add_argument("connection_id")
+        if action == "set":
+            item.add_argument("--eda", required=True)
+            item.add_argument("--kind", choices=("local", "ssh"), required=True)
+            item.add_argument("--host")
+            item.add_argument("--ssh-option", action="append", default=[])
+            item.add_argument("--timeout-seconds", type=float, default=30)
+            item.add_argument("launch_command", nargs=argparse.REMAINDER)
+    mcp = sub.add_parser("mcp")
+    mcp_sub = mcp.add_subparsers(dest="mcp_command", required=True)
+    mcp_serve = mcp_sub.add_parser("serve")
+    mcp_serve.add_argument("--registry", type=Path)
     return parser
 
 
@@ -50,6 +69,43 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "context" and args.context_command == "decode":
         print(json.dumps(EDAContext.decode(args.token).__dict__, indent=2))
+        return 0
+    if args.command == "connection":
+        registry = ConnectionRegistry(args.registry)
+        if args.connection_command == "list":
+            print(
+                json.dumps(
+                    {
+                        "status": "ready",
+                        "connections": [item.to_dict() for item in registry.list()],
+                    },
+                    indent=2,
+                )
+            )
+            return 0
+        if args.connection_command == "remove":
+            removed = registry.remove(args.connection_id)
+            print(json.dumps({"status": "removed" if removed else "not_found"}))
+            return 0 if removed else 1
+        launch_command = list(args.launch_command)
+        if launch_command and launch_command[0] == "--":
+            launch_command.pop(0)
+        spec = ConnectionSpec(
+            connection_id=args.connection_id,
+            eda=args.eda,
+            kind=args.kind,
+            command=tuple(launch_command),
+            host=args.host,
+            ssh_options=tuple(args.ssh_option),
+            timeout_seconds=args.timeout_seconds,
+        )
+        registry.upsert(spec)
+        print(json.dumps({"status": "ready", "connection": spec.to_dict()}, indent=2))
+        return 0
+    if args.command == "mcp" and args.mcp_command == "serve":
+        from .mcp_server import serve_mcp
+
+        serve_mcp(registry=ConnectionRegistry(args.registry))
         return 0
     if args.command == "ledger":
         with ExecutionLedger(args.database) as ledger:

@@ -2,6 +2,7 @@
 
 from ._version import __version__
 from .adapter import Adapter, AdapterContext, AdapterResult
+from .connections import ConnectionRegistry, ConnectionSpec
 from .context import EDAContext
 from .jobs import JobStore
 from .ledger import ExecutionLedger
@@ -15,6 +16,8 @@ __all__ = [
     "Adapter",
     "AdapterContext",
     "AdapterResult",
+    "ConnectionRegistry",
+    "ConnectionSpec",
     "EDAContext",
     "ExecutionLedger",
     "JobStore",

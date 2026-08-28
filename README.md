@@ -22,9 +22,9 @@ took, and what result or artifact was produced.
 
 ## Current alpha
 
-`0.1.0a1` establishes the public contracts: protocol envelopes, actor identity,
-`EDA_CONTEXT/v1`, SQLite execution ledger, resource leases, durable jobs,
-adapter SDK, and local/SSH JSON-lines transports.
+`0.1.0a2` adds registered persistent local/SSH connections and the first
+agent-neutral MCP entry point to the a1 contracts. ADS and AnsysEM now use the
+same intent, identity, timing, reconnect, and durable-job model.
 
 ```powershell
 python -m venv .venv
@@ -35,3 +35,5 @@ python -m venv .venv
 See [Architecture](docs/ARCHITECTURE.md) and the
 [protocol schema](docs/schemas/request-v1.schema.json).
 
+The repository also includes a minimal [MCP and Codex plugin](docs/MCP_AND_CODEX.md). It resolves
+named local/SSH connections without asking the agent to assemble transport commands on each call.
