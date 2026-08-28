@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cottman99/eda-bridge-runtime/request-v1.schema.json",
+  "title": "EDA Runtime Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "request_id", "run_id", "trace_id", "purpose", "target", "operation", "payload"],
+  "properties": {
+    "protocol": {"const": "eda-runtime.request/v1"},
+    "request_id": {"type": "string", "minLength": 8},
+    "run_id": {"type": "string", "minLength": 8},
+    "trace_id": {"type": "string", "minLength": 8},
+    "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
+    "expected_effect": {"type": ["string", "null"], "maxLength": 240},
+    "idempotency_key": {"type": ["string", "null"]},
+    "target": {"type": "object"},
+    "operation": {"type": "string", "minLength": 1},
+    "payload": {"type": "object"},
+    "actor": {"type": "object"}
+  }
+}
+
