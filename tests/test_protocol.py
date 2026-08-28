@@ -1,6 +1,11 @@
 import pytest
 
-from eda_bridge_runtime.protocol import ActorIdentity, RequestEnvelope, ResponseEnvelope
+from eda_bridge_runtime.protocol import (
+    ActorIdentity,
+    RequestEnvelope,
+    ResponseEnvelope,
+    RuntimeFacts,
+)
 
 
 def test_purpose_is_required():
@@ -48,3 +53,8 @@ def test_round_trip_request():
     )
     restored = RequestEnvelope.from_dict(original.to_dict())
     assert restored == original
+
+
+def test_runtime_facts_capture_display_without_agent_work(monkeypatch):
+    monkeypatch.setenv("DISPLAY", ":4.0")
+    assert RuntimeFacts("test").display == ":4.0"

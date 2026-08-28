@@ -151,6 +151,7 @@ class RuntimeFacts:
     hostname: str = field(default_factory=socket.gethostname)
     os: str = field(default_factory=platform.platform)
     python: str = field(default_factory=platform.python_version)
+    display: str | None = field(default_factory=lambda: os.environ.get("DISPLAY"))
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, str | None]:
         return asdict(self)
