@@ -1,0 +1,20 @@
+{
+  "name": "eda-bridge-runtime",
+  "interface": {
+    "displayName": "Eda Bridge Runtime"
+  },
+  "plugins": [
+    {
+      "name": "eda-bridge-runtime",
+      "source": {
+        "source": "local",
+        "path": "./plugins/eda-bridge-runtime"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

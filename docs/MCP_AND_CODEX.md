@@ -36,4 +36,11 @@ remains in the platform SSH configuration.
 ## Plugin source
 
 The repository plugin lives at `plugins/eda-bridge-runtime`. Install the Python package first so
-that `eda-runtime` is on the host path, then add the plugin through the Codex plugin workflow.
+that `eda-runtime` is on the host path, then install the repository marketplace and plugin:
+
+```console
+codex plugin marketplace add cottman99/eda-bridge-runtime --ref main
+codex plugin add eda-bridge-runtime@eda-bridge-runtime
+```
+
+Restart the Codex client after first installation so its Skill and MCP server are loaded together.
