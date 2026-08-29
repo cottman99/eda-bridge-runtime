@@ -40,8 +40,11 @@ def tool_fact(tool: str, result: Any) -> dict[str, Any]:
     run = structured.get("run") if isinstance(structured.get("run"), dict) else {}
     response = structured.get("response") if isinstance(structured.get("response"), dict) else {}
     response_result = response.get("result") if isinstance(response.get("result"), dict) else {}
+    measured_payload = response_result or {
+        key: value for key, value in structured.items() if key not in {"run", "response"}
+    }
     response_chars = len(
-        json.dumps(response_result, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        json.dumps(measured_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     )
     return {
         "tool": tool,

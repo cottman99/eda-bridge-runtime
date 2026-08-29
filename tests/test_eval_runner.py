@@ -104,6 +104,31 @@ def test_pi_tool_alias_and_unexpected_tool_are_detected():
     assert "unexpected_tools:bash" in scored["failures"]
 
 
+def test_top_level_diagnostic_result_contributes_only_a_size_fact():
+    runner = load_runner()
+    events = [
+        {
+            "type": "item.completed",
+            "item": {
+                "type": "mcp_tool_call",
+                "tool": "eda.connections.list",
+                "status": "completed",
+                "result": {
+                    "structured_content": {
+                        "status": "ready",
+                        "connections": [{"connection_id": "private"}],
+                    }
+                },
+            },
+        }
+    ]
+
+    observation = runner.parse_codex(events)
+
+    assert observation["facts"][0]["response_payload_chars"] > 2
+    assert "private" not in str(observation["facts"])
+
+
 def test_windows_command_wrapping_is_shared_by_agent_clients(monkeypatch):
     runner = load_runner()
     monkeypatch.setattr(runner.os, "name", "nt")
