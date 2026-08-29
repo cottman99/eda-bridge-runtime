@@ -32,6 +32,19 @@ credentials, host address, or task-specific geometry is included here.
   to it: the exact-answer failure is much larger than the unstable speed difference. `gpt-5.5`
   remains the correctness baseline until an authenticated Pi comparison proves a better tradeoff.
 
+## 2026-08-29 repeated cross-EDA capability baseline
+
+- Three independent `gpt-5.5` low-reasoning trials passed the exact ADS L1 contract, and three more
+  passed the exact AnsysEM L1 contract. Every trial used exactly one Runtime capability call; there
+  was no mutation, GUI automation, project access, or solve.
+- ADS median wall time was 26.409 s, of which measured Runtime/SSH/Bridge transport was 0.969 s.
+  AnsysEM median wall time was 22.285 s, with 1.156 s transport. The remote execution path therefore
+  accounted for only about 3.7% and 5.2% of the respective medians; cold Agent/client work remained
+  the dominant cost.
+- Exact-case selection and variable preflight prevented replaying unrelated lower levels and caught
+  missing connection bindings before any Agent process started. The complete 124-test Python suite,
+  Ruff, formatting, and all three Pi adapter tests passed before these evaluator-only commits.
+
 ## 2026-08-29 Runtime alpha.16 bounded-read acceptance
 
 - The same real ADS `session.status` task returned the same 13-session count with two calls before
