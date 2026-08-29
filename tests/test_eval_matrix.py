@@ -74,3 +74,11 @@ def test_matrix_preflights_required_variables_without_starting_agents():
     supplied = matrix.supplied_variable_names(["ADS_CONNECTION=ads-display4"])
 
     assert matrix.missing_case_variables(cases, supplied) == ["ANSYS_CONNECTION"]
+
+
+def test_empty_or_all_skipped_matrix_is_not_reported_as_success():
+    matrix = load_matrix()
+
+    assert matrix.matrix_exit_code([]) == 2
+    assert matrix.matrix_exit_code([{"passed": True}]) == 0
+    assert matrix.matrix_exit_code([{"passed": False}]) == 1

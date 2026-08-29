@@ -64,5 +64,6 @@ summary are written.
 Mutation approval is a two-part gate: the matrix must select the case explicitly and the child
 runner receives a separate mutation flag. Codex then uses its client-reviewed approval path; the
 runner never silently switches to an unrestricted sandbox or bypasses approval.
+An empty or entirely skipped matrix exits distinctly instead of reporting vacuous success.
 Codex and Pi model selectors are separate because Pi requires the provider-qualified
 `openai-codex/gpt-5.5` name while Codex accepts `gpt-5.5`.

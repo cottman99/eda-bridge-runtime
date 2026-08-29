@@ -67,6 +67,12 @@ def missing_case_variables(cases: list[dict[str, Any]], supplied: set[str]) -> l
     return sorted(required - supplied)
 
 
+def matrix_exit_code(results: list[dict[str, Any]]) -> int:
+    if not results:
+        return 2
+    return 0 if all(result.get("passed") is True for result in results) else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--agents", nargs="+", choices=("codex", "pi"), default=["codex", "pi"])
@@ -195,7 +201,7 @@ def main() -> int:
     rendered = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
     (args.output_dir / "matrix-summary.json").write_text(rendered, encoding="utf-8")
     print(rendered, end="")
-    return 0 if all(result.get("passed") is True for result in results) else 1
+    return matrix_exit_code(results)
 
 
 if __name__ == "__main__":
