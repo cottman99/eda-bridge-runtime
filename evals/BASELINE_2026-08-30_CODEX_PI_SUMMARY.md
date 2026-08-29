@@ -60,6 +60,12 @@ input from 59,591 to 41,909. Pi passed in 19.313 seconds and 5,215 input tokens.
 profile is reserved for already-resolved typed plans; normal natural-language work keeps vendor
 Skills and does not expose this distinction to the engineer.
 
+The same Runtime-only Codex profile and packaged Pi profile each passed a full AnsysEM greenfield
+evidence plan with one Agent call and three durable jobs: create, fresh inspect, and verified image
+export. Codex took 102.047 seconds and Pi 79.312 seconds, while their measured AEDT/Bridge boundaries
+were essentially identical at 63.312/63.422 seconds. This isolates the remaining 22.7-second gap to
+Agent/client work rather than SSH or AEDT. Both synthetic Bundles and images were removed.
+
 ## Evidence-backed decisions
 
 1. **Keep both Agents, with Pi as the bounded-execution default.** Pi autonomously passed mutation,

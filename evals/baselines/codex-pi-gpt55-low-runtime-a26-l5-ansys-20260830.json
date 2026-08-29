@@ -1,0 +1,92 @@
+{
+  "schema_version": "eda-runtime.eval-summary/v1",
+  "result_count": 2,
+  "outcomes": {
+    "passed": 2
+  },
+  "cross_agent_comparable_cases": 1,
+  "reliability": [
+    {
+      "case_id": "l5.ansys-project-evidence-plan",
+      "agent": "codex",
+      "model": "gpt-5.5",
+      "reasoning": "low",
+      "trials": 1,
+      "passed": 1,
+      "pass_rate": 1.0,
+      "semantic_passed": 1,
+      "semantic_pass_rate": 1.0,
+      "wall_budget_pass_rate": 1.0,
+      "median_wall_ms": 102047.0,
+      "median_non_transport_wall_ms": 38735.0,
+      "median_input_tokens": 42043.0
+    },
+    {
+      "case_id": "l5.ansys-project-evidence-plan",
+      "agent": "pi",
+      "model": "gpt-5.5",
+      "reasoning": "low",
+      "trials": 1,
+      "passed": 1,
+      "pass_rate": 1.0,
+      "semantic_passed": 1,
+      "semantic_pass_rate": 1.0,
+      "wall_budget_pass_rate": 1.0,
+      "median_wall_ms": 79312.0,
+      "median_non_transport_wall_ms": 15890.0,
+      "median_input_tokens": 6326.0
+    }
+  ],
+  "rows": [
+    {
+      "case_id": "l5.ansys-project-evidence-plan",
+      "level": 5,
+      "domain": "ansys-project-evidence-plan",
+      "agent": "codex",
+      "model": "gpt-5.5",
+      "reasoning": "low",
+      "trial": 1,
+      "outcome": "passed",
+      "semantic_passed": true,
+      "wall_ms": 102047.0,
+      "tool_attempts": 1,
+      "tool_calls_succeeded": 1,
+      "input_tokens": 42043,
+      "cached_input_tokens": 25728,
+      "output_tokens": 494,
+      "reasoning_output_tokens": 11,
+      "client_transport_ms_total": 63312.0,
+      "client_transport_ms_largest": 63312.0,
+      "non_transport_wall_ms": 38735.0,
+      "client_transport_share_pct": 62.042,
+      "total_response_payload_chars": 7757,
+      "largest_response_payload_chars": 7757,
+      "failures": []
+    },
+    {
+      "case_id": "l5.ansys-project-evidence-plan",
+      "level": 5,
+      "domain": "ansys-project-evidence-plan",
+      "agent": "pi",
+      "model": "gpt-5.5",
+      "reasoning": "low",
+      "trial": 1,
+      "outcome": "passed",
+      "semantic_passed": true,
+      "wall_ms": 79312.0,
+      "tool_attempts": 1,
+      "tool_calls_succeeded": 1,
+      "input_tokens": 6326,
+      "cached_input_tokens": 0,
+      "output_tokens": 426,
+      "reasoning_output_tokens": 0,
+      "client_transport_ms_total": 63422.0,
+      "client_transport_ms_largest": 63422.0,
+      "non_transport_wall_ms": 15890.0,
+      "client_transport_share_pct": 79.965,
+      "total_response_payload_chars": 7711,
+      "largest_response_payload_chars": 7711,
+      "failures": []
+    }
+  ]
+}
