@@ -1,6 +1,6 @@
 # Version 0.1 scope
 
-## Next alpha candidate — scoped unattended mutation evaluation
+## 0.1.0a10 — scoped unattended evaluation and audit analysis
 
 - Generate a separate Codex evaluation profile that pre-approves only typed
   `eda.submit` calls after an operator has authorized unattended work; do not

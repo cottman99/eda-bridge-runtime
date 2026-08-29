@@ -36,9 +36,10 @@ disconnect, and returns the result with its linked timing and evidence.
 
 ## Current alpha
 
-`0.1.0a9` adds a statically safe `eda.read` lane, bounded transport shutdown, and a public,
-deterministically scored Codex/Pi evaluation ladder. Exact connection identifiers now take
-precedence over redundant Agent-guessed EDA labels, while captured Context identity remains strict.
+`0.1.0a10` adds scoped unattended mutation profiles, deterministic L3 idempotency cases, a
+privacy-preserving cross-Agent result summary, and `eda-runtime audit analyze` for finding repeated
+discovery, failed actions, avoidable polling, and their conservatively estimated Runtime time.
+It builds on the statically safe `eda.read` lane and bounded transport lifecycle from alpha.9.
 Every MCP client contributes its
 observed client identity, concise purpose, argument fingerprint, timings, and linked Run without
 depending on a Codex- or Pi-specific hook. Agent hooks may add richer model/session metadata, but
@@ -56,7 +57,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a9"
+python -m pip install "eda-bridge-runtime==0.1.0a10"
 eda-runtime doctor
 ```
 
