@@ -38,7 +38,7 @@ def test_profile_disables_unrelated_skills_without_changing_global_config(tmp_pa
     assert "enabled = false" in profile
     assert "plugins = false" in profile
     assert "code_mode = false" in profile
-    assert "code_mode_host = false" in profile
+    assert "code_mode_host = true" in profile
     assert "shell_tool = false" in profile
     assert '[mcp_servers."node_repl"]\nenabled = false' in profile
     assert '[mcp_servers."eda-bridge-runtime"]' in profile
