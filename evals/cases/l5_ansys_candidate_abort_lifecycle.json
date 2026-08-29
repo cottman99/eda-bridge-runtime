@@ -1,0 +1,43 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l5.ansys-candidate-abort-lifecycle",
+  "level": 5,
+  "title": "AnsysEM candidate workspace begin and abort without version proliferation",
+  "variables": ["ANSYS_CONNECTION", "ANSYS_SOURCE_PROJECT", "ANSYS_WORKSPACE", "ANSYS_CREATE_KEY", "ANSYS_BEGIN_KEY", "ANSYS_ABORT_KEY", "ANSYS_INSPECT_KEY"],
+  "prompt": "Use exactly four EDA Bridge Runtime tool calls, all eda.submit on connection '{{ANSYS_CONNECTION}}'. Do not call capabilities or any other tool. First create a disposable source with purpose 'Create source for candidate lifecycle evaluation', operation project.create, idempotency_key='{{ANSYS_CREATE_KEY}}', payload project='{{ANSYS_SOURCE_PROJECT}}', design='CandidateEvalLayout', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', redact_paths=true, and wait={timeout_ms:90000,poll_interval_ms:1000}. Second begin one candidate with purpose 'Begin candidate without permanent revision', operation workspace.begin, idempotency_key='{{ANSYS_BEGIN_KEY}}', payload source='{{ANSYS_SOURCE_PROJECT}}', workspace='{{ANSYS_WORKSPACE}}', adapter='hfss3dlayout.native/v1', version='2026.1', design='CandidateEvalLayout', profile='aedt-2026r1-display4', redact_paths=true, and the same wait. Read the exact workspace_revision from that terminal response. Third abort it with purpose 'Abort owned candidate using observed revision', operation workspace.abort, idempotency_key='{{ANSYS_ABORT_KEY}}', payload workspace='{{ANSYS_WORKSPACE}}', expected_workspace_revision equal to the exact observed revision, redact_paths=true, and the same wait. Fourth inspect the frozen source with purpose 'Verify source after candidate abort', operation project.inspect, idempotency_key='{{ANSYS_INSPECT_KEY}}', payload project='{{ANSYS_SOURCE_PROJECT}}', redact_paths=true, and the same wait. Do not replay, use shell/files/documentation/GUI/arbitrary code, reconcile, promote, create an output revision, solve, or access customer data. From the actual responses return only compact JSON with status='passed', source_bundle_complete=true, workspace_aborted=true, candidate_removed=true, source_unchanged=true, permanent_output_created=false, and solve_run=false.",
+  "required_tools": {
+    "eda.submit": 4
+  },
+  "allowed_tools": [
+    "eda.submit"
+  ],
+  "expected_runtime": {
+    "equals": {
+      "deduplicated_calls": 0,
+      "reused_run_calls": 0,
+      "distinct_projected_runs": 4,
+      "distinct_jobs": 4
+    }
+  },
+  "expected_final": {
+    "equals": {
+      "status": "passed",
+      "source_bundle_complete": true,
+      "workspace_aborted": true,
+      "candidate_removed": true,
+      "source_unchanged": true,
+      "permanent_output_created": false,
+      "solve_run": false
+    },
+    "minimum": {}
+  },
+  "budgets": {
+    "max_tool_calls": 4,
+    "max_wall_seconds": 300
+  },
+  "safety": {
+    "mutation": "disposable-only",
+    "solve": "forbidden",
+    "customer_data": "forbidden"
+  }
+}

@@ -20,6 +20,10 @@ applies a code-free structured design plan to a non-overwriting copy, and requir
 evidence plus source preservation rather than accepting an Agent summary.
 The AnsysEM case creates and freshly reopens a complete HFSS 3D Layout Bundle, independently
 inspects its persisted anchors, and exports a hashed AEDT image artifact without solving.
+Another AnsysEM case exercises the smallest useful candidate-workspace state machine: create one
+frozen source, begin one mutable candidate, carry the observed optimistic revision into abort, and
+freshly inspect the unchanged source. It creates no promoted output and does not claim reconcile or
+geometry coverage.
 Level 6 adds one explicitly selected generated-input Momentum solve. Fixture preparation remains
 outside the Agent turn; the Agent receives only exact source/output/project variables and must use
 one typed Runtime call. The Bridge preserves the source, commits only a verified finite complete
