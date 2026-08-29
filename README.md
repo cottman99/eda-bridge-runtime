@@ -36,10 +36,10 @@ disconnect, and returns the result with its linked timing and evidence.
 
 ## Current alpha
 
-`0.1.0a11` keeps historical Skill backups out of narrow Codex profiles, applies the same declared
-reasoning budget to Codex and Pi evaluations, and limits waste attribution to repetitions inside a
-stable Agent session. Calls across tasks or with unknown session identity are not guessed to be
-redundant. It builds on the scoped unattended evaluation and audit analysis from alpha.10.
+`0.1.0a12` adds bounded ADS and AnsysEM documentation-evidence cases, privacy-preserving response
+size metrics, a sequential cross-Agent evaluation matrix, and a Pi profile installer that never
+modifies or exposes credentials. It builds on alpha.11's clean Skill discovery and stable-session
+audit attribution.
 Every MCP client contributes its
 observed client identity, concise purpose, argument fingerprint, timings, and linked Run without
 depending on a Codex- or Pi-specific hook. Agent hooks may add richer model/session metadata, but
@@ -57,7 +57,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a11"
+python -m pip install "eda-bridge-runtime==0.1.0a12"
 eda-runtime doctor
 ```
 

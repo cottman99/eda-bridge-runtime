@@ -1,5 +1,19 @@
 # Version 0.1 scope
 
+## 0.1.0a12 — bounded evidence and reproducible cross-Agent matrices
+
+- Add ADS and AnsysEM L4 cases that find and expand one version-matched API
+  source without launching EDA, mutating projects, or retaining document text.
+- Retain aggregate response character counts in normalized results so the
+  scorer can prove substantive responses and compare context pressure without
+  exposing payloads.
+- Run bounded Codex/Pi matrices sequentially, require explicit mutation
+  approval, stop repeated work after an authentication failure, and keep
+  provider-specific model selectors explicit.
+- Install or refresh the dedicated Pi EDA profile while preserving unknown
+  settings and proving any existing `auth.json` is unchanged; missing or empty
+  credentials remain an explicit interactive-login boundary.
+
 ## 0.1.0a11 — clean Agent context and evidence-safe comparisons
 
 - Ignore hidden Skill backup and archive directories when generating a narrow
