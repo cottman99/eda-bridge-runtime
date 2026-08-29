@@ -248,6 +248,8 @@ def codex_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
     ]
     if args.codex_profile:
         command.extend(["--profile", args.codex_profile])
+    if getattr(args, "approve_mutations", False):
+        command.append("--approve-for-me")
     command.extend(
         [
             "--ephemeral",
@@ -365,6 +367,11 @@ def main() -> int:
     parser.add_argument("--agent", choices=("codex", "pi"), required=True)
     parser.add_argument("--model", default="gpt-5.5")
     parser.add_argument("--thinking", choices=("low", "medium", "high"), default="medium")
+    parser.add_argument(
+        "--approve-mutations",
+        action="store_true",
+        help="Allow a case declared disposable-only to request client-reviewed mutations.",
+    )
     parser.add_argument("--cwd", type=Path, default=Path.cwd())
     parser.add_argument("--output", type=Path)
     parser.add_argument("--raw-output", type=Path)
@@ -383,6 +390,9 @@ def main() -> int:
     )
     args = parser.parse_args()
     case = json.loads(args.case.read_text(encoding="utf-8"))
+    mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
+    if mutation != "forbidden" and not args.approve_mutations:
+        parser.error("mutation case requires explicit --approve-mutations")
     validate_case(case)
     case["prompt"] = render_prompt(case, variables(args.var))
     command = (

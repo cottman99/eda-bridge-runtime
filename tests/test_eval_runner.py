@@ -111,6 +111,22 @@ def test_pi_tool_alias_and_unexpected_tool_are_detected():
     assert "unexpected_tools:bash" in scored["failures"]
 
 
+def test_codex_mutation_approval_uses_review_not_unrestricted_bypass():
+    runner = load_runner()
+    args = SimpleNamespace(
+        codex_command="codex",
+        model="gpt-5.5",
+        thinking="medium",
+        codex_profile="eda-runtime",
+        approve_mutations=True,
+        cwd=Path.cwd(),
+    )
+    command = runner.codex_command(args, {"prompt": "bounded mutation"})
+
+    assert "--approve-for-me" in command
+    assert "--dangerously-bypass-approvals-and-sandbox" not in command
+
+
 def test_top_level_diagnostic_result_contributes_only_a_size_fact():
     runner = load_runner()
     events = [

@@ -1,0 +1,44 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l5.ads-structured-design",
+  "level": 5,
+  "title": "ADS greenfield structured schematic transaction",
+  "variables": ["ADS_CONNECTION", "ADS_SOURCE_WORKSPACE", "ADS_OUTPUT_WORKSPACE", "ADS_CREATE_KEY", "ADS_APPLY_KEY"],
+  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ADS_CONNECTION}}'. Read capabilities once for purpose 'Benchmark ADS structured design contract'. Submit workspace.create once with idempotency_key='{{ADS_CREATE_KEY}}', vendor payload workspace='{{ADS_SOURCE_WORKSPACE}}', library='RuntimeEval_lib', cell='Main', display=':4.0', and purpose 'Create disposable source for structured ADS evaluation'. Then submit design.apply once with idempotency_key='{{ADS_APPLY_KEY}}', purpose 'Apply and freshly verify disposable structured ADS schematic', display=':4.0', and plan={schema_version:'ads.design-plan/v1', operation_id:'runtime_eval_design', source_workspace:'{{ADS_SOURCE_WORKSPACE}}', output_workspace:'{{ADS_OUTPUT_WORKSPACE}}', design:'RuntimeEval_lib:Main:schematic', expected_before:{instance_names:[]}, operations:[{op:'add_instance',item:['ads_rflib','R','symbol'],at:[0,0],name:'R1',parameters:{R:'50 Ohm'}},{op:'add_instance',item:['ads_rflib','C','symbol'],at:[2,0],name:'C1',angle:-90,parameters:{C:'1 pF'}},{op:'add_instance',item:['ads_rflib','GROUND','symbol'],at:[2,-1],name:'G1',angle:-90},{op:'add_wire',points:[[1,0],[2,0]],label:'OUT'}], assertions:{instance_names:['C1','G1','R1'],parameters:[{instance:'R1',parameter:'R',value:'50 Ohm'},{instance:'C1',parameter:'C',value:'1 pF'}],netlist_contains:['R1','C1']}}. Do not add Runtime bookkeeping inside the vendor plan. Do not use shell, files, GUI, arbitrary code, AEL, launch, simulation, shutdown, or customer data. Return only compact JSON with status='passed', source_preserved, fresh_reopen, instance_count, and assertion_count copied from the actual Bridge response.",
+  "required_tools": {
+    "eda.capabilities": 1,
+    "eda.submit": 2
+  },
+  "allowed_tools": [
+    "eda.capabilities",
+    "eda.submit"
+  ],
+  "expected_runtime": {
+    "equals": {
+      "deduplicated_calls": 0,
+      "reused_run_calls": 0,
+      "distinct_projected_runs": 3,
+      "distinct_jobs": 0
+    }
+  },
+  "expected_final": {
+    "equals": {
+      "status": "passed",
+      "source_preserved": true,
+      "fresh_reopen": true,
+      "instance_count": 3,
+      "assertion_count": 7
+    },
+    "minimum": {}
+  },
+  "budgets": {
+    "max_tool_calls": 3,
+    "max_wall_seconds": 180
+  },
+  "safety": {
+    "mutation": "disposable-only",
+    "solve": "forbidden",
+    "customer_data": "forbidden"
+  }
+}
+

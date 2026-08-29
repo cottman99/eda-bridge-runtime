@@ -98,6 +98,9 @@ def main() -> int:
             ]
             for value in args.var:
                 command.extend(["--var", value])
+            mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
+            if args.approve_mutations and mutation != "forbidden":
+                command.append("--approve-mutations")
             subprocess.run(
                 command, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )  # noqa: S603
