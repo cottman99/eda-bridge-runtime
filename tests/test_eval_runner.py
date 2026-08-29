@@ -25,6 +25,7 @@ def test_codex_trace_is_normalized_and_scored():
                 "status": "completed",
                 "result": {
                     "structured_content": {
+                        "client_transport_ms": 4.5,
                         "run": {"run_id": "run-one", "state": "passed"},
                         "response": {"result": {"deduplicated": True}},
                     }
@@ -65,6 +66,12 @@ def test_codex_trace_is_normalized_and_scored():
         "distinct_jobs": 0,
         "total_response_payload_chars": 21,
         "largest_response_payload_chars": 21,
+        "client_transport_ms_total": 4.5,
+        "client_transport_ms_largest": 4.5,
+    }
+    assert runner.wall_partition(10.0, runner.runtime_metrics(observation["facts"])) == {
+        "non_transport_wall_ms": 5.5,
+        "client_transport_share_pct": 45.0,
     }
 
 

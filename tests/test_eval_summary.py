@@ -27,6 +27,10 @@ def result(agent, *, passed=True, failures=None):
             "cached_input_tokens": 5,
             "output_tokens": 4,
             "reasoning_output_tokens": 3,
+            "client_transport_ms_total": 2.5,
+            "client_transport_ms_largest": 1.5,
+            "non_transport_wall_ms": 7.5,
+            "client_transport_share_pct": 25.0,
             "total_response_payload_chars": 200,
             "largest_response_payload_chars": 150,
         },
@@ -41,6 +45,7 @@ def test_summary_is_comparable_and_omits_final_payloads():
     assert summary["outcomes"] == {"passed": 2}
     assert "final" not in summary["rows"][0]
     assert summary["rows"][0]["reasoning"] == "medium"
+    assert summary["rows"][0]["client_transport_share_pct"] == 25.0
     assert summary["rows"][0]["largest_response_payload_chars"] == 150
 
 

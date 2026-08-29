@@ -46,6 +46,12 @@ def tool_fact(tool: str, result: Any) -> dict[str, Any]:
     response_chars = len(
         json.dumps(measured_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     )
+    transport_ms = structured.get("client_transport_ms")
+    transport_ms = (
+        float(transport_ms)
+        if isinstance(transport_ms, (int, float)) and not isinstance(transport_ms, bool)
+        else None
+    )
     return {
         "tool": tool,
         "run_id": str(run.get("run_id") or "") or None,
@@ -53,14 +59,20 @@ def tool_fact(tool: str, result: Any) -> dict[str, Any]:
         "state": str(run.get("state") or "") or None,
         "deduplicated": response_result.get("deduplicated") is True,
         "response_payload_chars": response_chars,
+        "client_transport_ms": transport_ms,
     }
 
 
-def runtime_metrics(facts: list[dict[str, Any]]) -> dict[str, int]:
+def runtime_metrics(facts: list[dict[str, Any]]) -> dict[str, int | float]:
     runs = {fact["run_id"] for fact in facts if fact["run_id"]}
     jobs = {fact["job_id"] for fact in facts if fact["job_id"]}
     seen: set[tuple[str, str]] = set()
     reused_run_calls = 0
+    transport = [
+        float(fact["client_transport_ms"])
+        for fact in facts
+        if fact.get("client_transport_ms") is not None
+    ]
     for fact in facts:
         identity = (str(fact["tool"]), str(fact["run_id"] or ""))
         if not identity[1]:
@@ -77,6 +89,20 @@ def runtime_metrics(facts: list[dict[str, Any]]) -> dict[str, int]:
         "largest_response_payload_chars": max(
             (fact["response_payload_chars"] for fact in facts), default=0
         ),
+        "client_transport_ms_total": round(sum(transport), 3),
+        "client_transport_ms_largest": round(max(transport, default=0.0), 3),
+    }
+
+
+def wall_partition(wall_ms: float, metrics: dict[str, int | float]) -> dict[str, float]:
+    """Separate measured Bridge transport from all Agent/client-side wall time."""
+    transport_ms = float(metrics.get("client_transport_ms_total") or 0.0)
+    non_transport_ms = max(0.0, wall_ms - transport_ms)
+    return {
+        "non_transport_wall_ms": round(non_transport_ms, 3),
+        "client_transport_share_pct": round(transport_ms / wall_ms * 100, 3)
+        if wall_ms > 0
+        else 0.0,
     }
 
 
@@ -394,6 +420,7 @@ def main() -> int:
     if wall_ms > int(case["budgets"]["max_wall_seconds"]) * 1000:
         scored["failures"].append("wall_budget_exceeded")
         scored["passed"] = False
+    measured_runtime = runtime_metrics(observation["facts"])
     result = {
         "schema_version": "eda-runtime.eval-result/v1",
         "case_id": case["case_id"],
@@ -408,7 +435,8 @@ def main() -> int:
             "tool_attempts": len(observation["attempts"]),
             "tool_calls_succeeded": len(observation["tools"]),
             "tool_sequence": observation["tools"],
-            **runtime_metrics(observation["facts"]),
+            **measured_runtime,
+            **wall_partition(wall_ms, measured_runtime),
             **observation["usage"],
         },
         "final": scored["final"],
