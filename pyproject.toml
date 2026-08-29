@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "eda-bridge-runtime"
-version = "0.1.0a25"
+version = "0.1.0a26"
 description = "Agent-neutral execution runtime for local and remote EDA bridges"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -28,6 +28,12 @@ eda-runtime = "eda_bridge_runtime.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/eda_bridge_runtime"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"integrations/pi-eda-runtime/package.json" = "eda_bridge_runtime/pi_eda_runtime/package.json"
+"integrations/pi-eda-runtime/extensions" = "eda_bridge_runtime/pi_eda_runtime/extensions"
+"integrations/pi-eda-runtime/lib" = "eda_bridge_runtime/pi_eda_runtime/lib"
+"integrations/pi-eda-runtime/skills" = "eda_bridge_runtime/pi_eda_runtime/skills"
 
 [tool.pytest.ini_options]
 addopts = "-q"

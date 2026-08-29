@@ -10,7 +10,7 @@ Requirements:
 - `eda-runtime` on the Agent host path;
 - Runtime connections already registered for the intended local or SSH EDA workers.
 
-Create or refresh a dedicated profile with `install_profile.py`. The installer owns only the
+Create or refresh a dedicated profile with the installed Runtime CLI. The installer owns only the
 work launcher, sibling `*-login.cmd` and `*-status.cmd` launchers, bounded settings, and session directory. It neither
 creates nor modifies `auth.json`, and verifies an existing credential file is byte-for-byte
 unchanged. Run the login launcher and use Pi's `/login` once; it loads no EDA extension, Skill,
@@ -19,7 +19,7 @@ to verify the isolated profile directly; checking the user's default Pi profile 
 the EDA profile is authenticated.
 
 ```powershell
-python integrations/pi-eda-runtime/install_profile.py `
+eda-runtime agent-profile pi install `
   --profile-dir F:\EDA\pi-eda-agent\config `
   --session-dir F:\EDA\pi-eda-agent\sessions `
   --launcher F:\EDA\pi-eda.cmd `
@@ -28,6 +28,9 @@ python integrations/pi-eda-runtime/install_profile.py `
   --vendor-skill F:\skills\ads-agent-bridge\SKILL.md `
   --vendor-skill F:\skills\ansysem-agent-bridge\SKILL.md
 ```
+
+No Runtime source checkout is required. The repository `install_profile.py` is only a thin
+compatibility wrapper around the packaged implementation.
 
 Try it without installing:
 
