@@ -73,6 +73,21 @@ def matrix_exit_code(results: list[dict[str, Any]]) -> int:
     return 0 if all(result.get("passed") is True for result in results) else 1
 
 
+def execution_schedule(
+    cases: list[dict[str, Any]], agents: list[str], repetitions: int
+) -> list[tuple[dict[str, Any], int, str]]:
+    """Interleave clients without ever running two EDA evaluations concurrently."""
+    schedule: list[tuple[dict[str, Any], int, str]] = []
+    if not agents:
+        return schedule
+    for case_index, case in enumerate(cases):
+        for trial in range(1, repetitions + 1):
+            offset = (case_index + trial - 1) % len(agents)
+            ordered_agents = agents[offset:] + agents[:offset]
+            schedule.extend((case, trial, agent) for agent in ordered_agents)
+    return schedule
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--agents", nargs="+", choices=("codex", "pi"), default=["codex", "pi"])
@@ -117,85 +132,95 @@ def main() -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     results: list[dict[str, Any]] = []
     unavailable_agents: set[str] = set()
-    for agent in args.agents:
-        for case in cases:
-            for trial in range(1, args.repetitions + 1):
-                if agent in unavailable_agents:
-                    skipped.append(
-                        {
-                            "case_id": case["case_id"],
-                            "agent": agent,
-                            "trial": trial,
-                            "reason": "agent_auth_unavailable",
-                        }
-                    )
-                    continue
-                output = result_path(
-                    args.output_dir,
-                    case_id=str(case["case_id"]),
-                    agent=agent,
-                    trial=trial,
-                    repetitions=args.repetitions,
-                )
-                model = args.codex_model if agent == "codex" else args.pi_model
-                command = [
-                    sys.executable,
-                    str(eval_root / "run_case.py"),
-                    "--case",
-                    str(case["_path"]),
-                    "--agent",
-                    agent,
-                    "--model",
-                    model,
-                    "--thinking",
-                    args.thinking,
-                    "--cwd",
-                    str(args.cwd),
-                    "--output",
-                    str(output),
-                    "--codex-profile",
-                    args.codex_profile,
-                    "--pi-command",
-                    args.pi_command,
-                ]
-                for value in args.var:
-                    command.extend(["--var", value])
-                mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
-                if args.approve_mutations and mutation != "forbidden":
-                    command.append("--approve-mutations")
-                completed = subprocess.run(
-                    command, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-                )  # noqa: S603
-                if not output.is_file():
-                    results.append(
-                        {
-                            "case_id": case["case_id"],
-                            "agent": agent,
-                            "model": model,
-                            "reasoning": args.thinking,
-                            "trial": trial,
-                            "passed": False,
-                            "failures": [
-                                "runner_did_not_write_result",
-                                f"runner_exit_code:{completed.returncode}",
-                            ],
-                            "metrics": {},
-                        }
-                    )
-                    continue
-                result = json.loads(output.read_text(encoding="utf-8"))
-                result["trial"] = trial
-                output.write_text(
-                    json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-                )
-                results.append(result)
-                if "agent_auth_unavailable" in result.get("failures", []):
-                    unavailable_agents.add(agent)
+    execution_order: list[dict[str, Any]] = []
+    for sequence, (case, trial, agent) in enumerate(
+        execution_schedule(cases, list(args.agents), args.repetitions), start=1
+    ):
+        if agent in unavailable_agents:
+            skipped.append(
+                {
+                    "case_id": case["case_id"],
+                    "agent": agent,
+                    "trial": trial,
+                    "reason": "agent_auth_unavailable",
+                }
+            )
+            continue
+        execution_order.append(
+            {
+                "sequence": sequence,
+                "case_id": case["case_id"],
+                "agent": agent,
+                "trial": trial,
+            }
+        )
+        output = result_path(
+            args.output_dir,
+            case_id=str(case["case_id"]),
+            agent=agent,
+            trial=trial,
+            repetitions=args.repetitions,
+        )
+        model = args.codex_model if agent == "codex" else args.pi_model
+        command = [
+            sys.executable,
+            str(eval_root / "run_case.py"),
+            "--case",
+            str(case["_path"]),
+            "--agent",
+            agent,
+            "--model",
+            model,
+            "--thinking",
+            args.thinking,
+            "--cwd",
+            str(args.cwd),
+            "--output",
+            str(output),
+            "--codex-profile",
+            args.codex_profile,
+            "--pi-command",
+            args.pi_command,
+        ]
+        for value in args.var:
+            command.extend(["--var", value])
+        mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
+        if args.approve_mutations and mutation != "forbidden":
+            command.append("--approve-mutations")
+        completed = subprocess.run(
+            command, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )  # noqa: S603
+        if not output.is_file():
+            results.append(
+                {
+                    "case_id": case["case_id"],
+                    "agent": agent,
+                    "model": model,
+                    "reasoning": args.thinking,
+                    "trial": trial,
+                    "sequence": sequence,
+                    "passed": False,
+                    "failures": [
+                        "runner_did_not_write_result",
+                        f"runner_exit_code:{completed.returncode}",
+                    ],
+                    "metrics": {},
+                }
+            )
+            continue
+        result = json.loads(output.read_text(encoding="utf-8"))
+        result["trial"] = trial
+        result["sequence"] = sequence
+        output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        results.append(result)
+        if "agent_auth_unavailable" in result.get("failures", []):
+            unavailable_agents.add(agent)
 
     summary = load_summarizer(eval_root).summarize(results)
     report = {
         "schema_version": "eda-runtime.eval-matrix/v1",
         "summary": summary,
+        "execution_order": execution_order,
         "skipped": skipped,
     }
     rendered = json.dumps(report, ensure_ascii=False, indent=2) + "\n"

@@ -82,3 +82,21 @@ def test_empty_or_all_skipped_matrix_is_not_reported_as_success():
     assert matrix.matrix_exit_code([]) == 2
     assert matrix.matrix_exit_code([{"passed": True}]) == 0
     assert matrix.matrix_exit_code([{"passed": False}]) == 1
+
+
+def test_matrix_interleaves_agents_and_rotates_first_client_by_trial_and_case():
+    matrix = load_matrix()
+    cases = [{"case_id": "l0.one"}, {"case_id": "l1.two"}]
+
+    schedule = matrix.execution_schedule(cases, ["codex", "pi"], repetitions=2)
+
+    assert [(case["case_id"], trial, agent) for case, trial, agent in schedule] == [
+        ("l0.one", 1, "codex"),
+        ("l0.one", 1, "pi"),
+        ("l0.one", 2, "pi"),
+        ("l0.one", 2, "codex"),
+        ("l1.two", 1, "pi"),
+        ("l1.two", 1, "codex"),
+        ("l1.two", 2, "codex"),
+        ("l1.two", 2, "pi"),
+    ]

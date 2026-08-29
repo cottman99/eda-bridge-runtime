@@ -55,6 +55,9 @@ samples below the chosen repetition count as insufficient instead of turning one
 regression gate.
 
 `run_matrix.py` runs selected cases sequentially so two Agents never contend for one EDA target.
+Within each case it interleaves clients and rotates which client goes first by trial and case. This
+reduces cold-start, cache, and transient-host-load bias without introducing parallel EDA contention;
+the normalized matrix records the actual execution order.
 Use repeatable `--case-id` options to run only named cases; an explicit case selection does not
 replay lower levels merely because the selected case has a higher level.
 The matrix validates every selected case variable before starting an Agent. A missing connection or
