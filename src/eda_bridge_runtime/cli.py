@@ -29,6 +29,18 @@ def _parser() -> argparse.ArgumentParser:
     codex_install.add_argument("--runtime-command", default="eda-runtime")
     codex_install.add_argument("--approve-mutations", action="store_true")
     codex_install.add_argument("--keep-name", action="append", dest="keep_names")
+    pi_profile = agent_profile_sub.add_parser("pi")
+    pi_profile_sub = pi_profile.add_subparsers(dest="pi_profile_command", required=True)
+    pi_install = pi_profile_sub.add_parser("install")
+    pi_install.add_argument("--profile-dir", type=Path, required=True)
+    pi_install.add_argument("--session-dir", type=Path, required=True)
+    pi_install.add_argument("--launcher", type=Path, required=True)
+    pi_install.add_argument("--login-launcher", type=Path)
+    pi_install.add_argument("--status-launcher", type=Path)
+    pi_install.add_argument("--auth-provider", default="openai-codex")
+    pi_install.add_argument("--node", type=Path, required=True)
+    pi_install.add_argument("--pi-cli", type=Path, required=True)
+    pi_install.add_argument("--vendor-skill", type=Path, action="append", default=[])
     context = sub.add_parser("context")
     context_sub = context.add_subparsers(dest="context_command", required=True)
     decode = context_sub.add_parser("decode")
@@ -124,6 +136,22 @@ def main(argv: list[str] | None = None) -> int:
                 indent=2,
             )
         )
+        return 0
+    if args.command == "agent-profile" and args.agent_profile_command == "pi":
+        from .pi_profile import install_profile
+
+        result = install_profile(
+            profile_dir=args.profile_dir,
+            session_dir=args.session_dir,
+            launcher=args.launcher,
+            login_launcher=args.login_launcher,
+            status_launcher=args.status_launcher,
+            auth_provider=args.auth_provider,
+            node=args.node,
+            pi_cli=args.pi_cli,
+            vendor_skills=tuple(args.vendor_skill),
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     if args.command == "context" and args.context_command == "decode":
         print(json.dumps(EDAContext.decode(args.token).__dict__, indent=2))

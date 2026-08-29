@@ -47,7 +47,8 @@ disables shell/write/edit and automatic global Skill discovery, then explicitly 
 Runtime control plus operation and documentation Skills for ADS and AnsysEM. The engineer still
 starts one command and uses natural language; Pi selects and reads the relevant Skill.
 
-The checked-in package is `integrations/pi-eda-runtime`. It registers exactly ten `eda_*` tools,
+The canonical adapter source is `integrations/pi-eda-runtime`, and the public Runtime wheel carries
+its execution assets so an Agent host does not need this repository checkout. It registers exactly ten `eda_*` tools,
 maintains one persistent `eda-runtime mcp serve` child, and adds `/eda-runtime-status`. It does not
 contain SSH or vendor logic. Pi supplies provider, model, reasoning, session, and tool-call identity
 directly from its extension context; Runtime stores these as declared facts and stores MCP client

@@ -1,15 +1,11 @@
-import importlib.util
 import json
 from pathlib import Path
 
+from eda_bridge_runtime import cli, pi_profile
+
 
 def load_installer():
-    path = Path(__file__).parents[1] / "integrations/pi-eda-runtime/install_profile.py"
-    spec = importlib.util.spec_from_file_location("pi_eda_profile", path)
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return pi_profile
 
 
 def test_pi_profile_update_preserves_credentials_and_unmanaged_settings(tmp_path):
@@ -150,3 +146,37 @@ def test_pi_profile_rejects_ambiguous_auth_provider(tmp_path):
         assert "provider" in str(exc)
     else:
         raise AssertionError("ambiguous provider should be rejected")
+
+
+def test_packaged_cli_installs_pi_profile(tmp_path, capsys):
+    node = tmp_path / "node.exe"
+    pi_bundle = tmp_path / "cli.js"
+    node.write_bytes(b"node")
+    pi_bundle.write_bytes(b"pi")
+
+    assert (
+        cli.main(
+            [
+                "agent-profile",
+                "pi",
+                "install",
+                "--profile-dir",
+                str(tmp_path / "profile"),
+                "--session-dir",
+                str(tmp_path / "sessions"),
+                "--launcher",
+                str(tmp_path / "pi-eda.cmd"),
+                "--node",
+                str(node),
+                "--pi-cli",
+                str(pi_bundle),
+            ]
+        )
+        == 0
+    )
+    result = json.loads(capsys.readouterr().out)
+
+    assert result["status"] == "installed"
+    assert result["agent"] == "pi"
+    assert result["runtime_tools"] == 10
+    assert Path(result["runtime_extension"]).is_dir()

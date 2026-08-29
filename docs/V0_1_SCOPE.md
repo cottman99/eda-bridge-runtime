@@ -1,5 +1,16 @@
 # Version 0.1 scope
 
+## 0.1.0a26 — source-free Pi profile installation
+
+- Package the reviewed thin Pi Runtime extension and profile installer with the Python Runtime,
+  removing the source-checkout dependency from a dedicated Pi Agent host.
+- Expose the same `agent-profile <agent> install` CLI family for Codex and Pi without adding a new
+  service, transport, job store, or audit path.
+- Keep the existing Pi credential-preservation boundary, separate work/login/status launchers,
+  read-only built-in tool set, and explicit vendor Skill selection.
+- Retain one canonical copy of the Pi JavaScript adapter under `integrations/`; the wheel includes
+  only its runtime package, extension, library, and Skill assets, not repository tests or docs.
+
 ## 0.1.0a25 — direct MCP transport retained in isolated Codex profiles
 
 - Keep Codex's internal Code Mode host enabled because Codex 0.151 uses that process for direct MCP

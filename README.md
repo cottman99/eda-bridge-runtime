@@ -36,6 +36,16 @@ eda-runtime agent-profile codex install
 No source checkout is required. The generated profile keeps the Runtime path and selected EDA
 Skills while excluding inherited general-purpose execution tools only from that profile.
 
+Pi Agent hosts use the parallel packaged command below. Its installer preserves the dedicated
+profile's credential file byte-for-byte and emits separate work, login, and status launchers:
+
+```text
+eda-runtime agent-profile pi install --help
+```
+
+The administrator supplies the installed Node/Pi locations and selected vendor Skills once;
+engineers continue to start the single generated launcher and use natural language.
+
 ## Design promises
 
 - Local and SSH execution use one protocol and one evidence model.
@@ -48,6 +58,10 @@ Skills while excluding inherited general-purpose execution tools only from that 
 - EDA-specific behavior lives in adapters, not in the runtime core.
 
 ## Current alpha
+
+`0.1.0a26` packages the thin Pi adapter and profile installer alongside the Runtime, giving Codex
+and Pi Agent hosts the same source-free `agent-profile <agent> install` setup family while retaining
+one Runtime, transport, and audit path.
 
 `0.1.0a25` retains Codex's internal MCP host while keeping Agent-visible Code Mode and shell tools
 disabled. This corrects the packaged alpha.24 profile on Codex 0.151 without reopening an alternate
@@ -112,7 +126,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a25"
+python -m pip install "eda-bridge-runtime==0.1.0a26"
 eda-runtime doctor
 ```
 
