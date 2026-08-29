@@ -28,6 +28,12 @@ credentials, host address, or task-specific geometry is included here.
   registered connections. The audit row included an automatically inferred MCP lifecycle ID. Its
   29.342-second wall time is retained as an installed-state correctness sample, not presented as a
   latency improvement over the repeated pre-release baseline.
+- Installed-state vendor acceptance also passed on the one permitted remote display: ADS session
+  status used one read; AnsysEM created one disposable project and replayed the same mutation key
+  without a duplicate job; a fresh one-call inspect then confirmed the persisted Bundle. No solve
+  ran, and all three temporary Ansys artifacts were removed after verification. Agent-side time
+  remained the majority of both read cases, while the creation case correctly spent most of its
+  measured time inside the Bridge/EDA boundary.
 
 ## 2026-08-29 Codex profile system-Skill isolation
 
