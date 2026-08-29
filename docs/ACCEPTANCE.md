@@ -5,11 +5,12 @@ credentials, host address, or task-specific geometry is included here.
 
 ## 2026-08-29 Runtime alpha.19 mechanical read-preflight acceptance
 
-- A real ADS session-status task used exactly one `eda.read`. Runtime mechanically obtained the
-  missing capability metadata, rejected no safety boundary, executed the typed read, and returned
-  the exact projected count. Agent calls fell from two to one, input tokens from the prior
-  three-trial median of 52,781 to 37,839 (28.3%), and model-visible response characters from 2,731
-  to 20. Runtime/SSH/ADS time remained 1.125 s.
+- Three real ADS session-status trials each used exactly one `eda.read`. Runtime mechanically
+  obtained the missing capability metadata, verified the read-only boundary, executed the typed
+  read, and returned only the exact projected count. All three passed. Agent calls fell from two to
+  one, median input tokens from 52,781 to 37,859 (28.3%), and model-visible response characters
+  from 2,731 to 20. Median wall time fell from 26.382 to 25.791 s while Runtime/SSH/ADS remained
+  about 1.17 s; the release does not generalize that small latency difference.
 - A real AnsysEM fresh project inspect likewise used exactly one inline-wait `eda.read`. Calls fell
   from the original three-call lifecycle to one, input tokens from 66,853 to 51,634 (22.8%), and
   response characters from 2,840 to 954. Wall time was 31.236 s versus the prior 35.063-second
