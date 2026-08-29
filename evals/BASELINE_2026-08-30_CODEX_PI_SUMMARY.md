@@ -33,6 +33,13 @@ Codex had reported one tool call instead of the nine/fourteen supported operatio
 reported the intended values. The case now states the semantic meaning and rejects a count of one
 without pinning vendor-version totals.
 
+The same installed profiles then ran bounded ADS and AnsysEM documentation evidence cases. Pi
+passed both first attempts; Codex passed AnsysEM but made zero calls and explicitly failed its first
+ADS attempt before passing an independent retry. Successful clients selected identical bounded
+source/excerpt counts. This is further evidence for Pi as the default typed executor and for keeping
+zero-call Agent failures visible instead of automatically rewriting them as Bridge or retrieval
+failures.
+
 ## Evidence-backed decisions
 
 1. **Keep both Agents, with Pi as the bounded-execution default.** Pi autonomously passed mutation,
