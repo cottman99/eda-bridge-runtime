@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
+import os
 import queue
 import shlex
+import signal
 import subprocess
 import threading
 from abc import ABC, abstractmethod
@@ -50,6 +53,11 @@ class PersistentStdioTransport(Transport):
     def _start(self) -> None:
         if self._process and self._process.poll() is None:
             return
+        process_group: dict[str, Any]
+        if os.name == "nt":
+            process_group = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+        else:
+            process_group = {"start_new_session": True}
         self._process = subprocess.Popen(  # noqa: S603
             self.command,
             stdin=subprocess.PIPE,
@@ -58,6 +66,7 @@ class PersistentStdioTransport(Transport):
             text=True,
             encoding="utf-8",
             bufsize=1,
+            **process_group,
         )
         self._stdout_queue = queue.Queue()
         self._stderr_tail = deque(maxlen=40)
@@ -115,13 +124,61 @@ class PersistentStdioTransport(Transport):
             return ResponseEnvelope(**data)
 
     def close(self) -> None:
-        if self._process and self._process.poll() is None:
-            self._process.terminate()
-            try:
-                self._process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self._process.kill()
+        process = self._process
         self._process = None
+        if process is None or process.poll() is not None:
+            return
+
+        # EOF is the normal shutdown contract for both a local JSON-lines worker
+        # and ``ssh <host> <bridge> runtime serve``.  Give that path a short chance
+        # before terminating the isolated process tree.  A bounded close keeps an
+        # MCP reset or server shutdown from hanging on an uncooperative child.
+        if process.stdin is not None:
+            with contextlib.suppress(OSError):
+                process.stdin.close()
+        if self._wait(process, timeout=0.75):
+            return
+        self._terminate_process_tree(process)
+
+    @staticmethod
+    def _wait(process: subprocess.Popen[str], *, timeout: float) -> bool:
+        try:
+            process.wait(timeout=timeout)
+            return True
+        except subprocess.TimeoutExpired:
+            return False
+
+    @classmethod
+    def _terminate_process_tree(cls, process: subprocess.Popen[str]) -> None:
+        if process.poll() is not None:
+            return
+        if os.name == "nt":
+            try:
+                subprocess.run(  # noqa: S603
+                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=2,
+                    check=False,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
+            except (OSError, subprocess.TimeoutExpired):
+                process.kill()
+            cls._wait(process, timeout=0.75)
+            return
+
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            return
+        if cls._wait(process, timeout=0.75):
+            return
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            return
+        cls._wait(process, timeout=0.75)
 
 
 class SSHStdioTransport(PersistentStdioTransport):

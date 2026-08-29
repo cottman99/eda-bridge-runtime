@@ -344,9 +344,7 @@ class MCPRuntimeServer:
                 if "mutating" not in payload and metadata is not None:
                     payload["mutating"] = bool(metadata.get("mutates", True))
         else:
-            operation = (
-                "runtime.job_events" if name == "eda.job.events" else "runtime.job_status"
-            )
+            operation = "runtime.job_events" if name == "eda.job.events" else "runtime.job_status"
             payload = {"mutating": False, "job_id": str(arguments["job_id"])}
             if name == "eda.job.events":
                 payload["after_cursor"] = int(arguments.get("after_cursor", 0))

@@ -1,5 +1,8 @@
 import io
 import json
+import os
+import sys
+import time
 
 from eda_bridge_runtime.adapter import Adapter, AdapterResult
 from eda_bridge_runtime.ledger import ExecutionLedger
@@ -184,3 +187,37 @@ def test_ssh_transport_uses_one_remote_command_string():
         "ads-agent runtime serve --ledger '/tmp/a b.sqlite3'",
     ]
     assert transport.timeout_seconds == 30
+
+
+def test_transport_close_is_bounded_and_stops_descendant_process(tmp_path):
+    from eda_bridge_runtime.transport import PersistentStdioTransport
+
+    heartbeat = tmp_path / "descendant-heartbeat.txt"
+    child_code = (
+        "import pathlib,sys,time; p=pathlib.Path(sys.argv[1]); "
+        "[(p.open('a').write('x'), time.sleep(0.05)) for _ in range(1200)]"
+    )
+    parent_code = (
+        "import json,pathlib,subprocess,sys,time; "
+        "child=subprocess.Popen([sys.executable,'-u','-c',sys.argv[2],sys.argv[1]]); "
+        "p=pathlib.Path(sys.argv[1]); "
+        "deadline=time.monotonic()+5; "
+        "\nwhile not p.exists() and time.monotonic()<deadline: time.sleep(0.01); "
+        "\nprint(json.dumps({'protocol':'eda-runtime.handshake/v1','selected':1}),flush=True); "
+        "time.sleep(60)"
+    )
+    transport = PersistentStdioTransport(
+        [sys.executable, "-u", "-c", parent_code, str(heartbeat), child_code],
+        timeout_seconds=5,
+    )
+    transport._start()
+    assert heartbeat.is_file()
+
+    started = time.monotonic()
+    transport.close()
+    elapsed = time.monotonic() - started
+    size_after_close = os.path.getsize(heartbeat)
+    time.sleep(0.25)
+
+    assert elapsed < 4
+    assert os.path.getsize(heartbeat) == size_after_close
