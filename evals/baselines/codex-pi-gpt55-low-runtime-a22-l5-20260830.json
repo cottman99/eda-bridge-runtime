@@ -1,0 +1,13 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a22",
+  "environment": "sanitized authenticated dedicated-Pi and narrow-Codex remote display4 disposable lifecycle acceptance",
+  "notes": "One functional acceptance trial per retained row. Both Agents used the same GPT-5.5 model family, low reasoning, exact connection, one Runtime plan call, and independent disposable paths and idempotency keys. No solve, GUI action, customer data, final response, raw trace, private path, or generated EDA artifact was retained. Token counters are provider-reported and are not a direct billing comparison.",
+  "cases": [
+    {"case_id":"l5.ads-structured-design-plan","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":1,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":34956.827,"median_input_tokens":66768.0},
+    {"case_id":"l5.ads-structured-design-plan","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":1,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":18814.558,"median_input_tokens":5102.0},
+    {"case_id":"l5.ansys-project-evidence-plan","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":1,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":92325.38,"median_input_tokens":47595.0},
+    {"case_id":"l5.ansys-project-evidence-plan","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":1,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":86024.829,"median_input_tokens":6286.0}
+  ]
+}
