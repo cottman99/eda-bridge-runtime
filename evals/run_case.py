@@ -386,17 +386,19 @@ def pi_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
         args.model,
         "--thinking",
         args.thinking,
-        "--no-extensions",
-        "--extension",
-        str(args.pi_extension),
-        "--no-skills",
-        "--skill",
-        str(args.pi_skill),
-        "--no-builtin-tools",
-        "--tools",
-        ",".join(selected_tools),
-        case["prompt"],
     ]
+    if args.pi_extension is not None:
+        command.extend(["--no-extensions", "--extension", str(args.pi_extension)])
+    if args.pi_skill is not None:
+        command.extend(["--no-skills", "--skill", str(args.pi_skill)])
+    command.extend(
+        [
+            "--no-builtin-tools",
+            "--tools",
+            ",".join(selected_tools),
+            case["prompt"],
+        ]
+    )
     return native_command(command)
 
 
@@ -518,7 +520,15 @@ def main() -> int:
         type=Path,
         default=Path("integrations/pi-eda-runtime/skills/eda-runtime-control/SKILL.md"),
     )
+    parser.add_argument(
+        "--pi-use-launcher-profile",
+        action="store_true",
+        help="Use the launcher's installed extension and Skills instead of injecting repo assets.",
+    )
     args = parser.parse_args()
+    if args.pi_use_launcher_profile:
+        args.pi_extension = None
+        args.pi_skill = None
     case = json.loads(args.case.read_text(encoding="utf-8"))
     mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
     if mutation != "forbidden" and not args.approve_mutations:

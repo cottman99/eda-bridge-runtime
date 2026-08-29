@@ -370,6 +370,26 @@ def test_pi_command_exposes_only_case_allowed_runtime_tools():
     assert command[command.index("--tools") + 1] == "eda_connections_list,eda_run_plan"
 
 
+def test_pi_command_can_reuse_installed_launcher_profile_without_duplicate_assets():
+    runner = load_runner()
+    args = SimpleNamespace(
+        pi_command="pi-eda.cmd",
+        pi_extension=None,
+        pi_skill=None,
+        model="openai-codex/gpt-test",
+        thinking="medium",
+    )
+
+    command = runner.pi_command(
+        args,
+        {"prompt": "inspect", "allowed_tools": ["eda.connections.list"]},
+    )
+
+    assert "--extension" not in command
+    assert "--skill" not in command
+    assert command[command.index("--tools") + 1] == "eda_connections_list"
+
+
 def test_codex_command_can_measure_the_unscoped_global_profile():
     runner = load_runner()
     args = SimpleNamespace(
