@@ -3,6 +3,17 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 Runtime alpha.27 timing-semantics acceptance
+
+- The privacy-preserving audit analyzer now emits canonical `adapter_boundary_ms` and
+  `runtime_local_ms` facts plus an explicit `network_only_ms: null` declaration. Existing timing
+  names remain byte-compatible aliases, so consumers do not need a coordinated migration.
+- A live analysis of the latest five complete calls returned identical legacy and canonical totals,
+  preserved paired/unpaired accounting, and described the measurement boundary without exposing
+  paths, arguments, Context tokens, or execution identifiers.
+- The complete suite passed 156 tests, Ruff lint and format checks, and diff validation. This change
+  does not open an EDA application or an SSH connection.
+
 ## 2026-08-30 Runtime alpha.26 source-free Pi acceptance
 
 - A hot Codex plugin refresh replaced the stale local alpha.23 registration with exact

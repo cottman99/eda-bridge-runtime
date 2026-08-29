@@ -1,5 +1,12 @@
 # Version 0.1 scope
 
+## 0.1.0a27 — unambiguous execution timing
+
+- Report canonical adapter/EDA-boundary and Runtime-local timing names while retaining the original
+  field names as explicit compatibility aliases.
+- State mechanically that packet-level network time is not measured, preventing local or SSH
+  adapter wait from being misreported as pure network latency.
+
 ## 0.1.0a26 — source-free Pi profile installation
 
 - Package the reviewed thin Pi Runtime extension and profile installer with the Python Runtime,

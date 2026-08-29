@@ -159,8 +159,15 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
             "runtime_nontransport_ms_median": (
                 round(median(nontransport), 3) if nontransport else 0
             ),
+            "adapter_boundary_ms_total": round(sum(transport), 3),
+            "adapter_boundary_ms_median": round(median(transport), 3) if transport else 0,
+            "runtime_local_ms_total": round(sum(nontransport), 3),
+            "runtime_local_ms_median": round(median(nontransport), 3) if nontransport else 0,
             "unpaired_mcp_server_ms_total": round(sum(unpaired_server), 3),
             "transport_share_percent": (
+                round(100 * sum(transport) / sum(paired_server), 3) if sum(paired_server) else 0
+            ),
+            "adapter_boundary_share_percent": (
                 round(100 * sum(transport) / sum(paired_server), 3) if sum(paired_server) else 0
             ),
         }
@@ -176,6 +183,21 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "schema_version": "eda-runtime.audit-analysis/v1",
         "source_policy": "mcp-runtime-preferred",
+        "timing_semantics": {
+            "adapter_boundary_ms": (
+                "Runtime wall time inside the local or SSH adapter request; includes process "
+                "startup, serialization, transport, Bridge work, and vendor EDA work"
+            ),
+            "runtime_local_ms": (
+                "paired MCP server elapsed time outside the measured adapter request"
+            ),
+            "network_only_ms": None,
+            "legacy_aliases": {
+                "client_transport_ms": "adapter_boundary_ms",
+                "runtime_nontransport_ms": "runtime_local_ms",
+                "transport_share_percent": "adapter_boundary_share_percent",
+            },
+        },
         "event_count": len(events),
         "tool_calls": len(calls),
         "completed_calls": sum(call["completed"] for call in calls),
@@ -186,6 +208,8 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
             "paired_mcp_server_ms": round(sum(all_paired_server), 3),
             "client_transport_ms": round(sum(all_transport), 3),
             "runtime_nontransport_ms": round(sum(all_nontransport), 3),
+            "adapter_boundary_ms": round(sum(all_transport), 3),
+            "runtime_local_ms": round(sum(all_nontransport), 3),
             "unpaired_mcp_server_ms": round(sum(all_unpaired_server), 3),
             "paired_calls": sum(
                 int(item["paired_timing_calls"]) for item in timing_by_tool.values()
@@ -194,6 +218,11 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
                 int(item["unpaired_timing_calls"]) for item in timing_by_tool.values()
             ),
             "transport_share_percent": (
+                round(100 * sum(all_transport) / sum(all_paired_server), 3)
+                if sum(all_paired_server)
+                else 0
+            ),
+            "adapter_boundary_share_percent": (
                 round(100 * sum(all_transport) / sum(all_paired_server), 3)
                 if sum(all_paired_server)
                 else 0

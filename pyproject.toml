@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "eda-bridge-runtime"
-version = "0.1.0a26"
+version = "0.1.0a27"
 description = "Agent-neutral execution runtime for local and remote EDA bridges"
 readme = "README.md"
 requires-python = ">=3.10"
