@@ -16,8 +16,8 @@ the same Runtime/Bridge contracts.
 | L2 ADS session status | 3 each | 21.955 s | 10.868 s | 50.5% | Agent/client |
 | L4 ADS documentation evidence | 3 each | 23.118 s | 13.978 s | 39.5% | Agent/client plus retrieval |
 | L4 AnsysEM documentation evidence | 3 each | 23.724 s | 13.970 s | 41.1% | Agent/client plus retrieval |
-| L3 ADS create plus exact replay | 1 each | 32.090 s | 18.546 s | 42.2% | Agent/client |
-| L3 AnsysEM create plus exact replay | 1 each | 72.634 s | 55.065 s | 24.2% | AEDT lifecycle |
+| L3 ADS create plus exact replay (Codex 2/3; Pi 3/3) | 3 each | 32.109 s | 16.605 s | 48.3% | Agent/client |
+| L3 AnsysEM create plus exact replay | 3 each, both 3/3 | 67.000 s | 56.672 s | 15.4% | AEDT lifecycle |
 | L5 ADS structured-design plan | 3 each, both 3/3 | 30.135 s | 18.548 s | 38.5% | Agent/client |
 | L5 AnsysEM project-evidence plan | 3 each, both 3/3 | 90.871 s | 84.140 s | 7.4% | AEDT lifecycle |
 | L6 generated-input Momentum solve (Codex 2/3; Pi 3/3) | 3 each | 38.814 s | 21.701 s | 44.1% | Mixed Agent and solver |
@@ -51,9 +51,9 @@ the same Runtime/Bridge contracts.
 
 ## Remaining evidence gaps
 
-- Repeat L3 lifecycle cases before using their wall-time differences as regression thresholds.
-  ADS L5, AnsysEM L5, generated-input Momentum, and cross-EDA coordination now have three trials
-  per Agent.
+- The L3, L5, generated-input Momentum, and cross-EDA lifecycle cases now have three trials per
+  Agent. Add more repetitions only for a specific regression question rather than accumulating
+  samples without a decision boundary.
 - Add live ADS 2024 Update 2 and ADS 2023 Update 2 evidence only when those installations are
   available; version strings alone must not promote their support tier.
 - Continue product-specific capability growth inside each Bridge. Runtime should gain another
