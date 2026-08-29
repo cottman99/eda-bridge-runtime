@@ -10,6 +10,9 @@
   prove idempotent replay without trusting the Agent's final summary.
 - Add disposable ADS and AnsysEM L3 cases covering create, terminal readback,
   and exact-key replay without simulation or customer data.
+- Derive an action fingerprint that excludes the human-readable purpose and add
+  an audit analysis view for redundant discovery, repeated failure, avoidable
+  polling, idempotent replay, and conservatively estimated avoidable MCP time.
 
 ## 0.1.0a9 — safe read lane, bounded lifecycle, and reproducible Agent evaluation
 

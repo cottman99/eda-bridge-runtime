@@ -67,6 +67,9 @@ def record_codex_hook(
     tool_input = tool_input if isinstance(tool_input, Mapping) else {}
     purpose = str(tool_input.get("purpose") or "unspecified EDA operation")[:240]
     fingerprint = _fingerprint(tool_name, tool_input)
+    action_fingerprint = _fingerprint(
+        tool_name, {key: value for key, value in tool_input.items() if key != "purpose"}
+    )
     actor = ActorIdentity.detect(
         observed={
             key: value
@@ -90,6 +93,7 @@ def record_codex_hook(
         "tool": _TOOL_NAMES[native_tool_name],
         "purpose": purpose,
         "input_sha256": fingerprint,
+        "action_sha256": action_fingerprint,
     }
     event_type = "agent.tool.requested"
     if phase == "post":

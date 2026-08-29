@@ -18,6 +18,11 @@ credentials, host address, or task-specific geometry is included here.
   one reused projected Run and one Job; no second project creation occurred.
 - Both cases prohibited simulation and customer data. All named `/tmp`
   workspaces and project Bundles were removed after verification.
+- Analysis of 134 existing Runtime calls separated 8 intentional idempotent
+  replays from 23 potentially redundant discovery calls and 17 avoidable status
+  polls. The report contained aggregate timings and finding counts only; no raw
+  payload, customer path, Context token, connection identifier, or Run/Job id
+  was emitted.
 
 ## 2026-08-29 Runtime alpha.9 safe-read and evaluation acceptance
 

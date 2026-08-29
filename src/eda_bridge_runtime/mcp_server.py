@@ -512,6 +512,13 @@ class MCPRuntimeServer:
             separators=(",", ":"),
             ensure_ascii=False,
         )
+        action_arguments = {key: value for key, value in arguments.items() if key != "purpose"}
+        action_canonical = json.dumps(
+            {"tool": name, "arguments": action_arguments},
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        )
         self._audit.append(
             run_id=run_id,
             request_id=request_id,
@@ -523,6 +530,7 @@ class MCPRuntimeServer:
                 "tool": name,
                 "purpose": str(arguments.get("purpose") or "unspecified EDA operation")[:240],
                 "input_sha256": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+                "action_sha256": hashlib.sha256(action_canonical.encode("utf-8")).hexdigest(),
             },
         )
         return run_id, request_id

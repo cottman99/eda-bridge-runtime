@@ -61,6 +61,9 @@ def _parser() -> argparse.ArgumentParser:
     audit_list = audit_sub.add_parser("list")
     audit_list.add_argument("--database", type=Path)
     audit_list.add_argument("--limit", type=int, default=20)
+    audit_analyze = audit_sub.add_parser("analyze")
+    audit_analyze.add_argument("--database", type=Path)
+    audit_analyze.add_argument("--limit", type=int, default=1000)
     return parser
 
 
@@ -141,6 +144,13 @@ def main(argv: list[str] | None = None) -> int:
         from .agent_audit import audit_events
 
         print(json.dumps({"events": audit_events(args.database, limit=args.limit)}, indent=2))
+        return 0
+    if args.command == "audit" and args.audit_command == "analyze":
+        from .agent_audit import audit_events
+        from .audit_analysis import analyze_events
+
+        events = audit_events(args.database, limit=args.limit)
+        print(json.dumps(analyze_events(events), indent=2))
         return 0
     if args.command == "ledger":
         with ExecutionLedger(args.database) as ledger:

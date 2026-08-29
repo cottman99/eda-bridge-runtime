@@ -20,6 +20,10 @@ tools. Where the Codex surface supports them, they enrich the same audit databas
 turn, active model, permission mode, and tool-call identity. Hooks are optional: they do not define
 whether the base Runtime record exists. Neither path parses the chat transcript or stores raw
 operation payloads. Inspect the bounded recent view with `eda-runtime audit list`.
+Use `eda-runtime audit analyze` for a privacy-preserving efficiency summary. It
+separates intentional idempotent replay from repeated discovery, repeated
+failure, and avoidable status polling, and reports bounded timing totals without
+returning raw arguments, Context tokens, paths, or execution identifiers.
 
 Codex asks for one-time trust when a new or changed plugin Hook is first used. Review and approve
 the two bundled audit commands; routine calls need no extra Agent prompt after that. Automated
