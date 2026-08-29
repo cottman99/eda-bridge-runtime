@@ -45,6 +45,11 @@ final payload and raw trace, distinguishes authentication from Runtime/EDA
 failure, and only calls a case cross-Agent comparable when more than one Agent
 actually passed that same case.
 
+`baselines/` retains sanitized observed references, not raw traces or customer facts.
+`compare_baseline.py` compares only the same case, Agent, model, and reasoning budget. It labels
+samples below the chosen repetition count as insufficient instead of turning one lucky run into a
+regression gate.
+
 `run_matrix.py` runs selected cases sequentially so two Agents never contend for one EDA target.
 Use repeatable `--case-id` options to run only named cases; an explicit case selection does not
 replay lower levels merely because the selected case has a higher level.
