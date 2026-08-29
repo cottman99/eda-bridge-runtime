@@ -125,6 +125,11 @@ def main() -> int:
     parser.add_argument("--cwd", type=Path, default=Path.cwd())
     parser.add_argument("--codex-profile", default="eda-runtime")
     parser.add_argument("--pi-command", default="pi-eda.cmd")
+    parser.add_argument(
+        "--pi-use-launcher-profile",
+        action="store_true",
+        help="Use the Pi launcher's installed extension and Skills for every Pi case.",
+    )
     args = parser.parse_args()
     if not 1 <= args.repetitions <= 10:
         parser.error("--repetitions must be between 1 and 10")
@@ -205,6 +210,8 @@ def main() -> int:
             "--pi-command",
             args.pi_command,
         ]
+        if agent == "pi" and args.pi_use_launcher_profile:
+            command.append("--pi-use-launcher-profile")
         for value in expand_run_variables(args.var, agent=agent, trial=trial, sequence=sequence):
             command.extend(["--var", value])
         mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
