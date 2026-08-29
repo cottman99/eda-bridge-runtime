@@ -6,6 +6,8 @@ not part of the Runtime kernel or the end-user workflow.
 Cases progress from Runtime-only discovery to Bridge reads, disposable EDA mutations, durable-job
 resume/idempotency, and bounded documentation-evidence workflows. Every case declares allowed tools, exact
 deterministic gates, budgets, and safety limits. The Agent executes the task; `run_case.py` scores it.
+The level-2 cross-EDA case uses one Agent turn and two exact connections to distinguish multi-product
+coordination from two unrelated cold starts without adding a cross-vendor transaction abstraction.
 Codex cases expose only the Runtime tools declared in `allowed_tools` and use a generated JSON
 Schema that constrains final field names and types without supplying expected values. This keeps
 wrong-tool and prose-format noise separate from EDA correctness while preserving genuine no-tool

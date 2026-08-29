@@ -9,6 +9,7 @@
     {"case_id":"l1.ads-capabilities","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":16703.0,"median_input_tokens":35957.0},
     {"case_id":"l1.ansys-capabilities","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":17656.0,"median_input_tokens":35067.0},
     {"case_id":"l2.ads-session-status","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":19657.0,"median_input_tokens":36977.0},
-    {"case_id":"l2.ansys-project-inspect","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":19562.0,"median_input_tokens":36337.0}
+    {"case_id":"l2.ansys-project-inspect","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":19562.0,"median_input_tokens":36337.0},
+    {"case_id":"l2.cross-eda-capabilities","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":19687.0,"median_input_tokens":37271.0}
   ]
 }

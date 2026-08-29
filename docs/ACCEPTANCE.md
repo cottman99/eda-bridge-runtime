@@ -18,6 +18,12 @@ credentials, host address, or task-specific geometry is included here.
 - The AnsysEM read fixture was created once through a disposable-only idempotency case, then all
   three owned remote Bundle artifacts were removed after the read trials. Fixture setup evidence is
   not mixed into the read-latency baseline.
+- A separate three-trial cross-EDA case selected the exact ADS and AnsysEM connections in one Agent
+  turn and passed both capability reads with exactly two Runtime calls every time. Its 19.687 s
+  median was 14.672 s (42.7%) below the sum of the two independent capability-case medians, while
+  median input fell from 71,024 combined tokens to 37,271. This supports batching already-known,
+  independent EDA observations into one turn; it does not introduce or claim a cross-vendor
+  transaction.
 - The sanitized three-trial reference is checked in as
   `evals/baselines/codex-gpt55-low-runtime-a21-20260830.json`; transient per-trial files remain
   untracked.

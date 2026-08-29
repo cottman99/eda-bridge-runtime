@@ -1,0 +1,34 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l2.cross-eda-capabilities",
+  "level": 2,
+  "title": "One-turn cross-EDA capability discovery",
+  "variables": ["ADS_CONNECTION", "ANSYS_CONNECTION"],
+  "prompt": "Use only the EDA Bridge Runtime tool. Read capabilities exactly once from ADS connection '{{ADS_CONNECTION}}' for purpose 'Compare ADS capability surface in one cross-EDA turn', then exactly once from AnsysEM connection '{{ANSYS_CONNECTION}}' for purpose 'Compare AnsysEM capability surface in one cross-EDA turn'. Do not use shell, files, documentation, GUI, or any other tool, and do not repeat either discovery. Return a compact JSON object with status='passed', ads_eda, ads_operation_count, ansys_eda, and ansys_operation_count copied from the two actual responses.",
+  "required_tools": {
+    "eda.capabilities": 2
+  },
+  "allowed_tools": [
+    "eda.capabilities"
+  ],
+  "expected_final": {
+    "equals": {
+      "status": "passed",
+      "ads_eda": "keysight-ads",
+      "ansys_eda": "ansys-electronics-desktop"
+    },
+    "minimum": {
+      "ads_operation_count": 1,
+      "ansys_operation_count": 1
+    }
+  },
+  "budgets": {
+    "max_tool_calls": 2,
+    "max_wall_seconds": 45
+  },
+  "safety": {
+    "mutation": "forbidden",
+    "solve": "forbidden",
+    "customer_data": "forbidden"
+  }
+}
