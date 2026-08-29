@@ -32,9 +32,47 @@ def json_lines(output: str) -> list[dict[str, Any]]:
     return values
 
 
+def tool_fact(tool: str, result: Any) -> dict[str, Any]:
+    """Reduce one tool result to non-sensitive execution facts for scoring."""
+    result = result if isinstance(result, dict) else {}
+    structured = result.get("structured_content") or result.get("structuredContent")
+    structured = structured if isinstance(structured, dict) else {}
+    run = structured.get("run") if isinstance(structured.get("run"), dict) else {}
+    response = structured.get("response") if isinstance(structured.get("response"), dict) else {}
+    response_result = response.get("result") if isinstance(response.get("result"), dict) else {}
+    return {
+        "tool": tool,
+        "run_id": str(run.get("run_id") or "") or None,
+        "job_id": str(run.get("job_id") or "") or None,
+        "state": str(run.get("state") or "") or None,
+        "deduplicated": response_result.get("deduplicated") is True,
+    }
+
+
+def runtime_metrics(facts: list[dict[str, Any]]) -> dict[str, int]:
+    runs = {fact["run_id"] for fact in facts if fact["run_id"]}
+    jobs = {fact["job_id"] for fact in facts if fact["job_id"]}
+    seen: set[tuple[str, str]] = set()
+    reused_run_calls = 0
+    for fact in facts:
+        identity = (str(fact["tool"]), str(fact["run_id"] or ""))
+        if not identity[1]:
+            continue
+        if identity in seen:
+            reused_run_calls += 1
+        seen.add(identity)
+    return {
+        "deduplicated_calls": sum(fact["deduplicated"] is True for fact in facts),
+        "reused_run_calls": reused_run_calls,
+        "distinct_projected_runs": len(runs),
+        "distinct_jobs": len(jobs),
+    }
+
+
 def parse_codex(events: list[dict[str, Any]]) -> dict[str, Any]:
     tools: list[str] = []
     attempts: list[str] = []
+    facts: list[dict[str, Any]] = []
     messages = 0
     final_text = ""
     usage = {
@@ -53,12 +91,14 @@ def parse_codex(events: list[dict[str, Any]]) -> dict[str, Any]:
             attempts.append(tool)
             if item.get("status") == "completed" and not item.get("error"):
                 tools.append(tool)
+                facts.append(tool_fact(tool, item.get("result")))
         if event.get("type") == "item.completed" and item.get("type") == "agent_message":
             messages += 1
             final_text = str(item.get("text") or "")
     return {
         "tools": tools,
         "attempts": attempts,
+        "facts": facts,
         "messages": messages,
         "usage": usage,
         "final_text": final_text,
@@ -68,6 +108,7 @@ def parse_codex(events: list[dict[str, Any]]) -> dict[str, Any]:
 def parse_pi(events: list[dict[str, Any]]) -> dict[str, Any]:
     tools: list[str] = []
     attempts: list[str] = []
+    facts: list[dict[str, Any]] = []
     messages = 0
     final_text = ""
     usage = {
@@ -82,6 +123,7 @@ def parse_pi(events: list[dict[str, Any]]) -> dict[str, Any]:
             attempts.append(tool)
             if not event.get("isError", False):
                 tools.append(tool)
+                facts.append(tool_fact(tool, event.get("result")))
         if event.get("type") != "message_end":
             continue
         message = event.get("message") if isinstance(event.get("message"), dict) else {}
@@ -99,6 +141,7 @@ def parse_pi(events: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "tools": tools,
         "attempts": attempts,
+        "facts": facts,
         "messages": messages,
         "usage": usage,
         "final_text": final_text,
@@ -138,6 +181,14 @@ def score(case: dict[str, Any], observation: dict[str, Any], exit_code: int) -> 
     budgets = case["budgets"]
     if len(tools) > int(budgets["max_tool_calls"]):
         failures.append("tool_budget_exceeded")
+    observed_runtime = runtime_metrics(observation["facts"])
+    for path, value in case.get("expected_runtime", {}).get("equals", {}).items():
+        if nested_value(observed_runtime, path) != value:
+            failures.append(f"runtime_mismatch:{path}")
+    for path, value in case.get("expected_runtime", {}).get("minimum", {}).items():
+        actual = nested_value(observed_runtime, path)
+        if not isinstance(actual, int | float) or actual < value:
+            failures.append(f"runtime_below_minimum:{path}")
     final = final_object(observation["final_text"])
     if final is None:
         failures.append("final_not_json_object")
@@ -328,6 +379,7 @@ def main() -> int:
             "tool_attempts": len(observation["attempts"]),
             "tool_calls_succeeded": len(observation["tools"]),
             "tool_sequence": observation["tools"],
+            **runtime_metrics(observation["facts"]),
             **observation["usage"],
         },
         "final": scored["final"],

@@ -18,3 +18,8 @@ codex exec --profile eda-runtime "Inspect the selected EDA target"
 
 Regenerate the profile after installing or removing Skills. Engineers do not maintain the generated
 path list by hand.
+
+For a separately authorized unattended evaluation, generate a different
+profile with `--approve-mutations`. It pre-approves only the typed Runtime
+`eda.submit` tool; it does not disable the sandbox, approve shell commands, or
+change the ordinary `eda-runtime` profile.

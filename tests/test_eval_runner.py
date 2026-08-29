@@ -21,6 +21,12 @@ def test_codex_trace_is_normalized_and_scored():
                 "type": "mcp_tool_call",
                 "tool": "eda.connections.list",
                 "status": "completed",
+                "result": {
+                    "structured_content": {
+                        "run": {"run_id": "run-one", "state": "passed"},
+                        "response": {"result": {"deduplicated": True}},
+                    }
+                },
             },
         },
         {
@@ -44,10 +50,17 @@ def test_codex_trace_is_normalized_and_scored():
             "minimum": {"connection_count": 1},
         },
         "budgets": {"max_tool_calls": 1},
+        "expected_runtime": {"equals": {"deduplicated_calls": 1}},
     }
 
     assert runner.score(case, observation, 0)["passed"] is True
     assert observation["usage"]["input_tokens"] == 10
+    assert runner.runtime_metrics(observation["facts"]) == {
+        "deduplicated_calls": 1,
+        "reused_run_calls": 0,
+        "distinct_projected_runs": 1,
+        "distinct_jobs": 0,
+    }
 
 
 def test_pi_tool_alias_and_unexpected_tool_are_detected():

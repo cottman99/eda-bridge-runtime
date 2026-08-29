@@ -1,5 +1,16 @@
 # Version 0.1 scope
 
+## Next alpha candidate — scoped unattended mutation evaluation
+
+- Generate a separate Codex evaluation profile that pre-approves only typed
+  `eda.submit` calls after an operator has authorized unattended work; do not
+  disable the sandbox or approve shell, GUI, browser, or unrelated MCP tools.
+- Extend deterministic scoring with non-sensitive Run, Job, explicit
+  deduplication, and repeated-Run facts so synchronous and durable Bridges can
+  prove idempotent replay without trusting the Agent's final summary.
+- Add disposable ADS and AnsysEM L3 cases covering create, terminal readback,
+  and exact-key replay without simulation or customer data.
+
 ## 0.1.0a9 — safe read lane, bounded lifecycle, and reproducible Agent evaluation
 
 - Close local and SSH JSON-lines workers through EOF first, then terminate only the isolated

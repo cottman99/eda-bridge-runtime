@@ -42,3 +42,15 @@ def test_profile_disables_unrelated_skills_without_changing_global_config(tmp_pa
     assert "eda-runtime hook codex-pre-tool-use" in profile
     assert "eda-runtime hook codex-post-tool-use" in profile
     assert global_config.read_text(encoding="utf-8") == 'model = "unchanged"\n'
+
+
+def test_unattended_profile_approves_only_typed_runtime_mutation(tmp_path):
+    installer = load_installer()
+    write_skill(tmp_path / "skills", "ads", "ads-agent-bridge")
+
+    output, _, _ = installer.install_profile(tmp_path, approve_mutations=True)
+    profile = output.read_text(encoding="utf-8")
+
+    assert '[mcp_servers."eda-bridge-runtime".tools."eda.submit"]' in profile
+    assert 'approval_mode = "approve"' in profile
+    assert "dangerously-bypass" not in profile

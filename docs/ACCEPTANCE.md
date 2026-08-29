@@ -3,6 +3,22 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 scoped unattended mutation evaluation
+
+- The ordinary Codex profile rejected `eda.submit` under non-interactive
+  `approval_policy=never`, proving the write gate remained active.
+- A separate evaluation profile pre-approved only `eda.submit`; shell, GUI,
+  browser, general plugins, and unrelated tools stayed disabled. It did not use
+  global approval or sandbox bypass.
+- The ADS L3 case created one disposable workspace and replayed the exact
+  idempotency key in three calls. Scoring independently observed one explicit
+  deduplication and one reused projected Run.
+- The AnsysEM L3 case created one disposable project, waited for its durable
+  Job, and replayed the exact key in four calls. Scoring independently observed
+  one reused projected Run and one Job; no second project creation occurred.
+- Both cases prohibited simulation and customer data. All named `/tmp`
+  workspaces and project Bundles were removed after verification.
+
 ## 2026-08-29 Runtime alpha.9 safe-read and evaluation acceptance
 
 - The Python suite passed 71 tests, Ruff and formatting checks; the Pi adapter passed all three

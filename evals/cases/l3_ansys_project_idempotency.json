@@ -1,0 +1,43 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l3.ansys-project-idempotency",
+  "level": 3,
+  "title": "AnsysEM disposable project creation and idempotent replay",
+  "variables": ["ANSYS_CONNECTION", "ANSYS_PROJECT", "IDEMPOTENCY_KEY"],
+  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ANSYS_CONNECTION}}'. Discover capabilities once for purpose 'Benchmark AnsysEM bounded mutation schema'. Submit operation 'project.create' with idempotency_key='{{IDEMPOTENCY_KEY}}' and vendor payload project='{{ANSYS_PROJECT}}', design='RuntimeEvalLayout', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', redact_paths=true for purpose 'Create one disposable AnsysEM evaluation project'. Wait exactly once for the returned job with purpose 'Confirm disposable AnsysEM project completion'. After the job is terminal, submit the exact same operation, key, payload, connection, and purpose once more to prove Runtime idempotency. Do not use shell, files, GUI, solve, or customer data. Return only a compact JSON object with status='passed', bundle_complete=true, and idempotent_replay=true based on the actual Runtime responses.",
+  "required_tools": {
+    "eda.capabilities": 1,
+    "eda.submit": 2,
+    "eda.job.wait": 1
+  },
+  "allowed_tools": [
+    "eda.capabilities",
+    "eda.submit",
+    "eda.job.wait"
+  ],
+  "expected_runtime": {
+    "equals": {
+      "deduplicated_calls": 0,
+      "reused_run_calls": 1,
+      "distinct_projected_runs": 2,
+      "distinct_jobs": 1
+    }
+  },
+  "expected_final": {
+    "equals": {
+      "status": "passed",
+      "bundle_complete": true,
+      "idempotent_replay": true
+    },
+    "minimum": {}
+  },
+  "budgets": {
+    "max_tool_calls": 4,
+    "max_wall_seconds": 120
+  },
+  "safety": {
+    "mutation": "disposable-only",
+    "solve": "forbidden",
+    "customer_data": "forbidden"
+  }
+}

@@ -9,7 +9,9 @@ deterministic gates, budgets, and safety limits. The Agent executes the task; `r
 
 Raw Agent streams may contain local target facts and are not saved unless `--raw-output` is supplied.
 Normalized results contain only cross-client metrics with matching definitions, the canonical tool
-sequence, a final compact result, and the raw trace hash. Client-specific notions such as a Codex
+sequence, non-sensitive Run/job/deduplication counts, a final compact result, and the raw trace hash.
+This lets mutation cases prove idempotency from Runtime responses instead of trusting the Agent's
+summary. Client-specific notions such as a Codex
 user turn versus a Pi assistant message are not mislabeled as one comparable metric. Never commit
 real-host raw streams or customer artifacts.
 

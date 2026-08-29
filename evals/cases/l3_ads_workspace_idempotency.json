@@ -1,0 +1,41 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l3.ads-workspace-idempotency",
+  "level": 3,
+  "title": "ADS disposable workspace creation and idempotent replay",
+  "variables": ["ADS_CONNECTION", "ADS_WORKSPACE", "IDEMPOTENCY_KEY"],
+  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ADS_CONNECTION}}'. Discover capabilities once for purpose 'Benchmark ADS bounded mutation schema'. Submit operation 'workspace.create' with idempotency_key='{{IDEMPOTENCY_KEY}}' and vendor payload workspace='{{ADS_WORKSPACE}}', library='RuntimeEval_lib', cell='Main', display=':4.0' for purpose 'Create one disposable ADS evaluation workspace'. After the first call completes, submit the exact same operation, key, payload, connection, and purpose once more to prove Runtime idempotency. Do not use shell, files, GUI, launch, simulation, shutdown, or customer data. Return only a compact JSON object with status='passed', created=true, and idempotent_replay=true based on the two actual Runtime responses.",
+  "required_tools": {
+    "eda.capabilities": 1,
+    "eda.submit": 2
+  },
+  "allowed_tools": [
+    "eda.capabilities",
+    "eda.submit"
+  ],
+  "expected_runtime": {
+    "equals": {
+      "deduplicated_calls": 1,
+      "reused_run_calls": 1,
+      "distinct_projected_runs": 2,
+      "distinct_jobs": 0
+    }
+  },
+  "expected_final": {
+    "equals": {
+      "status": "passed",
+      "created": true,
+      "idempotent_replay": true
+    },
+    "minimum": {}
+  },
+  "budgets": {
+    "max_tool_calls": 3,
+    "max_wall_seconds": 90
+  },
+  "safety": {
+    "mutation": "disposable-only",
+    "solve": "forbidden",
+    "customer_data": "forbidden"
+  }
+}
