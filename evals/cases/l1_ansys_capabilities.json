@@ -4,7 +4,7 @@
   "level": 1,
   "title": "AnsysEM Bridge capability discovery",
   "variables": ["ANSYS_CONNECTION"],
-  "prompt": "Use only the EDA Bridge Runtime tool. Read capabilities exactly once from connection '{{ANSYS_CONNECTION}}' for the purpose 'Benchmark AnsysEM capability discovery'. Do not use shell, files, documentation, GUI, or any other tool. Return a compact JSON object with status='passed', eda, and operation_count.",
+  "prompt": "Use only the EDA Bridge Runtime tool. Read capabilities exactly once from connection '{{ANSYS_CONNECTION}}' for the purpose 'Benchmark AnsysEM capability discovery'. Do not use shell, files, documentation, GUI, or any other tool. Return a compact JSON object with status='passed', eda, and operation_count equal to the number of supported operations returned by the Bridge; do not report the number of tool calls.",
   "required_tools": {
     "eda.capabilities": 1
   },
@@ -17,7 +17,7 @@
       "eda": "ansys-electronics-desktop"
     },
     "minimum": {
-      "operation_count": 1
+      "operation_count": 2
     }
   },
   "budgets": {

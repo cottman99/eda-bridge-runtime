@@ -19,6 +19,15 @@ credentials, host address, or task-specific geometry is included here.
 - With that correction, connection discovery passed in 7.750 seconds with one Runtime call and two
   connections. The ADS ambiguity guard passed in 8.375 seconds with zero tool attempts and exactly
   one blocking question. No EDA application or SSH connection was opened by either case.
+- A four-run installed-profile capability spot check then used one read per Agent and vendor. Pi
+  reported the actual nine ADS and fourteen AnsysEM supported operations in 9.375 and 8.984 seconds;
+  Codex initially returned `1`, confusing supported-operation count with tool-call count. The old
+  minimum-one gate falsely passed it. The shared cases now define the field explicitly and require
+  more than one operation without hard-coding version-specific totals. Fresh Codex reruns reported
+  nine and fourteen in 16.375 and 13.266 seconds.
+- The measured vendor boundary remained approximately one second for both clients. The corrected
+  single samples retained Pi's lower Agent-side latency and provider-reported input counts, but are
+  functional spot checks rather than new statistical performance claims.
 
 ## 2026-08-30 Runtime alpha.25 Agent-host acceptance
 
