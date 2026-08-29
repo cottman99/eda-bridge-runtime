@@ -9,6 +9,8 @@ deterministic gates, budgets, and safety limits. The Agent executes the task; `r
 Level 5 begins complete disposable engineering lifecycles. The ADS case creates a blank source,
 applies a code-free structured design plan to a non-overwriting copy, and requires fresh-reopen
 evidence plus source preservation rather than accepting an Agent summary.
+The AnsysEM case creates and freshly reopens a complete HFSS 3D Layout Bundle, independently
+inspects its persisted anchors, and exports a hashed AEDT image artifact without solving.
 
 Raw Agent streams may contain local target facts and are not saved unless `--raw-output` is supplied.
 Normalized results contain only cross-client metrics with matching definitions, the canonical tool

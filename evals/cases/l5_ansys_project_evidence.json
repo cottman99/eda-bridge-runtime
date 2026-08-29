@@ -1,0 +1,49 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l5.ansys-project-evidence",
+  "level": 5,
+  "title": "AnsysEM greenfield project with fresh bundle and image evidence",
+  "variables": ["ANSYS_CONNECTION", "ANSYS_PROJECT", "ANSYS_IMAGE", "ANSYS_CREATE_KEY"],
+  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ANSYS_CONNECTION}}'. Read capabilities once for purpose 'Benchmark AnsysEM greenfield evidence contract'. Submit project.create once with idempotency_key='{{ANSYS_CREATE_KEY}}', purpose 'Create disposable AnsysEM L5 evaluation project', project='{{ANSYS_PROJECT}}', design='RuntimeEvalLayout', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', and redact_paths=true. Wait exactly once for its job with purpose 'Confirm disposable AnsysEM creation'. Then run project.inspect exactly once through the Runtime read-only tool with the same project/version/profile/display and purpose 'Verify persisted AnsysEM evaluation bundle'; wait exactly once for that job. Then run layout.export_image exactly once through the Runtime read-only tool with project='{{ANSYS_PROJECT}}', design='RuntimeEvalLayout', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', output='{{ANSYS_IMAGE}}', width=800, height=600, redact_paths=true, and purpose 'Export verified AnsysEM evaluation image'; wait exactly once for that job. Do not replay jobs, use shell/files/documentation/GUI, mutate after creation, solve, or use customer data. Return only compact JSON with status='passed', created=true, bundle_complete=true, image_verified=true, design_count, and validation_count copied from actual terminal responses.",
+  "required_tools": {
+    "eda.capabilities": 1,
+    "eda.submit": 1,
+    "eda.read": 2,
+    "eda.job.wait": 3
+  },
+  "allowed_tools": [
+    "eda.capabilities",
+    "eda.submit",
+    "eda.read",
+    "eda.job.wait"
+  ],
+  "expected_runtime": {
+    "equals": {
+      "deduplicated_calls": 0,
+      "reused_run_calls": 0,
+      "distinct_projected_runs": 4,
+      "distinct_jobs": 3
+    }
+  },
+  "expected_final": {
+    "equals": {
+      "status": "passed",
+      "created": true,
+      "bundle_complete": true,
+      "image_verified": true,
+      "design_count": 1,
+      "validation_count": 2
+    },
+    "minimum": {}
+  },
+  "budgets": {
+    "max_tool_calls": 7,
+    "max_wall_seconds": 300
+  },
+  "safety": {
+    "mutation": "disposable-only",
+    "solve": "forbidden",
+    "customer_data": "forbidden"
+  }
+}
+
