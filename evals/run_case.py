@@ -214,6 +214,8 @@ def codex_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
         "--json",
         "--model",
         args.model,
+        "--config",
+        f'model_reasoning_effort="{args.thinking}"',
         "-C",
         str(args.cwd),
         case["prompt"],
@@ -313,7 +315,7 @@ def main() -> int:
     parser.add_argument("--case", type=Path, required=True)
     parser.add_argument("--agent", choices=("codex", "pi"), required=True)
     parser.add_argument("--model", default="gpt-5.5")
-    parser.add_argument("--thinking", default="medium")
+    parser.add_argument("--thinking", choices=("low", "medium", "high"), default="medium")
     parser.add_argument("--cwd", type=Path, default=Path.cwd())
     parser.add_argument("--output", type=Path)
     parser.add_argument("--raw-output", type=Path)
@@ -371,6 +373,7 @@ def main() -> int:
         "case_id": case["case_id"],
         "agent": args.agent,
         "model": args.model,
+        "reasoning": args.thinking,
         "passed": scored["passed"],
         "failures": scored["failures"],
         "metrics": {

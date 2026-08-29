@@ -1,5 +1,6 @@
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
 
 def load_runner():
@@ -112,6 +113,21 @@ def test_windows_command_wrapping_is_shared_by_agent_clients(monkeypatch):
 
     assert command[:5] == ["cmd.exe", "/d", "/s", "/c", "call"]
     assert command[5].endswith("codex.cmd")
+
+
+def test_codex_command_applies_shared_thinking_budget():
+    runner = load_runner()
+    args = SimpleNamespace(
+        codex_command="codex",
+        codex_profile="eda-runtime",
+        model="gpt-5.5",
+        thinking="low",
+        cwd=Path("workspace"),
+    )
+
+    command = runner.codex_command(args, {"prompt": "inspect"})
+
+    assert 'model_reasoning_effort="low"' in command
 
 
 def test_case_variables_are_required_and_not_stored_in_case_definition():
