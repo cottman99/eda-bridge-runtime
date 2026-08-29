@@ -35,10 +35,13 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\python -m pip install -e ".[dev]"
-.venv\Scripts\eda-runtime doctor
+python -m pip install "eda-bridge-runtime==0.1.0a5"
+eda-runtime doctor
 ```
+
+For repository development, create a virtual environment and install `.[dev]`
+instead. Public releases are built once on a clean GitHub runner, published
+through PyPI Trusted Publishing, and installed back from PyPI before acceptance.
 
 See [Architecture](docs/ARCHITECTURE.md) and the
 [protocol schema](docs/schemas/request-v1.schema.json). Host placement is
