@@ -59,7 +59,7 @@ engineers continue to start the single generated launcher and use natural langua
 
 ## Current alpha
 
-`0.1.0a26` packages the thin Pi adapter and profile installer alongside the Runtime, giving Codex
+`0.1.0a27` packages the thin Pi adapter and profile installer alongside the Runtime, giving Codex
 and Pi Agent hosts the same source-free `agent-profile <agent> install` setup family while retaining
 one Runtime, transport, and audit path.
 
@@ -126,7 +126,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a26"
+python -m pip install "eda-bridge-runtime==0.1.0a27"
 eda-runtime doctor
 ```
 

@@ -32,18 +32,22 @@ Use `eda-runtime audit analyze` for a privacy-preserving efficiency summary. It
 separates intentional idempotent replay from repeated discovery, repeated
 failure, and avoidable status polling, and reports bounded timing totals without
 returning raw arguments, Context tokens, paths, or execution identifiers.
-Per-tool totals and medians split Bridge/transport time from measured Runtime-local processing only
+Per-tool totals and medians split the adapter/EDA boundary from measured Runtime-local processing only
 for paired timing samples. Calls from older or incomplete records without a transport measurement
 remain explicitly `unpaired`; they are never subtracted from a different sample population.
 Use `--session-id <id>` to isolate one observed or declared Agent lifecycle, or
 `--execution-run-id <id>` to isolate the Runtime call linked to one Bridge Run. The same exact
 filters work with `audit list`; compact rows expose linked execution Run and job identities without
 returning tool arguments. Filtered lookup scans at most the most recent 1,000 complete call groups.
-The transport share is calculated only from paired samples, making local and SSH routing costs
-comparable without treating missing measurements as zero.
-`client_transport_ms` is a boundary measurement: it includes time waiting for the local or remote
-Bridge and vendor EDA service, not just network packet transit. It can show that Runtime-local
-orchestration is small, but it cannot by itself claim that SSH network latency is large or small.
+The adapter-boundary share is calculated only from paired samples, making local and SSH execution
+paths comparable without treating missing measurements as zero. Canonical output names are
+`adapter_boundary_ms`, `runtime_local_ms`, and `adapter_boundary_share_percent`. For compatibility,
+the analyzer also retains the legacy `client_transport_ms`, `runtime_nontransport_ms`, and
+`transport_share_percent` aliases and describes the mapping in `timing_semantics`.
+The adapter boundary includes time waiting for the local or remote Bridge and vendor EDA service,
+not just network packet transit. `network_only_ms` is explicitly `null`: these observations can show
+that Runtime-local orchestration is small, but cannot by themselves claim that SSH packet latency is
+large or small.
 Failed-call counts remain separate so a fast rejection is not mistaken for healthy performance.
 The limit is measured in complete recent calls rather than raw event rows. Runtime
 observations are authoritative when present, so enabling an Agent Hook does not

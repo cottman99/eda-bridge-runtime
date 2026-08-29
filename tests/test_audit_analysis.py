@@ -56,15 +56,24 @@ def test_analysis_separates_idempotent_replay_from_waste():
     assert result["idempotent_replays"] == 1
     assert result["findings"] == [{"code": "potential_redundant_discovery", "count": 1}]
     assert result["potential_avoidable_mcp_ms"] == 10
+    assert result["timing_semantics"]["network_only_ms"] is None
+    assert result["timing_semantics"]["legacy_aliases"] == {
+        "client_transport_ms": "adapter_boundary_ms",
+        "runtime_nontransport_ms": "runtime_local_ms",
+        "transport_share_percent": "adapter_boundary_share_percent",
+    }
     assert result["timing_totals"] == {
         "mcp_server_ms": 40.0,
         "paired_mcp_server_ms": 40.0,
         "client_transport_ms": 36.0,
         "runtime_nontransport_ms": 4.0,
+        "adapter_boundary_ms": 36.0,
+        "runtime_local_ms": 4.0,
         "unpaired_mcp_server_ms": 0,
         "paired_calls": 4,
         "unpaired_calls": 0,
         "transport_share_percent": 90.0,
+        "adapter_boundary_share_percent": 90.0,
     }
     assert result["timing_by_tool"]["eda.capabilities"] == {
         "calls": 2,
@@ -79,8 +88,13 @@ def test_analysis_separates_idempotent_replay_from_waste():
         "client_transport_ms_median": 9.0,
         "runtime_nontransport_ms_total": 2.0,
         "runtime_nontransport_ms_median": 1.0,
+        "adapter_boundary_ms_total": 18.0,
+        "adapter_boundary_ms_median": 9.0,
+        "runtime_local_ms_total": 2.0,
+        "runtime_local_ms_median": 1.0,
         "unpaired_mcp_server_ms_total": 0,
         "transport_share_percent": 90.0,
+        "adapter_boundary_share_percent": 90.0,
     }
 
 
