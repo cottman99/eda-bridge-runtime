@@ -11,9 +11,10 @@ Requirements:
 - Runtime connections already registered for the intended local or SSH EDA workers.
 
 Create or refresh a dedicated profile with `install_profile.py`. The installer owns only the
-launcher, bounded settings, and session directory. It neither creates nor modifies `auth.json`, and
-verifies an existing credential file is byte-for-byte unchanged. Authentication remains an
-interactive Pi action.
+work launcher, a sibling `*-login.cmd` launcher, bounded settings, and session directory. It neither
+creates nor modifies `auth.json`, and verifies an existing credential file is byte-for-byte
+unchanged. Run the login launcher and use Pi's `/login` once; it loads no EDA extension, Skill,
+tool, or project context. Authentication remains an interactive Pi action.
 
 ```powershell
 python integrations/pi-eda-runtime/install_profile.py `

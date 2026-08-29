@@ -48,6 +48,10 @@ def test_pi_profile_update_preserves_credentials_and_unmanaged_settings(tmp_path
     assert "eda_read" in launcher
     assert "eda_run_plan" in launcher
     assert launcher.endswith(" %*\n")
+    login_launcher = (tmp_path / "pi-eda-login.cmd").read_text(encoding="utf-8")
+    assert "--no-extensions --no-skills --no-tools --no-context-files" in login_launcher
+    assert "eda-runtime-control" not in login_launcher
+    assert result["login_launcher"].endswith("pi-eda-login.cmd")
 
 
 def test_pi_profile_does_not_create_an_auth_file(tmp_path):

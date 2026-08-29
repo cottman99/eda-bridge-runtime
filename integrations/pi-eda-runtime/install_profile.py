@@ -65,6 +65,7 @@ def install_profile(
     profile_dir: Path,
     session_dir: Path,
     launcher: Path,
+    login_launcher: Path | None = None,
     node: Path,
     pi_cli: Path,
     vendor_skills: tuple[Path, ...] = (),
@@ -72,6 +73,11 @@ def install_profile(
     profile_dir = profile_dir.expanduser().resolve()
     session_dir = session_dir.expanduser().resolve()
     launcher = launcher.expanduser().resolve()
+    login_launcher = (
+        login_launcher.expanduser().resolve()
+        if login_launcher is not None
+        else launcher.with_name(f"{launcher.stem}-login{launcher.suffix}")
+    )
     node = node.expanduser().resolve()
     pi_cli = pi_cli.expanduser().resolve()
     if not node.is_file() or not pi_cli.is_file():
@@ -138,6 +144,27 @@ def install_profile(
         ]
     )
     atomic_text(launcher, command)
+    login_arguments = [
+        str(node),
+        str(pi_cli),
+        "--no-extensions",
+        "--no-skills",
+        "--no-tools",
+        "--no-context-files",
+    ]
+    login_command = "\n".join(
+        [
+            "@echo off",
+            "setlocal",
+            f'set "PI_CODING_AGENT_DIR={profile_dir}"',
+            f'set "PI_CODING_AGENT_SESSION_DIR={session_dir}"',
+            'set "PI_TELEMETRY=0"',
+            'set "PI_SKIP_VERSION_CHECK=1"',
+            subprocess.list2cmdline(login_arguments) + " %*",
+            "",
+        ]
+    )
+    atomic_text(login_launcher, login_command)
     auth_after = file_hash(auth_path)
     if auth_before != auth_after:
         raise RuntimeError("Pi credential file changed during profile installation.")
@@ -146,6 +173,7 @@ def install_profile(
         "profile_dir": str(profile_dir),
         "session_dir": str(session_dir),
         "launcher": str(launcher),
+        "login_launcher": str(login_launcher),
         "auth_state": "configured" if auth_entries else "login_required",
         "auth_unchanged": True,
         "runtime_extension": str(package_root),
@@ -160,6 +188,7 @@ def main() -> int:
     parser.add_argument("--profile-dir", type=Path, required=True)
     parser.add_argument("--session-dir", type=Path, required=True)
     parser.add_argument("--launcher", type=Path, required=True)
+    parser.add_argument("--login-launcher", type=Path)
     parser.add_argument("--node", type=Path, required=True)
     parser.add_argument("--pi-cli", type=Path, required=True)
     parser.add_argument(
@@ -174,6 +203,7 @@ def main() -> int:
         profile_dir=args.profile_dir,
         session_dir=args.session_dir,
         launcher=args.launcher,
+        login_launcher=args.login_launcher,
         node=args.node,
         pi_cli=args.pi_cli,
         vendor_skills=tuple(args.vendor_skill),
