@@ -17,7 +17,8 @@ codex exec --profile eda-runtime "Inspect the selected EDA target"
 ```
 
 Regenerate the profile after installing or removing Skills. Engineers do not maintain the generated
-path list by hand.
+path list by hand. Hidden backup and archive directories are ignored so historical
+Skill copies cannot re-enter the Agent prompt.
 
 For a separately authorized unattended evaluation, generate a different
 profile with `--approve-mutations`. It pre-approves only the typed Runtime

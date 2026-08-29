@@ -54,3 +54,14 @@ def test_unattended_profile_approves_only_typed_runtime_mutation(tmp_path):
     assert '[mcp_servers."eda-bridge-runtime".tools."eda.submit"]' in profile
     assert 'approval_mode = "approve"' in profile
     assert "dangerously-bypass" not in profile
+
+
+def test_profile_ignores_hidden_skill_backups(tmp_path):
+    installer = load_installer()
+    current = write_skill(tmp_path / "skills", "ads", "ads-agent-bridge")
+    hidden = write_skill(tmp_path / "skills", ".ads-agent-backups/ads-old", "ads-agent-bridge")
+
+    discovered = installer.discover_skills(tmp_path)
+
+    assert (current, "ads-agent-bridge") in discovered
+    assert (hidden, "ads-agent-bridge") not in discovered

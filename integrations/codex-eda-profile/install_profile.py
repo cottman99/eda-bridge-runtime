@@ -26,6 +26,9 @@ def discover_skills(codex_home: Path) -> list[tuple[Path, str]]:
         if not root.is_dir():
             continue
         for skill_file in root.rglob("SKILL.md"):
+            relative = skill_file.relative_to(root)
+            if any(part.startswith(".") for part in relative.parts):
+                continue
             try:
                 header = skill_file.read_text(encoding="utf-8")[:4096]
             except (OSError, UnicodeError):
