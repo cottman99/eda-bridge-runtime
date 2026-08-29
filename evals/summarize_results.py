@@ -25,6 +25,8 @@ def outcome(result: dict[str, Any]) -> str:
         return "agent_auth_unavailable"
     if "runtime_mcp_unavailable" in failures:
         return "runtime_unavailable"
+    if "agent_reported_tool_unavailable" in failures:
+        return "agent_reported_tool_unavailable"
     return "failed"
 
 

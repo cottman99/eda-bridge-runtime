@@ -450,6 +450,10 @@ def test_mcp_supports_legacy_and_modern_discovery():
     assert "Omit this field unless every JSON Pointer was verified" in result_view["description"]
     pointer = result_view["properties"]["fields"]["items"]["properties"]["pointer"]
     assert "never infer it from final-answer keys" in pointer["description"]
+    target_properties = read_tool["inputSchema"]["properties"]
+    assert "registered connection identifier" in target_properties["connection_id"]["description"]
+    assert "vendor type" in target_properties["eda"]["description"]
+    assert "rather than in eda" in target_properties["connection_id"]["description"]
 
 
 def test_mcp_requires_purpose_even_for_connection_discovery():

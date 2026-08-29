@@ -26,8 +26,12 @@ const ResultView = Type.Object({
 const TargetFields = {
   target: Type.Optional(JsonObject),
   context: Type.Optional(Type.String()),
-  connection_id: Type.Optional(Type.String()),
-  eda: Type.Optional(Type.String()),
+  connection_id: Type.Optional(Type.String({
+    description: "Exact registered connection identifier, for example ads-display4. If the request names a connection, put it here rather than in eda.",
+  })),
+  eda: Type.Optional(Type.String({
+    description: "EDA vendor type such as keysight-ads or ansys-electronics-desktop; use only when exactly one registered connection has that type.",
+  })),
 };
 
 type RuntimeResult = {

@@ -1,6 +1,6 @@
 # Version 0.1 scope
 
-## Unreleased — task-scoped audit retrieval and fair evaluation
+## 0.1.0a22 — precise Agent targeting and authenticated comparison
 
 - Filter compact audit calls and aggregate timing by one exact Agent session, one linked Bridge
   Run, or both, while retaining complete request/completion pairs and bounded recent-call scans.
@@ -9,6 +9,13 @@
   and record the actual execution order.
 - Add a one-turn, two-connection read-only case that measures cross-EDA coordination without
   pretending to offer a cross-vendor transaction.
+- Give `connection_id` and `eda` distinct machine-visible meanings so Agents do not put a
+  registered connection name into the vendor-type selector.
+- Generate separate login and native status launchers for isolated Pi EDA profiles, preserving
+  credentials while preventing default-profile readiness from being mistaken for EDA-profile readiness.
+- Retain the first authenticated Codex/Pi baselines from Runtime discovery through bounded
+  vendor-document source selection, and classify an explicit zero-call client tool-unavailable
+  result separately from Runtime, Bridge, EDA, and reasoning failures.
 
 ## 0.1.0a21 — correlated audit sessions and honest timing boundaries
 

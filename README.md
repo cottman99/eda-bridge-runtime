@@ -39,7 +39,7 @@ Agent context. Full responses remain the default for exploration.
 
 ## Current alpha
 
-`0.1.0a21` gives every MCP client lifecycle an automatic anonymous audit correlation when the Agent
+`0.1.0a22` gives every MCP client lifecycle an automatic anonymous audit correlation when the Agent
 cannot declare its own session, and reports only paired timing partitions while identifying legacy
 measurements that cannot be compared. Generated Codex EDA profiles now explicitly isolate built-in
 system Skills as well as unrelated installed Skills.
@@ -87,7 +87,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a21"
+python -m pip install "eda-bridge-runtime==0.1.0a22"
 eda-runtime doctor
 ```
 

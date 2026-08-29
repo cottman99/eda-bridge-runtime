@@ -1,0 +1,15 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a21 plus candidate selector descriptions",
+  "environment": "sanitized authenticated dedicated-Pi and narrow-Codex remote display4 read-only acceptance",
+  "notes": "Three trials per retained row. The Pi ADS documentation row is the three-trial confirmation after connection_id and eda received explicit machine-visible descriptions. The initial pre-fix Pi ADS documentation trial that put ads-display4 in eda is retained in the narrative but excluded from the post-fix performance row. No mutation, solve, GUI action, customer data, passage text, final response, or raw trace was retained. Token counters are provider-reported and are not a direct billing comparison.",
+  "cases": [
+    {"case_id":"l2.ads-session-status","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":21955.145,"median_input_tokens":36751.0},
+    {"case_id":"l2.ads-session-status","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":10868.172,"median_input_tokens":2368.0},
+    {"case_id":"l4.ads-docs-evidence","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":23118.29,"median_input_tokens":53433.0},
+    {"case_id":"l4.ads-docs-evidence","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":13978.278,"median_input_tokens":4823.0},
+    {"case_id":"l4.ansys-docs-evidence","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":23724.317,"median_input_tokens":49667.0},
+    {"case_id":"l4.ansys-docs-evidence","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":13970.234,"median_input_tokens":4204.0}
+  ]
+}

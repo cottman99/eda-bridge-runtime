@@ -27,14 +27,19 @@ tools; shell, write, and edit are absent. An authentication-free RPC acceptance 
 Runtime tools, two configured EDA connections, and a 181.4 ms status refresh while preserving the
 empty credential file unchanged.
 
+The profile installer also emits separate login and authentication-status launchers. The latter
+checks the isolated EDA profile with Pi's native `auth check` command before any EDA extension or
+Skill is loaded. This prevents a successful login in the user's default Pi profile from being
+mistaken for readiness of the isolated EDA profile.
+
 The Agent host currently uses Node `24.20.0`, npm `11.19.0`, and pinned Pi
 `@earendil-works/pi-coding-agent@0.84.4`. The dedicated profile lives outside the repository and
-contains no credentials. Its launcher keeps only Pi's read-only file tool, disables shell/write/edit
-and automatic global Skill discovery, then explicitly loads only three Skills: Runtime control,
-ADS operation, and AnsysEM operation. The engineer still starts one command and uses natural
-language; Pi selects and reads the relevant Skill.
+contains no credentials in the repository. Its launcher keeps only Pi's read-only file tool,
+disables shell/write/edit and automatic global Skill discovery, then explicitly loads five Skills:
+Runtime control plus operation and documentation Skills for ADS and AnsysEM. The engineer still
+starts one command and uses natural language; Pi selects and reads the relevant Skill.
 
-The checked-in package is `integrations/pi-eda-runtime`. It registers exactly nine `eda_*` tools,
+The checked-in package is `integrations/pi-eda-runtime`. It registers exactly ten `eda_*` tools,
 maintains one persistent `eda-runtime mcp serve` child, and adds `/eda-runtime-status`. It does not
 contain SSH or vendor logic. Pi supplies provider, model, reasoning, session, and tool-call identity
 directly from its extension context; Runtime stores these as declared facts and stores MCP client

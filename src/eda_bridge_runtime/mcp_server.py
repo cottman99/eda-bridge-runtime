@@ -152,6 +152,22 @@ def _project_response_result(response: dict[str, Any], result_view: Any) -> dict
     }
 
 
+_CONNECTION_ID_SCHEMA = {
+    "type": "string",
+    "description": (
+        "Exact registered connection identifier, for example ads-display4. "
+        "When the request names a connection, put it here rather than in eda."
+    ),
+}
+_EDA_SELECTOR_SCHEMA = {
+    "type": "string",
+    "description": (
+        "EDA vendor type, for example keysight-ads or ansys-electronics-desktop; "
+        "use only when exactly one registered connection has that type."
+    ),
+}
+
+
 TOOLS = [
     {
         "name": "eda.context.resolve",
@@ -164,7 +180,7 @@ TOOLS = [
             {
                 "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
                 "context": {"type": "string"},
-                "connection_id": {"type": "string"},
+                "connection_id": _CONNECTION_ID_SCHEMA,
             },
             ["purpose", "context"],
         ),
@@ -190,7 +206,7 @@ TOOLS = [
         "inputSchema": _object_schema(
             {
                 "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
-                "connection_id": {"type": "string"},
+                "connection_id": _CONNECTION_ID_SCHEMA,
             },
             ["purpose", "connection_id"],
         ),
@@ -208,8 +224,8 @@ TOOLS = [
                 "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
                 "target": {"type": "object"},
                 "context": {"type": "string"},
-                "connection_id": {"type": "string"},
-                "eda": {"type": "string"},
+                "connection_id": _CONNECTION_ID_SCHEMA,
+                "eda": _EDA_SELECTOR_SCHEMA,
             },
             ["purpose"],
         ),
@@ -231,8 +247,8 @@ TOOLS = [
                 "payload": {"type": "object"},
                 "target": {"type": "object"},
                 "context": {"type": "string"},
-                "connection_id": {"type": "string"},
-                "eda": {"type": "string"},
+                "connection_id": _CONNECTION_ID_SCHEMA,
+                "eda": _EDA_SELECTOR_SCHEMA,
                 "result_view": _RESULT_VIEW_SCHEMA,
                 "wait": _WAIT_SCHEMA,
             },
@@ -258,8 +274,8 @@ TOOLS = [
                 "payload": {"type": "object"},
                 "target": {"type": "object"},
                 "context": {"type": "string"},
-                "connection_id": {"type": "string"},
-                "eda": {"type": "string"},
+                "connection_id": _CONNECTION_ID_SCHEMA,
+                "eda": _EDA_SELECTOR_SCHEMA,
                 "expected_effect": {"type": "string"},
                 "idempotency_key": {"type": "string"},
                 "wait": _WAIT_SCHEMA,
@@ -315,8 +331,8 @@ TOOLS = [
                 },
                 "target": {"type": "object"},
                 "context": {"type": "string"},
-                "connection_id": {"type": "string"},
-                "eda": {"type": "string"},
+                "connection_id": _CONNECTION_ID_SCHEMA,
+                "eda": _EDA_SELECTOR_SCHEMA,
             },
             ["purpose", "steps"],
         ),
@@ -332,8 +348,8 @@ TOOLS = [
             {
                 "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
                 "job_id": {"type": "string"},
-                "connection_id": {"type": "string"},
-                "eda": {"type": "string"},
+                "connection_id": _CONNECTION_ID_SCHEMA,
+                "eda": _EDA_SELECTOR_SCHEMA,
             },
             ["purpose", "job_id"],
         ),
@@ -350,8 +366,8 @@ TOOLS = [
             {
                 "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
                 "job_id": {"type": "string"},
-                "connection_id": {"type": "string"},
-                "eda": {"type": "string"},
+                "connection_id": _CONNECTION_ID_SCHEMA,
+                "eda": _EDA_SELECTOR_SCHEMA,
                 "result_view": _RESULT_VIEW_SCHEMA,
                 "timeout_ms": {"type": "integer", "minimum": 1000, "maximum": 90000},
                 "poll_interval_ms": {"type": "integer", "minimum": 100, "maximum": 5000},
@@ -369,8 +385,8 @@ TOOLS = [
                 "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
                 "job_id": {"type": "string"},
                 "after_cursor": {"type": "integer", "minimum": 0},
-                "connection_id": {"type": "string"},
-                "eda": {"type": "string"},
+                "connection_id": _CONNECTION_ID_SCHEMA,
+                "eda": _EDA_SELECTOR_SCHEMA,
             },
             ["purpose", "job_id"],
         ),

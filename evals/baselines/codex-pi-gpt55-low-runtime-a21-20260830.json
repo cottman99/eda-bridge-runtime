@@ -1,0 +1,17 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a21",
+  "environment": "sanitized authenticated dedicated-Pi and narrow-Codex remote display4 read-only acceptance",
+  "notes": "Agents were interleaved and EDA calls remained serial. The first three cases have three trials per Agent. Cross-EDA has five trials per Agent across one three-trial matrix and one two-trial confirmation. No mutation, solve, GUI action, customer data, final response, or raw Agent trace was retained. Token counters are provider-reported and are not a direct billing comparison.",
+  "cases": [
+    {"case_id":"l0.connections","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":16127.115,"median_input_tokens":34633.0},
+    {"case_id":"l0.connections","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":7959.225,"median_input_tokens":1489.0},
+    {"case_id":"l1.ads-capabilities","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":20056.425,"median_input_tokens":36353.0},
+    {"case_id":"l1.ads-capabilities","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":10656.171,"median_input_tokens":2488.0},
+    {"case_id":"l1.ansys-capabilities","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":19916.276,"median_input_tokens":34878.0},
+    {"case_id":"l1.ansys-capabilities","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":9901.939,"median_input_tokens":2184.0},
+    {"case_id":"l2.cross-eda-capabilities","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":5,"pass_rate":0.8,"semantic_pass_rate":0.8,"wall_budget_pass_rate":1.0,"median_wall_ms":26183.678,"median_input_tokens":50821.0},
+    {"case_id":"l2.cross-eda-capabilities","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":5,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":13645.95,"median_input_tokens":3303.0}
+  ]
+}

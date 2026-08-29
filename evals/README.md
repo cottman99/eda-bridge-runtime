@@ -48,7 +48,8 @@ Agent profile and is never copied into a case or result.
 
 `summarize_results.py` combines only normalized results. It omits every Agent
 final payload and raw trace, distinguishes authentication from Runtime/EDA
-failure, and only calls a case cross-Agent comparable when more than one Agent
+failure, and separately labels a zero-call result whose compact final explicitly
+reports that the client tool was unavailable. It only calls a case cross-Agent comparable when more than one Agent
 actually passed that same case.
 
 `baselines/` retains sanitized observed references, not raw traces or customer facts.

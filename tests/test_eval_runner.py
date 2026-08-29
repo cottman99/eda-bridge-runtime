@@ -370,3 +370,20 @@ def test_auth_failure_is_reduced_to_non_secret_classification():
         runner.launch_failure("No matching provider is authenticated. Use --provider.")
         == "agent_auth_unavailable"
     )
+
+
+def test_agent_reported_tool_unavailable_is_classified_without_raw_trace():
+    runner = load_runner()
+
+    assert (
+        runner.agent_reported_failure(
+            {"status": "failed", "eda": "tool_unavailable"}, tool_attempts=0
+        )
+        == "agent_reported_tool_unavailable"
+    )
+    assert (
+        runner.agent_reported_failure(
+            {"status": "failed", "eda": "tool_unavailable"}, tool_attempts=1
+        )
+        is None
+    )
