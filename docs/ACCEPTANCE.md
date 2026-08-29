@@ -3,6 +3,21 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 Runtime a21 repeated read-only baseline
+
+- Twelve independent Codex trials passed across Runtime discovery, ADS and AnsysEM capability
+  discovery, and one typed ADS session read. Every case used exactly one allowed Runtime call; no
+  mutation, solve, GUI action, customer data, or raw Agent trace was retained.
+- Each case had three trials with a 100% strict, semantic, and wall-budget pass rate. Median wall
+  times were 17.219 s, 16.703 s, 17.656 s, and 19.657 s respectively.
+- Against the same Codex `gpt-5.5` low-reasoning a20 baseline, those medians improved by 4.615 s,
+  9.706 s, 4.629 s, and 6.382 s (about 21%, 37%, 21%, and 25%) without changing the correctness
+  gates. The measured Bridge/SSH/EDA boundary remained about 0-6% of wall time, so this evidence
+  does not justify additional SSH command-layer complexity.
+- The sanitized three-trial reference is checked in as
+  `evals/baselines/codex-gpt55-low-runtime-a21-20260830.json`; transient per-trial files remain
+  untracked.
+
 ## 2026-08-30 Runtime alpha.21 correlated-audit acceptance
 
 - The complete Python suite passed 135 tests; Ruff check and format check passed across 56 files.

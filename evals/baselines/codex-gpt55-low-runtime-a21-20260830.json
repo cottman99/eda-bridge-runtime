@@ -1,0 +1,13 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a21",
+  "environment": "sanitized remote display4 read-only acceptance",
+  "notes": "Three independent trials per case. No mutation, solve, GUI action, customer data, or raw Agent trace was retained.",
+  "cases": [
+    {"case_id":"l0.connections","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":17219.0,"median_input_tokens":34561.0},
+    {"case_id":"l1.ads-capabilities","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":16703.0,"median_input_tokens":35957.0},
+    {"case_id":"l1.ansys-capabilities","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":17656.0,"median_input_tokens":35067.0},
+    {"case_id":"l2.ads-session-status","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":19657.0,"median_input_tokens":36977.0}
+  ]
+}
