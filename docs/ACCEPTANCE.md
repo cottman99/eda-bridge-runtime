@@ -60,6 +60,13 @@ credentials, host address, or task-specific geometry is included here.
   Bridge/EDA transport boundary. The zero-call Codex miss was correctly absent from Runtime facts
   and present in the evaluator record, proving the documented client-versus-Runtime observability
   boundary.
+- A new candidate-workspace case made both Agents carry the exact revision observed from
+  `workspace.begin` into `workspace.abort`, then inspect the frozen source. Both initial trials
+  supplied the correct revision and exposed the same AnsysEM Bridge keyword-only dispatch defect;
+  both stopped without claiming success. After the Bridge fix, regression tests, and installation
+  of public `ansysem-agent-bridge 0.2.0a5`, both fresh runs passed four calls and four durable jobs,
+  removed the candidate, preserved the complete source, created no promoted output, and ran no
+  solve. This validates a real stateful workflow rather than only static capability discovery.
 
 ## 2026-08-30 Runtime alpha.22 installed acceptance
 

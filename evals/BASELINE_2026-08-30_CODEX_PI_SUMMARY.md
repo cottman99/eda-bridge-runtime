@@ -20,6 +20,7 @@ the same Runtime/Bridge contracts.
 | L3 AnsysEM create plus exact replay | 3 each, both 3/3 | 67.000 s | 56.672 s | 15.4% | AEDT lifecycle |
 | L5 ADS structured-design plan | 3 each, both 3/3 | 30.135 s | 18.548 s | 38.5% | Agent/client |
 | L5 AnsysEM project-evidence plan | 3 each, both 3/3 | 90.871 s | 84.140 s | 7.4% | AEDT lifecycle |
+| L5 AnsysEM candidate begin/abort | 1 each, both passed | 85.011 s | 67.829 s | 20.2% | Mixed Agent and AEDT lifecycle |
 | L6 generated-input Momentum solve (Codex 2/3; Pi 3/3) | 3 each | 38.814 s | 21.701 s | 44.1% | Mixed Agent and solver |
 | L6 one-turn ADS plus AnsysEM | 3 each, both 3/3 | 103.691 s | 92.718 s | 10.6% | AEDT lifecycle |
 
@@ -51,9 +52,12 @@ the same Runtime/Bridge contracts.
 
 ## Remaining evidence gaps
 
-- The L3, L5, generated-input Momentum, and cross-EDA lifecycle cases now have three trials per
-  Agent. Add more repetitions only for a specific regression question rather than accumulating
-  samples without a decision boundary.
+- The L3 mutations, ADS structured-design L5, AnsysEM project-evidence L5, generated-input
+  Momentum, and cross-EDA lifecycle cases now have three trials per Agent. Add more repetitions
+  only for a specific regression question rather than accumulating samples without a decision
+  boundary.
+- The new candidate begin/abort case is one post-fix functional trial per Agent. Repeat it only if
+  candidate-state latency or Agent revision-carry reliability becomes a decision gate.
 - Add live ADS 2024 Update 2 and ADS 2023 Update 2 evidence only when those installations are
   available; version strings alone must not promote their support tier.
 - Continue product-specific capability growth inside each Bridge. Runtime should gain another

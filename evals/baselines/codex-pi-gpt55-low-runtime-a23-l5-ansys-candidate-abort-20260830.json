@@ -1,0 +1,11 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a23",
+  "environment": "sanitized authenticated dedicated-Pi and narrow-Codex remote display4 AnsysEM 0.2.0a5 candidate-workspace acceptance",
+  "notes": "One post-fix functional trial per Agent created an independent empty source, began one candidate, carried the observed optimistic revision into abort, and freshly inspected the unchanged source. Both passed with four Runtime calls, four durable jobs, no promoted output, and no solve. The pre-fix trial for each Agent supplied the correct revision but exposed the same Bridge keyword-only dispatch TypeError; neither claimed success. No customer data, final response, raw trace, private path, workspace, project, job identity, or generated EDA artifact was retained. Token counters are provider-reported and are not a direct billing comparison.",
+  "cases": [
+    {"case_id":"l5.ansys-candidate-abort-lifecycle","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":1,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":85011.223,"median_non_transport_wall_ms":41947.223,"median_input_tokens":100850.0},
+    {"case_id":"l5.ansys-candidate-abort-lifecycle","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":1,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":67828.527,"median_non_transport_wall_ms":20405.527,"median_input_tokens":11737.0}
+  ]
+}
