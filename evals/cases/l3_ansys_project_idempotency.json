@@ -4,16 +4,14 @@
   "level": 3,
   "title": "AnsysEM disposable project creation and idempotent replay",
   "variables": ["ANSYS_CONNECTION", "ANSYS_PROJECT", "IDEMPOTENCY_KEY"],
-  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ANSYS_CONNECTION}}'. Discover capabilities once for purpose 'Benchmark AnsysEM bounded mutation schema'. Submit operation 'project.create' with idempotency_key='{{IDEMPOTENCY_KEY}}' and vendor payload project='{{ANSYS_PROJECT}}', design='RuntimeEvalLayout', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', redact_paths=true for purpose 'Create one disposable AnsysEM evaluation project'. Wait exactly once for the returned job with purpose 'Confirm disposable AnsysEM project completion'. After the job is terminal, submit the exact same operation, key, payload, connection, and purpose once more to prove Runtime idempotency. Do not use shell, files, GUI, solve, or customer data. Return only a compact JSON object with status='passed', bundle_complete=true, and idempotent_replay=true based on the actual Runtime responses.",
+  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ANSYS_CONNECTION}}'. Discover capabilities once for purpose 'Benchmark AnsysEM bounded mutation schema'. Submit operation 'project.create' with idempotency_key='{{IDEMPOTENCY_KEY}}', purpose 'Create and wait for one disposable AnsysEM evaluation project', vendor payload project='{{ANSYS_PROJECT}}', design='RuntimeEvalLayout', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', redact_paths=true, and wait={timeout_ms:90000,poll_interval_ms:1000}. After that call returns terminal, submit the exact same operation, key, payload, connection, purpose, and wait once more to prove Runtime idempotency. Do not call a separate job tool, use shell, files, GUI, solve, or customer data. Return only a compact JSON object with status='passed', bundle_complete=true, and idempotent_replay=true based on the actual Runtime responses.",
   "required_tools": {
     "eda.capabilities": 1,
-    "eda.submit": 2,
-    "eda.job.wait": 1
+    "eda.submit": 2
   },
   "allowed_tools": [
     "eda.capabilities",
-    "eda.submit",
-    "eda.job.wait"
+    "eda.submit"
   ],
   "expected_runtime": {
     "equals": {
@@ -32,7 +30,7 @@
     "minimum": {}
   },
   "budgets": {
-    "max_tool_calls": 4,
+    "max_tool_calls": 3,
     "max_wall_seconds": 120
   },
   "safety": {

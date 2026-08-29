@@ -3,6 +3,24 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Runtime alpha.18 one-call durable-operation acceptance
+
+- A real AnsysEM project inspect used one capability call plus one inline-wait read and returned the
+  same fresh bundle facts as the prior three-call lifecycle. Agent tool calls fell from three to
+  two, and input tokens fell from the prior three-trial median of 66,853 to 52,565 (21.4%). Wall
+  time was 33.221 s; the single sample is not used as a latency claim.
+- A separate disposable AnsysEM creation used one inline-wait mutation and one exact idempotent
+  replay. It completed the same correctness contract in three Agent calls instead of four and used
+  84,928 input tokens versus 101,851 in the prior direct baseline (16.6% less). AEDT execution was
+  slower in this sample, so the 127.383-second wall time missed the unchanged 120-second SLO while
+  remaining semantically correct; the budget was not relaxed after observation.
+- Compact audit retained the inline wait as one logical `eda.read` or `eda.submit`; internal job
+  polling did not appear as extra Agent behavior. Both disposable Bundles and all staging files
+  were removed after exact-path verification.
+- The complete 126-test Python suite, Ruff, formatting, package build, Twine checks, and all three
+  Pi adapter tests passed. The candidate Runtime and plugin were installed on the local Agent host
+  and the remote combined host; both isolated remote Bridge environments report `0.1.0a18`.
+
 ## 2026-08-29 Runtime alpha.17 durable and planned bounded-read acceptance
 
 - One real ADS read plan obtained the exact 13-session count and `ok` Bridge status through two
