@@ -1,6 +1,10 @@
 # EDA Bridge Runtime
 
-<img src="plugins/eda-bridge-runtime/assets/logo.png" width="180" alt="EDA Bridge Runtime logo">
+<p align="center">
+  <img src="plugins/eda-bridge-runtime/assets/logo.png" width="160" alt="EDA Bridge Runtime logo">
+</p>
+
+<p align="center"><strong>Keep EDA work reliable whether the Agent runs beside the tool or reaches it over SSH.</strong></p>
 
 `eda-bridge-runtime` is an agent-neutral execution layer for EDA automation.
 It gives local and SSH-driven bridges the same request envelope, durable job
@@ -10,6 +14,14 @@ The runtime is intentionally not an EDA bridge and not an AI harness. Vendor
 bridges keep their native API knowledge. Agents state a short purpose; the
 runtime records what was requested, what actually ran, how long each phase
 took, and what result or artifact was produced.
+
+![A small operator reconnects a remote EDA task that kept running and retained its evidence record](docs/assets/readme/runtime-user-value.png)
+
+## What changes for the user
+
+You state the task and intended target once. The Runtime carries the same
+request through a local or remote path, keeps long work recoverable across a
+disconnect, and returns the result with its linked timing and evidence.
 
 ## Design promises
 
