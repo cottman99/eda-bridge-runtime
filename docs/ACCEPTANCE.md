@@ -26,6 +26,9 @@ credentials, host address, or task-specific geometry is included here.
   Pi adapter tests passed. Local and remote Runtime/plugin installs plus both isolated remote Bridge
   environments report the alpha.19 candidate. The disposable AnsysEM Bundle and staging files were
   removed after exact-path verification.
+- A clean PyPI dependency-resolution dry run for the public ADS alpha.36 and AnsysEM alpha.4
+  packages selected Runtime alpha.19 automatically. Existing compatible installations are not
+  forcibly upgraded, while new Bridge installations receive the current Runtime dependency.
 
 ## 2026-08-29 Runtime alpha.18 one-call durable-operation acceptance
 
