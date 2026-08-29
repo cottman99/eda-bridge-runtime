@@ -65,6 +65,10 @@ python evals/run_case.py --case evals/cases/l0_connections.json `
 different reasoning budgets.
 Use `--no-codex-profile` only for a controlled comparison against the user's global Codex
 configuration; normal EDA evaluations retain the narrow profile.
+For self-contained typed mutation cases, `--codex-profile eda-runtime-eval` may select an
+administrator-generated Runtime-only profile. This avoids loading interpretation-oriented vendor
+Skills after the case has already supplied the complete typed plan; it does not replace the normal
+five-Skill profile for natural-language tasks.
 
 Pi uses the checked-in thin adapter and the same case prompt. Authentication remains in the private
 Agent profile and is never copied into a case or result.

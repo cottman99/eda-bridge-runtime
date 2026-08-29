@@ -54,6 +54,15 @@ credentials, host address, or task-specific geometry is included here.
 - All four sources were synthetic and independent. No solve ran. After verifying exact scratch-root
   resolution and no referencing process, the two ADS workspaces, two complete AnsysEM Bundles, and
   owned configuration remnants were deleted together; customer files were never opened.
+- A subsequent one-call ADS design-plan trial exposed a Codex profile-boundary issue. The full
+  five-Skill profile completed the correct two Runtime steps and all seven assertions, but first
+  attempted one invalid `read_mcp_resource` call while trying to consume interpretation guidance
+  that the already self-contained plan did not need. Strict evaluation therefore failed it.
+- A separate Runtime-only Codex evaluation profile retained only `eda-runtime-control`; the same
+  independent plan then passed with exactly one tool attempt in 26.938 seconds instead of 40.938,
+  and provider-reported input fell from 59,591 to 41,909. Pi passed its independent plan with one
+  attempt in 19.313 seconds and 5,215 input tokens. Daily natural-language profiles remain unchanged;
+  only pre-resolved typed execution/evaluation uses the narrower administrative profile.
 
 ## 2026-08-30 Runtime alpha.25 Agent-host acceptance
 
