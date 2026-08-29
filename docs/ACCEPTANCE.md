@@ -43,6 +43,12 @@ credentials, host address, or task-specific geometry is included here.
   median time outside the Bridge/EDA boundary was 26.880 versus 36.113 seconds. The dedicated Pi
   OAuth profile remained ready throughout the long-running sample. No solver ran, and all owned
   ADS and AnsysEM scratch was removed after process and exact-path verification.
+- A post-release repeated ADS structured-design sample used the matrix's new run-variable expansion
+  to create six independent source/output workspaces and idempotency identities. Both Agents passed
+  3/3 with one plan call and seven fresh-reopen assertions per trial. Pi's median wall time was
+  18.548 seconds versus Codex's 30.135 seconds, while the measured Runtime/SSH/ADS boundary was
+  effectively identical at 2.516 versus 2.515 seconds. All owned scratch was removed after process
+  and exact-path verification.
 
 ## 2026-08-30 Runtime alpha.22 installed acceptance
 

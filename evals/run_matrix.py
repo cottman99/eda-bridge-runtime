@@ -72,6 +72,22 @@ def missing_case_variables(cases: list[dict[str, Any]], supplied: set[str]) -> l
     return sorted(required - supplied)
 
 
+def expand_run_variables(values: list[str], *, agent: str, trial: int, sequence: int) -> list[str]:
+    """Expand only the matrix-owned placeholders, leaving all other braces untouched."""
+    replacements = {
+        "{agent}": agent,
+        "{trial}": str(trial),
+        "{sequence}": str(sequence),
+    }
+    expanded: list[str] = []
+    for value in values:
+        rendered = value
+        for placeholder, replacement in replacements.items():
+            rendered = rendered.replace(placeholder, replacement)
+        expanded.append(rendered)
+    return expanded
+
+
 def matrix_exit_code(results: list[dict[str, Any]]) -> int:
     if not results:
         return 2
@@ -189,7 +205,7 @@ def main() -> int:
             "--pi-command",
             args.pi_command,
         ]
-        for value in args.var:
+        for value in expand_run_variables(args.var, agent=agent, trial=trial, sequence=sequence):
             command.extend(["--var", value])
         mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
         if args.approve_mutations and mutation != "forbidden":

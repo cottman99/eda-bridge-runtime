@@ -1,0 +1,11 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a23",
+  "environment": "sanitized authenticated dedicated-Pi and narrow-Codex remote display4 repeated ADS structured-design acceptance",
+  "notes": "Three matrix-interleaved trials per Agent used independent disposable source/output workspaces, trial-specific idempotency keys, explicit mutation approval, one Runtime plan call, and no solve. Both Agents passed 3/3. Matrix-owned {agent} and {trial} expansion prevented accidental replay across repetitions. No customer data, final response, raw trace, private path, workspace, or generated EDA artifact was retained. Token counters are provider-reported and are not a direct billing comparison.",
+  "cases": [
+    {"case_id":"l5.ads-structured-design-plan","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":30134.901,"median_non_transport_wall_ms":27619.901,"median_input_tokens":50575.0},
+    {"case_id":"l5.ads-structured-design-plan","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":18548.208,"median_non_transport_wall_ms":16032.208,"median_input_tokens":5222.0}
+  ]
+}

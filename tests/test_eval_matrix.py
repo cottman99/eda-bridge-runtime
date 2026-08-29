@@ -118,6 +118,25 @@ def test_matrix_preflights_required_variables_without_starting_agents():
     assert matrix.missing_case_variables(cases, supplied) == ["ANSYS_CONNECTION"]
 
 
+def test_matrix_expands_owned_run_placeholders_without_interpreting_other_braces():
+    matrix = load_matrix()
+
+    assert matrix.expand_run_variables(
+        [
+            "ROOT=/scratch/{agent}/trial-{trial}",
+            "KEY=run-{sequence}",
+            'JSON={"literal":true}',
+        ],
+        agent="pi",
+        trial=3,
+        sequence=6,
+    ) == [
+        "ROOT=/scratch/pi/trial-3",
+        "KEY=run-6",
+        'JSON={"literal":true}',
+    ]
+
+
 def test_empty_or_all_skipped_matrix_is_not_reported_as_success():
     matrix = load_matrix()
 
