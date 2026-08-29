@@ -17,6 +17,9 @@
     "longDescription": "Routes typed ADS and AnsysEM operations through persistent connections, durable jobs, secret-free context, and an append-only execution ledger.",
     "developerName": "Pengfei Li",
     "category": "Developer Tools",
+    "brandColor": "#0B5FA5",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
     "capabilities": [
       "Interactive",
       "Read",
