@@ -24,6 +24,9 @@ Use `eda-runtime audit analyze` for a privacy-preserving efficiency summary. It
 separates intentional idempotent replay from repeated discovery, repeated
 failure, and avoidable status polling, and reports bounded timing totals without
 returning raw arguments, Context tokens, paths, or execution identifiers.
+Waste attribution is limited to repetitions inside one observed or declared Agent session. Global
+idempotent replay remains measurable because a reused Runtime Run proves it, but calls in separate
+sessions and calls with unknown session identity are never guessed to be redundant.
 
 Codex asks for one-time trust when a new or changed plugin Hook is first used. Review and approve
 the two bundled audit commands; routine calls need no extra Agent prompt after that. Automated

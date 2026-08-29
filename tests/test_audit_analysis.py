@@ -1,12 +1,25 @@
 from eda_bridge_runtime.audit_analysis import analyze_events
 
 
-def pair(run_id, tool, action, state="passed", execution_run=None, job_id=None, ms=10):
+def pair(
+    run_id,
+    tool,
+    action,
+    state="passed",
+    execution_run=None,
+    job_id=None,
+    ms=10,
+    session="session-one",
+):
     return [
         {
             "run_id": run_id,
             "event_type": "agent.tool.requested",
-            "payload": {"tool": tool, "action_sha256": action},
+            "payload": {
+                "tool": tool,
+                "action_sha256": action,
+                "actor": {"session_id": {"value": session, "provenance": "declared"}},
+            },
         },
         {
             "run_id": run_id,
@@ -55,3 +68,30 @@ def test_analysis_finds_repeated_failure_and_status_polling_without_ids():
     }
     assert result["potential_avoidable_mcp_ms"] == 30
     assert "private-job" not in str(result)
+
+
+def test_analysis_does_not_call_cross_session_or_unscoped_repetition_waste():
+    events = [
+        *pair("a", "eda.capabilities", "caps", session="session-one"),
+        *pair("b", "eda.capabilities", "caps", session="session-two"),
+        *pair("c", "eda.capabilities", "caps", session=None),
+        *pair("d", "eda.capabilities", "caps", session=None),
+        *pair("e", "eda.job.status", "poll", job_id="job", session="session-one"),
+        *pair("f", "eda.job.status", "poll", job_id="job", session="session-two"),
+    ]
+
+    result = analyze_events(events)
+
+    assert result["findings"] == []
+    assert result["potential_avoidable_mcp_ms"] == 0
+
+
+def test_analysis_treats_unknown_actor_session_as_unscoped():
+    events = [
+        *pair("a", "eda.capabilities", "caps", session="unknown"),
+        *pair("b", "eda.capabilities", "caps", session="unknown"),
+    ]
+
+    result = analyze_events(events)
+
+    assert result["findings"] == []

@@ -39,6 +39,8 @@ disconnect, and returns the result with its linked timing and evidence.
 `0.1.0a10` adds scoped unattended mutation profiles, deterministic L3 idempotency cases, a
 privacy-preserving cross-Agent result summary, and `eda-runtime audit analyze` for finding repeated
 discovery, failed actions, avoidable polling, and their conservatively estimated Runtime time.
+Waste findings require a stable Agent session identity; repetitions across tasks or calls whose
+session is unknown are not guessed to be redundant.
 It builds on the statically safe `eda.read` lane and bounded transport lifecycle from alpha.9.
 Every MCP client contributes its
 observed client identity, concise purpose, argument fingerprint, timings, and linked Run without
