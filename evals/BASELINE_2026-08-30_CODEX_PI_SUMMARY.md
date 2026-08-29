@@ -46,6 +46,12 @@ one turn with two sequential Runtime calls and the correct nine/fourteen support
 counts. Pi completed these in 9.797/11.954 seconds versus Codex's 15.687/18.734 seconds; the matched
 vendor boundaries again show that most of the gap is Agent-side rather than SSH.
 
+The public profiles also passed one independent L3 mutation/replay trial per vendor and Agent. ADS
+completed in 29.906 seconds for Codex and 16.438 seconds for Pi; AnsysEM completed in 69.953 and
+56.109 seconds. Every exact replay reused the original Run and did not repeat mutation. The
+AnsysEM vendor boundary occupied 38-41 seconds, again shrinking the relative Agent advantage as
+real AEDT lifecycle work becomes dominant. All owned scratch was verified idle and removed.
+
 ## Evidence-backed decisions
 
 1. **Keep both Agents, with Pi as the bounded-execution default.** Pi autonomously passed mutation,

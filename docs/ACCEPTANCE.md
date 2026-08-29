@@ -44,6 +44,16 @@ credentials, host address, or task-specific geometry is included here.
   sequential Runtime calls and the correct nine/fourteen operation counts. Pi completed in 11.954
   seconds and Codex in 18.734 seconds. The cross-EDA case inherited the same clarified count
   semantics, preventing the earlier call-count versus supported-operation ambiguity from returning.
+- Public installed profiles then passed independent disposable mutation and exact-replay cases on
+  the permitted display. ADS workspace creation plus replay took 29.906 seconds for Codex and
+  16.438 seconds for Pi; Runtime deduplicated the second request and did not repeat creation.
+- AnsysEM project create/save/fresh-reopen plus replay took 69.953 seconds for Codex and 56.109
+  seconds for Pi. Both linked the replay to the original durable Run and created exactly one job.
+  The AEDT/Bridge boundary itself took 40.671 and 38.328 seconds, so EDA lifecycle dominated more
+  than in the ADS case.
+- All four sources were synthetic and independent. No solve ran. After verifying exact scratch-root
+  resolution and no referencing process, the two ADS workspaces, two complete AnsysEM Bundles, and
+  owned configuration remnants were deleted together; customer files were never opened.
 
 ## 2026-08-30 Runtime alpha.25 Agent-host acceptance
 
