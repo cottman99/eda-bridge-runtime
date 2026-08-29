@@ -39,6 +39,15 @@ def test_pi_profile_update_preserves_credentials_and_unmanaged_settings(tmp_path
     assert settings["defaultProjectTrust"] == "never"
     assert result["auth_state"] == "configured"
     assert result["auth_unchanged"] is True
+    launcher = (tmp_path / "pi-eda.cmd").read_text(encoding="utf-8")
+    assert "--no-extensions --extension" in launcher
+    assert "pi-eda-runtime" in launcher
+    assert "--no-skills --skill" in launcher
+    assert "eda-runtime-control" in launcher
+    assert "--no-builtin-tools --tools read,eda_context_resolve" in launcher
+    assert "eda_read" in launcher
+    assert "eda_run_plan" in launcher
+    assert launcher.endswith(" %*\n")
 
 
 def test_pi_profile_does_not_create_an_auth_file(tmp_path):
@@ -80,3 +89,33 @@ def test_pi_profile_does_not_treat_an_empty_auth_object_as_configured(tmp_path):
     )
 
     assert result["auth_state"] == "login_required"
+
+
+def test_pi_profile_loads_selected_vendor_skills_without_exposing_shell(tmp_path):
+    installer = load_installer()
+    node = tmp_path / "node.exe"
+    cli = tmp_path / "cli.js"
+    vendor_skill = tmp_path / "vendor" / "SKILL.md"
+    node.write_bytes(b"node")
+    cli.write_bytes(b"pi")
+    vendor_skill.parent.mkdir()
+    vendor_skill.write_text("# Vendor\n", encoding="utf-8")
+    launcher = tmp_path / "pi-eda.cmd"
+
+    result = installer.install_profile(
+        profile_dir=tmp_path / "profile",
+        session_dir=tmp_path / "sessions",
+        launcher=launcher,
+        node=node,
+        pi_cli=cli,
+        vendor_skills=(vendor_skill,),
+    )
+
+    text = launcher.read_text(encoding="utf-8")
+    assert str(vendor_skill.resolve()) in text
+    assert result["loaded_skills"] == 2
+    assert "--tools read,eda_context_resolve" in text
+    assert result["runtime_tools"] == 10
+    assert "shell" not in text
+    assert "write" not in text
+    assert "edit" not in text

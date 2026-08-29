@@ -6,9 +6,23 @@ import argparse
 import hashlib
 import json
 import os
+import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any
+
+EDA_TOOLS = (
+    "eda_context_resolve",
+    "eda_connections_list",
+    "eda_connection_reset",
+    "eda_capabilities",
+    "eda_read",
+    "eda_submit",
+    "eda_run_plan",
+    "eda_job_status",
+    "eda_job_wait",
+    "eda_job_events",
+)
 
 
 def file_hash(path: Path) -> str | None:
@@ -53,6 +67,7 @@ def install_profile(
     launcher: Path,
     node: Path,
     pi_cli: Path,
+    vendor_skills: tuple[Path, ...] = (),
 ) -> dict[str, Any]:
     profile_dir = profile_dir.expanduser().resolve()
     session_dir = session_dir.expanduser().resolve()
@@ -61,6 +76,11 @@ def install_profile(
     pi_cli = pi_cli.expanduser().resolve()
     if not node.is_file() or not pi_cli.is_file():
         raise ValueError("The selected Node executable and Pi CLI bundle must already exist.")
+    package_root = Path(__file__).resolve().parent
+    runtime_skill = package_root / "skills/eda-runtime-control/SKILL.md"
+    selected_skills = (runtime_skill, *(path.expanduser().resolve() for path in vendor_skills))
+    if not all(path.is_file() for path in selected_skills):
+        raise ValueError("Every selected Pi EDA Skill must be an existing SKILL.md file.")
 
     auth_path = profile_dir / "auth.json"
     auth_before = file_hash(auth_path)
@@ -91,6 +111,20 @@ def install_profile(
     atomic_text(settings_path, json.dumps(settings, ensure_ascii=False, indent=2) + "\n")
     session_dir.mkdir(parents=True, exist_ok=True)
 
+    launch_arguments = [
+        str(node),
+        str(pi_cli),
+        "--no-extensions",
+        "--extension",
+        str(package_root),
+        "--no-skills",
+    ]
+    for skill in selected_skills:
+        launch_arguments.extend(["--skill", str(skill)])
+    enabled_tools = ("read", *EDA_TOOLS)
+    launch_arguments.extend(["--no-builtin-tools", "--tools", ",".join(enabled_tools)])
+    if any("%" in value or "\n" in value or "\r" in value for value in launch_arguments):
+        raise ValueError("Pi launcher paths must not contain batch expansion characters.")
     command = "\n".join(
         [
             "@echo off",
@@ -99,7 +133,7 @@ def install_profile(
             f'set "PI_CODING_AGENT_SESSION_DIR={session_dir}"',
             'set "PI_TELEMETRY=0"',
             'set "PI_SKIP_VERSION_CHECK=1"',
-            f'"{node}" "{pi_cli}" %*',
+            subprocess.list2cmdline(launch_arguments) + " %*",
             "",
         ]
     )
@@ -114,6 +148,10 @@ def install_profile(
         "launcher": str(launcher),
         "auth_state": "configured" if auth_entries else "login_required",
         "auth_unchanged": True,
+        "runtime_extension": str(package_root),
+        "loaded_skills": len(selected_skills),
+        "builtin_tools": ["read"],
+        "runtime_tools": len(EDA_TOOLS),
     }
 
 
@@ -124,6 +162,13 @@ def main() -> int:
     parser.add_argument("--launcher", type=Path, required=True)
     parser.add_argument("--node", type=Path, required=True)
     parser.add_argument("--pi-cli", type=Path, required=True)
+    parser.add_argument(
+        "--vendor-skill",
+        type=Path,
+        action="append",
+        default=[],
+        help="Additional vendor SKILL.md to load into the one-command EDA profile.",
+    )
     args = parser.parse_args()
     result = install_profile(
         profile_dir=args.profile_dir,
@@ -131,6 +176,7 @@ def main() -> int:
         launcher=args.launcher,
         node=args.node,
         pi_cli=args.pi_cli,
+        vendor_skills=tuple(args.vendor_skill),
     )
     print(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
     return 0

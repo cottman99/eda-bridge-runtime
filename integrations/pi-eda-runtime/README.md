@@ -1,6 +1,6 @@
 # Pi EDA Runtime adapter
 
-This is one thin Pi package over EDA Bridge Runtime. It registers exactly nine `eda_*` tools and
+This is one thin Pi package over EDA Bridge Runtime. It registers exactly ten `eda_*` tools and
 one local status command. It contains no SSH routing, EDA API knowledge, retry engine, job store, or
 audit database.
 
@@ -21,7 +21,9 @@ python integrations/pi-eda-runtime/install_profile.py `
   --session-dir F:\EDA\pi-eda-agent\sessions `
   --launcher F:\EDA\pi-eda.cmd `
   --node D:\node\node.exe `
-  --pi-cli F:\EDA\pi\node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js
+  --pi-cli F:\EDA\pi\node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js `
+  --vendor-skill F:\skills\ads-agent-bridge\SKILL.md `
+  --vendor-skill F:\skills\ansysem-agent-bridge\SKILL.md
 ```
 
 Try it without installing:
@@ -31,6 +33,7 @@ $env:PI_CODING_AGENT_DIR = 'F:\EDA\pi-eda-agent\config'
 pi --offline -e F:\path\to\eda-bridge-runtime\integrations\pi-eda-runtime
 ```
 
-The normal profile keeps only Pi's built-in read tool so selected Skills are visible and loadable;
-shell/write/edit remain disabled. Vendor Skills may be selected alongside the bundled Runtime
-Skill, but every EDA action still uses Runtime.
+The generated launcher always loads this Runtime extension and its Runtime Skill. Installer-selected
+vendor Skills are loaded into the same one-command profile; the engineer does not choose them on
+each task. The normal profile keeps only Pi's built-in read tool; shell/write/edit remain disabled,
+and every EDA action still uses Runtime.

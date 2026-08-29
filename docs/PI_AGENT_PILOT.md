@@ -20,6 +20,13 @@ or a second audit database.
 
 ## Implemented pilot
 
+The generated daily launcher now loads the Runtime extension and the administrator-selected
+Runtime/ADS/AnsysEM Skills itself. Engineers run one command and do not repeat extension or Skill
+flags. It disables every built-in tool except read while explicitly retaining all ten Runtime
+tools; shell, write, and edit are absent. An authentication-free RPC acceptance observed ten
+Runtime tools, two configured EDA connections, and a 181.4 ms status refresh while preserving the
+empty credential file unchanged.
+
 The Agent host currently uses Node `24.20.0`, npm `11.19.0`, and pinned Pi
 `@earendil-works/pi-coding-agent@0.84.4`. The dedicated profile lives outside the repository and
 contains no credentials. Its launcher keeps only Pi's read-only file tool, disables shell/write/edit
