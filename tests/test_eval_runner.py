@@ -152,6 +152,54 @@ def test_top_level_diagnostic_result_contributes_only_a_size_fact():
     assert "private" not in str(observation["facts"])
 
 
+def test_plan_call_counts_nested_runs_without_double_counting_transport():
+    runner = load_runner()
+    events = [
+        {
+            "type": "item.completed",
+            "item": {
+                "type": "mcp_tool_call",
+                "tool": "eda.run_plan",
+                "status": "completed",
+                "result": {
+                    "structured_content": {
+                        "status": "passed",
+                        "client_transport_ms": 12.5,
+                        "planned_step_count": 2,
+                        "steps": [
+                            {
+                                "step_id": "one",
+                                "run": {
+                                    "run_id": "run-one",
+                                    "job_id": "job-one",
+                                    "state": "passed",
+                                },
+                                "response": {"result": {"observed": 1}},
+                            },
+                            {
+                                "step_id": "two",
+                                "run": {
+                                    "run_id": "run-two",
+                                    "job_id": "job-two",
+                                    "state": "passed",
+                                },
+                                "response": {"result": {"observed": 2}},
+                            },
+                        ],
+                    }
+                },
+            },
+        }
+    ]
+
+    observation = runner.parse_codex(events)
+    metrics = runner.runtime_metrics(observation["facts"])
+    assert observation["tools"] == ["eda.run_plan"]
+    assert metrics["distinct_projected_runs"] == 2
+    assert metrics["distinct_jobs"] == 2
+    assert metrics["client_transport_ms_total"] == 12.5
+
+
 def test_windows_command_wrapping_is_shared_by_agent_clients(monkeypatch):
     runner = load_runner()
     monkeypatch.setattr(runner.os, "name", "nt")
@@ -180,6 +228,26 @@ def test_codex_command_applies_shared_thinking_budget():
     command = runner.codex_command(args, {"prompt": "inspect"})
 
     assert 'model_reasoning_effort="low"' in command
+
+
+def test_pi_command_exposes_only_case_allowed_runtime_tools():
+    runner = load_runner()
+    args = SimpleNamespace(
+        pi_command="pi-eda.cmd",
+        pi_extension=Path("extension"),
+        pi_skill=Path("skill.md"),
+        model="openai-codex/gpt-test",
+        thinking="medium",
+    )
+    command = runner.pi_command(
+        args,
+        {
+            "prompt": "run plan",
+            "allowed_tools": ["eda.run_plan", "eda.connections.list"],
+        },
+    )
+
+    assert command[command.index("--tools") + 1] == "eda_connections_list,eda_run_plan"
 
 
 def test_codex_command_can_measure_the_unscoped_global_profile():

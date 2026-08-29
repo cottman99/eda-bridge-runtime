@@ -20,6 +20,7 @@ trace, private path, customer artifact, or documentation passage is retained.
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | ADS blank workspace -> structured copied schematic -> fresh reopen | passed | 3 | 0 | 49.435 s | 2.593 s | 46.842 s | 5.245% | 91,219 |
 | AnsysEM project create -> fresh Bundle inspect -> verified AEDT image | passed | 7 | 3 | 117.376 s | 66.297 s | 51.079 s | 56.483% | 165,016 |
+| Same AnsysEM lifecycle through one validated plan | passed | 1 | 3 | 105.633 s | 67.985 s | 37.648 s | 64.359% | 49,300 |
 
 The cases deliberately follow each product's native execution model and are
 not identical workloads. They compare orchestration quality and measurement
@@ -39,4 +40,6 @@ boundaries, not ADS versus AEDT product speed.
 5. A matching Pi row remains pending interactive `openai-codex` login. The
    matrix classifies missing authentication once and skips repeats, so this
    pending comparison does not contaminate Bridge or EDA failure rates.
-
+6. The validated plan reduced Agent calls by 85.7%, input tokens by 70.1%, Agent/client time by
+   26.3%, and total wall time by 10.0%. Runtime/SSH/AEDT time changed by only +2.5%, confirming that
+   the gain came from removing repeated model turns rather than weakening the EDA lifecycle.

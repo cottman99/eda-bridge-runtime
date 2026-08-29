@@ -183,6 +183,127 @@ class CapabilityAwareTransport(FakeTransport):
         )
 
 
+class PlanTransport(FakeTransport):
+    def request(self, request):
+        self.requests.append(request)
+        if request.operation == "runtime.capabilities":
+            result = {
+                "data": {
+                    "capabilities": {
+                        "operations": [
+                            {"id": "project.inspect", "mutates": False},
+                            {"id": "project.create", "mutates": True},
+                            {"id": "image.export", "mutates": True},
+                        ]
+                    }
+                }
+            }
+            status = "passed"
+        elif request.operation == "project.inspect":
+            result = {"observed": request.payload.get("name")}
+            status = "passed"
+        else:
+            request.require_idempotency()
+            result = {"changed": request.operation}
+            status = "passed"
+        return ResponseEnvelope(
+            request_id=request.request_id,
+            run_id=request.run_id,
+            status=status,
+            result=result,
+        )
+
+
+class FailingPlanTransport(PlanTransport):
+    def request(self, request):
+        if request.operation == "project.inspect":
+            self.requests.append(request)
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status="failed",
+                error={"code": "inspection_failed", "message": "synthetic failure"},
+            )
+        return super().request(request)
+
+
+class TargetAwarePlanTransport(PlanTransport):
+    def request(self, request):
+        if request.operation == "runtime.capabilities":
+            self.requests.append(request)
+            operations = (
+                [{"id": "project.inspect", "mutates": False}]
+                if request.target.get("project") == "other"
+                else [
+                    {"id": "project.inspect", "mutates": False},
+                    {"id": "project.create", "mutates": True},
+                ]
+            )
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status="passed",
+                result={"data": {"capabilities": {"operations": operations}}},
+            )
+        return super().request(request)
+
+
+class DurablePlanTransport(PlanTransport):
+    def request(self, request):
+        if request.operation == "project.create":
+            self.requests.append(request)
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status="accepted",
+                result={
+                    "job": {
+                        "job_id": "plan-job",
+                        "request_id": request.request_id,
+                        "run_id": request.run_id,
+                        "state": "running",
+                    }
+                },
+            )
+        if request.operation == "runtime.job_status":
+            self.requests.append(request)
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status="passed",
+                result={
+                    "job": {
+                        "job_id": "plan-job",
+                        "request_id": "original-request",
+                        "run_id": "original-run",
+                        "state": "passed",
+                    }
+                },
+            )
+        return super().request(request)
+
+
+class NonDurableAcceptedPlanTransport(PlanTransport):
+    def request(self, request):
+        if request.operation == "project.create":
+            self.requests.append(request)
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status="accepted",
+                result={"accepted_without_job": True},
+            )
+        return super().request(request)
+
+
+class SubmitInterruptedPlanTransport(PlanTransport):
+    def request(self, request):
+        if request.operation == "project.create":
+            self.requests.append(request)
+            raise ConnectionError("synthetic disconnect during submit")
+        return super().request(request)
+
+
 class EventuallyTerminalTransport(FakeTransport):
     def request(self, request):
         self.requests.append(request)
@@ -230,6 +351,7 @@ def test_mcp_supports_legacy_and_modern_discovery():
         "eda.capabilities",
         "eda.read",
         "eda.submit",
+        "eda.run_plan",
         "eda.job.status",
         "eda.job.wait",
         "eda.job.events",
@@ -382,7 +504,449 @@ def test_mcp_stdio_bad_frame_does_not_kill_server():
     serve_mcp(source, destination, registry=FakeRegistry())
     responses = [json.loads(line) for line in destination.getvalue().splitlines()]
     assert responses[0]["error"]["code"] == -32700
-    assert len(responses[1]["result"]["tools"]) == 9
+    assert len(responses[1]["result"]["tools"]) == 10
+
+
+def test_run_plan_prevalidates_then_executes_steps_with_individual_purposes():
+    registry = FakeRegistry()
+    registry.transport = PlanTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Build and verify one disposable project",
+                    "connection_id": "ansys-one",
+                    "steps": [
+                        {
+                            "step_id": "create",
+                            "purpose": "Create the disposable project",
+                            "operation": "project.create",
+                            "payload": {"name": "scratch"},
+                            "idempotency_key": "plan-create-scratch",
+                        },
+                        {
+                            "step_id": "inspect",
+                            "purpose": "Inspect the saved project",
+                            "operation": "project.inspect",
+                            "payload": {"name": "scratch"},
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    value = response["result"]["structuredContent"]
+    assert response["result"]["isError"] is False
+    assert value["status"] == "passed"
+    assert value["step_count"] == value["planned_step_count"] == 2
+    assert [request.operation for request in registry.transport.requests] == [
+        "runtime.capabilities",
+        "project.create",
+        "project.inspect",
+    ]
+    assert [request.purpose for request in registry.transport.requests[1:]] == [
+        "Create the disposable project",
+        "Inspect the saved project",
+    ]
+    assert registry.transport.requests[1].payload["mutating"] is True
+    assert registry.transport.requests[2].payload["mutating"] is False
+
+
+def test_run_plan_rejects_all_invalid_steps_before_first_mutation():
+    registry = FakeRegistry()
+    registry.transport = PlanTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Reject an invalid operation plan",
+                    "connection_id": "ansys-one",
+                    "steps": [
+                        {
+                            "step_id": "create",
+                            "purpose": "Create the disposable project",
+                            "operation": "project.create",
+                            "payload": {},
+                            "idempotency_key": "plan-create-scratch",
+                        },
+                        {
+                            "step_id": "unknown",
+                            "purpose": "Attempt an unavailable operation",
+                            "operation": "raw.python",
+                            "payload": {},
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    assert response["result"]["isError"] is True
+    assert "unknown operation" in response["result"]["structuredContent"]["error"]["message"]
+    assert [request.operation for request in registry.transport.requests] == [
+        "runtime.capabilities"
+    ]
+
+
+def test_run_plan_preflights_every_effective_target_before_first_mutation():
+    registry = FakeRegistry()
+    registry.transport = TargetAwarePlanTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Reject a target-specific unsupported operation",
+                    "connection_id": "ansys-one",
+                    "target": {"project": "primary"},
+                    "steps": [
+                        {
+                            "step_id": "create-primary",
+                            "purpose": "Create the primary project",
+                            "operation": "project.create",
+                            "payload": {},
+                            "idempotency_key": "create-primary",
+                        },
+                        {
+                            "step_id": "create-other",
+                            "purpose": "Create the other project",
+                            "operation": "project.create",
+                            "payload": {},
+                            "target": {"project": "other"},
+                            "idempotency_key": "create-other",
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    assert response["result"]["isError"] is True
+    assert [request.operation for request in registry.transport.requests] == [
+        "runtime.capabilities",
+        "runtime.capabilities",
+    ]
+
+
+def test_run_plan_rejects_duplicate_mutation_keys_before_first_mutation():
+    registry = FakeRegistry()
+    registry.transport = PlanTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Reject duplicate mutation identities",
+                    "connection_id": "ansys-one",
+                    "steps": [
+                        {
+                            "step_id": "create",
+                            "purpose": "Create the disposable project",
+                            "operation": "project.create",
+                            "payload": {},
+                            "idempotency_key": "duplicate-key",
+                        },
+                        {
+                            "step_id": "export",
+                            "purpose": "Export project evidence",
+                            "operation": "image.export",
+                            "payload": {},
+                            "idempotency_key": "duplicate-key",
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    assert response["result"]["isError"] is True
+    assert "unique idempotency_key" in response["result"]["structuredContent"]["error"]["message"]
+    assert [request.operation for request in registry.transport.requests] == [
+        "runtime.capabilities"
+    ]
+
+
+def test_run_plan_bounds_wait_purpose_after_durable_submission():
+    registry = FakeRegistry()
+    registry.transport = DurablePlanTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Complete a durable plan with a long step reason",
+                    "connection_id": "ansys-one",
+                    "steps": [
+                        {
+                            "step_id": "create",
+                            "purpose": "x" * 240,
+                            "operation": "project.create",
+                            "payload": {},
+                            "idempotency_key": "durable-create",
+                            "wait": {"timeout_ms": 1000, "poll_interval_ms": 100},
+                        },
+                        {
+                            "step_id": "inspect",
+                            "purpose": "Inspect the completed project",
+                            "operation": "project.inspect",
+                            "payload": {},
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    value = response["result"]["structuredContent"]
+    assert response["result"]["isError"] is False
+    assert value["status"] == "passed"
+    wait_request = next(
+        request
+        for request in registry.transport.requests
+        if request.operation == "runtime.job_status"
+    )
+    assert len(wait_request.purpose) == 240
+
+
+def test_run_plan_preserves_nonterminal_run_when_wait_has_no_job_id():
+    registry = FakeRegistry()
+    registry.transport = NonDurableAcceptedPlanTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Preserve an accepted run without a durable job",
+                    "connection_id": "ansys-one",
+                    "steps": [
+                        {
+                            "step_id": "create",
+                            "purpose": "Create the project asynchronously",
+                            "operation": "project.create",
+                            "payload": {},
+                            "idempotency_key": "accepted-no-job",
+                            "wait": {"timeout_ms": 1000},
+                        },
+                        {
+                            "step_id": "inspect",
+                            "purpose": "Inspect only after creation",
+                            "operation": "project.inspect",
+                            "payload": {},
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    value = response["result"]["structuredContent"]
+    assert response["result"]["isError"] is True
+    assert value["status"] == "interrupted"
+    assert value["step_count"] == 1
+    assert value["steps"][0]["run"]["state"] == "accepted"
+    assert value["steps"][0]["run"]["run_id"]
+    assert value["error"]["code"] == "durable_job_id_missing"
+
+
+def test_run_plan_marks_submit_transport_interruption_as_mcp_error():
+    registry = FakeRegistry()
+    registry.transport = SubmitInterruptedPlanTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Expose a submit transport interruption",
+                    "connection_id": "ansys-one",
+                    "steps": [
+                        {
+                            "step_id": "create",
+                            "purpose": "Create the disposable project",
+                            "operation": "project.create",
+                            "payload": {},
+                            "idempotency_key": "interrupted-create",
+                        },
+                        {
+                            "step_id": "inspect",
+                            "purpose": "Inspect only after creation",
+                            "operation": "project.inspect",
+                            "payload": {},
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    value = response["result"]["structuredContent"]
+    assert response["result"]["isError"] is True
+    assert value["status"] == "interrupted"
+    assert value["step_count"] == 0
+    assert value["error"]["code"] == "ConnectionError"
+
+
+def test_run_plan_stops_after_first_terminal_failure():
+    registry = FakeRegistry()
+    registry.transport = FailingPlanTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Stop a plan when verification fails",
+                    "connection_id": "ansys-one",
+                    "steps": [
+                        {
+                            "step_id": "inspect",
+                            "purpose": "Inspect the selected project",
+                            "operation": "project.inspect",
+                            "payload": {},
+                        },
+                        {
+                            "step_id": "export",
+                            "purpose": "Export evidence only after inspection",
+                            "operation": "image.export",
+                            "payload": {},
+                            "idempotency_key": "plan-export-evidence",
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    value = response["result"]["structuredContent"]
+    assert value["status"] == "failed"
+    assert value["step_count"] == 1
+    assert value["planned_step_count"] == 2
+    assert [request.operation for request in registry.transport.requests] == [
+        "runtime.capabilities",
+        "project.inspect",
+    ]
+
+
+def test_run_plan_audit_records_step_reasons_and_execution_links_without_payloads(tmp_path):
+    database = tmp_path / "agent-audit.sqlite3"
+    registry = FakeRegistry()
+    registry.transport = PlanTransport()
+    server = MCPRuntimeServer(registry, audit_database=database)
+    server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Create and inspect a disposable project",
+                    "connection_id": "ansys-one",
+                    "steps": [
+                        {
+                            "step_id": "create",
+                            "purpose": "Create a disposable project",
+                            "operation": "project.create",
+                            "payload": {"secret_like_detail": "not-in-clear-audit"},
+                            "idempotency_key": "audit-plan-create",
+                        },
+                        {
+                            "step_id": "inspect",
+                            "purpose": "Inspect the disposable project",
+                            "operation": "project.inspect",
+                            "payload": {},
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    requested, completed = audit_events(database)
+    assert requested["payload"]["plan_steps"] == [
+        {
+            "step_id": "create",
+            "operation": "project.create",
+            "purpose": "Create a disposable project",
+        },
+        {
+            "step_id": "inspect",
+            "operation": "project.inspect",
+            "purpose": "Inspect the disposable project",
+        },
+    ]
+    assert "not-in-clear-audit" not in json.dumps(requested["payload"])
+    assert [step["state"] for step in completed["payload"]["execution"]["steps"]] == [
+        "passed",
+        "passed",
+    ]
+    server.close()
+
+
+def test_run_plan_audit_preserves_nonterminal_overall_state(tmp_path):
+    database = tmp_path / "agent-audit.sqlite3"
+    registry = FakeRegistry()
+    registry.transport = DurablePlanTransport()
+    server = MCPRuntimeServer(registry, audit_database=database)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Submit and expose one durable plan step",
+                    "connection_id": "ansys-one",
+                    "steps": [
+                        {
+                            "step_id": "create",
+                            "purpose": "Create the project asynchronously",
+                            "operation": "project.create",
+                            "payload": {},
+                            "idempotency_key": "nonterminal-create",
+                        },
+                        {
+                            "step_id": "inspect",
+                            "purpose": "Inspect only after creation",
+                            "operation": "project.inspect",
+                            "payload": {},
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    assert response["result"]["structuredContent"]["status"] == "waiting"
+    completed = audit_events(database)[1]["payload"]["execution"]
+    assert completed["state"] == "waiting"
+    assert completed["terminal"] is False
+    assert completed["steps"][0]["job_id"] == "plan-job"
+    server.close()
 
 
 def test_mcp_uses_cached_capability_mutability_for_submit_payload():

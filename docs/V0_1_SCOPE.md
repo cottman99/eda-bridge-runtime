@@ -1,5 +1,15 @@
 # Version 0.1 scope
 
+## 0.1.0a13 — validated deterministic execution plans
+
+- Execute 2..16 already-decided typed steps through one Agent call and one persistent connection;
+  keep planning and engineering judgment in the Agent.
+- Preflight every effective target and all mutation identities before the first change, then stop
+  at the first failed, interrupted, or unawaited non-terminal step.
+- Preserve per-step purpose, Run, Job, timing, and privacy-bounded audit evidence across Codex and
+  Pi, including partial evidence when transport or durable waiting is interrupted.
+- Add a one-call AnsysEM L5 evidence case and nested-run scoring for direct before/after measurement.
+
 ## 0.1.0a12 — bounded evidence and reproducible cross-Agent matrices
 
 - Add ADS and AnsysEM L4 cases that find and expand one version-matched API

@@ -1,0 +1,42 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l5.ansys-project-evidence-plan",
+  "level": 5,
+  "title": "AnsysEM greenfield evidence through one validated Runtime plan",
+  "variables": ["ANSYS_CONNECTION", "ANSYS_PROJECT", "ANSYS_IMAGE", "ANSYS_CREATE_KEY"],
+  "prompt": "Use exactly one EDA Bridge Runtime tool call: eda.run_plan on connection '{{ANSYS_CONNECTION}}'. Its purpose is 'Benchmark one-call AnsysEM greenfield evidence contract'. Supply exactly three ordered typed steps. Step create: purpose 'Create disposable AnsysEM plan evaluation project', operation project.create, idempotency_key='{{ANSYS_CREATE_KEY}}', payload project='{{ANSYS_PROJECT}}', design='RuntimePlanEvalLayout', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', redact_paths=true, and wait timeout_ms=90000 poll_interval_ms=1000. Step inspect: purpose 'Verify persisted AnsysEM plan evaluation bundle', operation project.inspect, payload with the same project/version/profile/display and redact_paths=true, and the same wait settings. Step image: purpose 'Export verified AnsysEM plan evaluation image', operation layout.export_image, payload project='{{ANSYS_PROJECT}}', design='RuntimePlanEvalLayout', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', output='{{ANSYS_IMAGE}}', width=800, height=600, redact_paths=true, and the same wait settings. Do not call capabilities separately, replay jobs, use shell/files/documentation/GUI, mutate after creation, solve, or use customer data. From the three actual terminal step responses return only compact JSON with status='passed', created=true, bundle_complete=true, image_verified=true, design_count, and validation_count.",
+  "required_tools": {
+    "eda.run_plan": 1
+  },
+  "allowed_tools": [
+    "eda.run_plan"
+  ],
+  "expected_runtime": {
+    "equals": {
+      "deduplicated_calls": 0,
+      "reused_run_calls": 0,
+      "distinct_projected_runs": 3,
+      "distinct_jobs": 3
+    }
+  },
+  "expected_final": {
+    "equals": {
+      "status": "passed",
+      "created": true,
+      "bundle_complete": true,
+      "image_verified": true,
+      "design_count": 1,
+      "validation_count": 2
+    },
+    "minimum": {}
+  },
+  "budgets": {
+    "max_tool_calls": 1,
+    "max_wall_seconds": 240
+  },
+  "safety": {
+    "mutation": "disposable-only",
+    "solve": "forbidden",
+    "customer_data": "forbidden"
+  }
+}

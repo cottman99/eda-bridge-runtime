@@ -10,6 +10,13 @@ capability, and freshness facts; v1 remains accepted. When the selected Skill
 already establishes a typed operation, `eda.submit` performs routing, freshness
 validation, and execution in one client call.
 
+When the Agent has already decided a short deterministic sequence,
+`eda.run_plan` submits the typed steps through the same kernel and transport.
+The Runtime validates every operation and mutation boundary before executing
+the first change, then performs durable waits and failure stops mechanically.
+This removes repeated Agent turns without moving engineering judgment into the
+Runtime or creating another architecture layer.
+
 All paths emit the same event model into one logical execution ledger:
 
 `client -> runtime -> transport -> adapter -> vendor bridge -> EDA`

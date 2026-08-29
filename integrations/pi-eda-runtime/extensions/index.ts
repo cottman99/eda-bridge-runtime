@@ -153,6 +153,29 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
     }),
   );
   register(
+    "eda_run_plan",
+    "eda.run_plan",
+    "Run Validated EDA Plan",
+    "Execute 2..16 already-decided typed operations on one connection after complete prevalidation.",
+    Type.Object({
+      purpose: Type.String({ minLength: 3, maxLength: 240 }),
+      steps: Type.Array(Type.Object({
+        step_id: Type.String({ minLength: 1, maxLength: 64 }),
+        purpose: Type.String({ minLength: 3, maxLength: 240 }),
+        operation: Type.String(),
+        payload: JsonObject,
+        target: Type.Optional(JsonObject),
+        expected_effect: Type.Optional(Type.String()),
+        idempotency_key: Type.Optional(Type.String()),
+        wait: Type.Optional(Type.Object({
+          timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: 90000 })),
+          poll_interval_ms: Type.Optional(Type.Integer({ minimum: 100, maximum: 5000 })),
+        })),
+      }, { additionalProperties: false }), { minItems: 2, maxItems: 16 }),
+      ...TargetFields,
+    }),
+  );
+  register(
     "eda_job_status",
     "eda.job.status",
     "Get EDA Job Status",

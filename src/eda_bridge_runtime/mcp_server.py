@@ -144,6 +144,59 @@ TOOLS = [
         "annotations": {"readOnlyHint": False, "destructiveHint": True, "openWorldHint": False},
     },
     {
+        "name": "eda.run_plan",
+        "title": "Run Validated EDA Operation Plan",
+        "description": (
+            "Execute 2..16 already-decided typed Bridge operations in order through one Runtime "
+            "connection. Runtime discovers and validates every operation before the first "
+            "mutation, preserves a purpose and idempotency boundary per step, waits for durable "
+            "jobs when requested, and stops at the first failure. This executes a plan; it does "
+            "not invent or choose EDA work."
+        ),
+        "inputSchema": _object_schema(
+            {
+                "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
+                "steps": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 16,
+                    "items": _object_schema(
+                        {
+                            "step_id": {"type": "string", "minLength": 1, "maxLength": 64},
+                            "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
+                            "operation": {"type": "string"},
+                            "payload": {"type": "object"},
+                            "target": {"type": "object"},
+                            "expected_effect": {"type": "string"},
+                            "idempotency_key": {"type": "string"},
+                            "wait": _object_schema(
+                                {
+                                    "timeout_ms": {
+                                        "type": "integer",
+                                        "minimum": 1000,
+                                        "maximum": 90000,
+                                    },
+                                    "poll_interval_ms": {
+                                        "type": "integer",
+                                        "minimum": 100,
+                                        "maximum": 5000,
+                                    },
+                                }
+                            ),
+                        },
+                        ["step_id", "purpose", "operation", "payload"],
+                    ),
+                },
+                "target": {"type": "object"},
+                "context": {"type": "string"},
+                "connection_id": {"type": "string"},
+                "eda": {"type": "string"},
+            },
+            ["purpose", "steps"],
+        ),
+        "annotations": {"readOnlyHint": False, "destructiveHint": True, "openWorldHint": False},
+    },
+    {
         "name": "eda.job.status",
         "title": "Get Durable EDA Job Status",
         "description": (
@@ -276,7 +329,15 @@ class MCPRuntimeServer:
         started = time.monotonic()
         try:
             value = self._call(str(name), arguments, message)
-            result = self._tool_result(value)
+            error_code = (
+                str((value.get("error") or {}).get("code") or "")
+                if isinstance(value.get("error"), dict)
+                else ""
+            )
+            result = self._tool_result(
+                value,
+                is_error=value.get("status") == "interrupted" or error_code == "wait_interrupted",
+            )
         except Exception as exc:
             value = {"status": "error", "error": {"code": type(exc).__name__, "message": str(exc)}}
             result = self._tool_result(
@@ -330,6 +391,8 @@ class MCPRuntimeServer:
                     "kind": spec.kind,
                 },
             }
+        if name == "eda.run_plan":
+            return self._run_plan(arguments, message)
         context = EDAContext.decode(str(arguments["context"])) if arguments.get("context") else None
         eda = str(arguments.get("eda") or (context.eda if context else "")) or None
         hinted = context.locator.get("connection_id") if context else None
@@ -444,6 +507,243 @@ class MCPRuntimeServer:
             ),
         }
 
+    def _run_plan(self, arguments: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
+        raw_steps = arguments.get("steps")
+        if not isinstance(raw_steps, list) or not 2 <= len(raw_steps) <= 16:
+            raise ValueError("steps must contain 2..16 operation steps")
+        if not all(isinstance(step, dict) for step in raw_steps):
+            raise ValueError("every plan step must be an object")
+        if len(json.dumps(raw_steps, ensure_ascii=False, separators=(",", ":"))) > 262_144:
+            raise ValueError("serialized plan steps must not exceed 256 KiB")
+        step_ids = [str(step.get("step_id") or "").strip() for step in raw_steps]
+        if any(not step_id or len(step_id) > 64 for step_id in step_ids):
+            raise ValueError("every step_id must contain 1..64 characters")
+        if len(set(step_ids)) != len(step_ids):
+            raise ValueError("step_id values must be unique")
+
+        shared_target = arguments.get("target") or {}
+        if not isinstance(shared_target, dict):
+            raise ValueError("plan target must be an object")
+        effective_targets: list[dict[str, Any]] = []
+        for step in raw_steps:
+            step_target = step.get("target") or {}
+            if not isinstance(step_target, dict):
+                raise ValueError(f"step {step.get('step_id')!r} target must be an object")
+            effective_targets.append({**shared_target, **step_target})
+
+        selector = {
+            key: arguments[key]
+            for key in ("context", "connection_id", "eda")
+            if arguments.get(key) is not None
+        }
+        metadata_by_target: dict[str, dict[str, dict[str, Any]]] = {}
+        preflight_transport_ms = 0.0
+        connection_id = ""
+        for target in effective_targets:
+            target_key = json.dumps(target, sort_keys=True, separators=(",", ":"))
+            if target_key in metadata_by_target:
+                continue
+            preflight = self._call(
+                "eda.capabilities",
+                {
+                    **selector,
+                    "target": target,
+                    "purpose": (
+                        "Validate registered operations before executing the operation plan"
+                    ),
+                },
+                message,
+            )
+            observed_connection = str(preflight["connection_id"])
+            if connection_id and observed_connection != connection_id:
+                raise ValueError("all plan steps must resolve to one Runtime connection")
+            connection_id = observed_connection
+            preflight_transport_ms += float(preflight.get("client_transport_ms") or 0)
+            metadata_by_target[target_key] = {
+                key: dict(value)
+                for key, value in self._operation_metadata.get(connection_id, {}).items()
+            }
+        validated: list[tuple[dict[str, Any], bool, str, dict[str, Any]]] = []
+        allowed_step_keys = {
+            "step_id",
+            "purpose",
+            "operation",
+            "payload",
+            "target",
+            "expected_effect",
+            "idempotency_key",
+            "wait",
+        }
+        mutation_keys: set[str] = set()
+        for step, effective_target in zip(raw_steps, effective_targets, strict=True):
+            unknown_keys = set(step) - allowed_step_keys
+            if unknown_keys:
+                raise ValueError(
+                    f"step {step.get('step_id')!r} contains unknown fields: "
+                    + ", ".join(sorted(unknown_keys))
+                )
+            purpose = str(step.get("purpose") or "").strip()
+            if not 3 <= len(purpose) <= 240:
+                raise ValueError(
+                    f"step {step.get('step_id')!r} purpose must contain 3..240 characters"
+                )
+            operation = str(step.get("operation") or "").strip()
+            if operation != step.get("operation"):
+                raise ValueError(
+                    f"step {step.get('step_id')!r} operation must not contain "
+                    "surrounding whitespace"
+                )
+            target_key = json.dumps(effective_target, sort_keys=True, separators=(",", ":"))
+            metadata = metadata_by_target[target_key]
+            if operation not in metadata:
+                raise ValueError(
+                    f"step {step.get('step_id')!r} uses unknown operation {operation!r}"
+                )
+            payload = step.get("payload")
+            if not isinstance(payload, dict):
+                raise ValueError(f"step {step.get('step_id')!r} payload must be an object")
+            mutates = bool(metadata[operation].get("mutates", True))
+            if "mutating" in payload and bool(payload["mutating"]) != mutates:
+                raise ValueError(
+                    f"step {step.get('step_id')!r} mutating flag contradicts capability metadata"
+                )
+            if mutates and not str(step.get("idempotency_key") or "").strip():
+                raise ValueError(f"step {step.get('step_id')!r} mutation requires idempotency_key")
+            if mutates:
+                idempotency_key = str(step["idempotency_key"]).strip()
+                if idempotency_key in mutation_keys:
+                    raise ValueError("mutating plan steps must use unique idempotency_key values")
+                mutation_keys.add(idempotency_key)
+            wait = step.get("wait")
+            if wait is not None and not isinstance(wait, dict):
+                raise ValueError(f"step {step.get('step_id')!r} wait must be an object")
+            if isinstance(wait, dict):
+                unknown_wait_keys = set(wait) - {"timeout_ms", "poll_interval_ms"}
+                if unknown_wait_keys:
+                    raise ValueError(f"step {step.get('step_id')!r} wait contains unknown fields")
+                timeout_ms = int(wait.get("timeout_ms", 60_000))
+                poll_interval_ms = int(wait.get("poll_interval_ms", 1_000))
+                if not 1_000 <= timeout_ms <= 90_000:
+                    raise ValueError(f"step {step.get('step_id')!r} timeout_ms is out of range")
+                if not 100 <= poll_interval_ms <= 5_000:
+                    raise ValueError(
+                        f"step {step.get('step_id')!r} poll_interval_ms is out of range"
+                    )
+            validated.append((step, mutates, operation, effective_target))
+
+        results: list[dict[str, Any]] = []
+        transport_ms = preflight_transport_ms
+        status = "passed"
+        plan_error: dict[str, Any] | None = None
+        for index, (step, mutates, operation, effective_target) in enumerate(validated):
+            step_arguments: dict[str, Any] = {
+                "purpose": str(step["purpose"]),
+                "operation": operation,
+                "payload": {**step["payload"], "mutating": mutates},
+                "connection_id": connection_id,
+            }
+            if arguments.get("context") is not None:
+                step_arguments["context"] = arguments["context"]
+            if effective_target:
+                step_arguments["target"] = effective_target
+            for key in ("expected_effect", "idempotency_key"):
+                if step.get(key) is not None:
+                    step_arguments[key] = step[key]
+            try:
+                # The plan itself is a mutation-capable, explicitly approved tool. Mutability was
+                # frozen from the target-specific capability snapshots before the first step.
+                value = self._call("eda.submit", step_arguments, message)
+            except Exception as exc:
+                status = "interrupted"
+                plan_error = {"code": type(exc).__name__, "message": str(exc)}
+                break
+            transport_ms += float(value.get("client_transport_ms") or 0)
+            run = value["run"]
+            if not run.get("terminal") and step.get("wait") is not None:
+                job_id = run.get("job_id")
+                if not job_id:
+                    results.append(
+                        {
+                            "step_id": str(step["step_id"]),
+                            "purpose": str(step["purpose"]),
+                            "operation": operation,
+                            "mutates": mutates,
+                            **value,
+                        }
+                    )
+                    status = "interrupted"
+                    plan_error = {
+                        "code": "durable_job_id_missing",
+                        "message": (
+                            "non-terminal run cannot be waited because it returned no job_id"
+                        ),
+                    }
+                    break
+                wait = step.get("wait") or {}
+                try:
+                    value = self._call(
+                        "eda.job.wait",
+                        {
+                            "purpose": (f"Wait for step {step['step_id']}: {step['purpose']}")[
+                                :240
+                            ],
+                            "connection_id": connection_id,
+                            "job_id": job_id,
+                            "timeout_ms": int(wait.get("timeout_ms", 60_000)),
+                            "poll_interval_ms": int(wait.get("poll_interval_ms", 1_000)),
+                        },
+                        message,
+                    )
+                except Exception as exc:
+                    results.append(
+                        {
+                            "step_id": str(step["step_id"]),
+                            "purpose": str(step["purpose"]),
+                            "operation": operation,
+                            "mutates": mutates,
+                            **value,
+                            "wait_error": {
+                                "code": type(exc).__name__,
+                                "message": str(exc),
+                            },
+                        }
+                    )
+                    status = "waiting"
+                    plan_error = {
+                        "code": "wait_interrupted",
+                        "message": "durable job remains observable by its returned job_id",
+                    }
+                    break
+                transport_ms += float(value.get("client_transport_ms") or 0)
+                run = value["run"]
+            results.append(
+                {
+                    "step_id": str(step["step_id"]),
+                    "purpose": str(step["purpose"]),
+                    "operation": operation,
+                    "mutates": mutates,
+                    **value,
+                }
+            )
+            state = str(run.get("state") or "unknown")
+            if run.get("terminal") and state != "passed":
+                status = "failed"
+                break
+            if not run.get("terminal"):
+                status = "waiting"
+                break
+            if index == len(validated) - 1:
+                status = "passed"
+        return {
+            "status": status,
+            "connection_id": connection_id,
+            "step_count": len(results),
+            "planned_step_count": len(validated),
+            "client_transport_ms": round(transport_ms, 3),
+            "steps": results,
+            **({"error": plan_error} if plan_error else {}),
+        }
+
     def _remember_capabilities(self, connection_id: str, response: dict[str, Any]) -> None:
         result = response.get("result") or {}
         data = result.get("data") if isinstance(result, dict) else {}
@@ -519,19 +819,30 @@ class MCPRuntimeServer:
             separators=(",", ":"),
             ensure_ascii=False,
         )
+        audit_payload: dict[str, Any] = {
+            "protocol": AGENT_AUDIT_PROTOCOL,
+            "actor": self._actor(message).to_dict(),
+            "tool": name,
+            "purpose": str(arguments.get("purpose") or "unspecified EDA operation")[:240],
+            "input_sha256": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+            "action_sha256": hashlib.sha256(action_canonical.encode("utf-8")).hexdigest(),
+        }
+        if name == "eda.run_plan" and isinstance(arguments.get("steps"), list):
+            audit_payload["plan_steps"] = [
+                {
+                    "step_id": str(step.get("step_id") or "")[:64],
+                    "operation": str(step.get("operation") or "")[:160],
+                    "purpose": str(step.get("purpose") or "")[:240],
+                }
+                for step in arguments["steps"][:16]
+                if isinstance(step, dict)
+            ]
         self._audit.append(
             run_id=run_id,
             request_id=request_id,
             event_type="agent.tool.requested",
             source="mcp-runtime",
-            payload={
-                "protocol": AGENT_AUDIT_PROTOCOL,
-                "actor": self._actor(message).to_dict(),
-                "tool": name,
-                "purpose": str(arguments.get("purpose") or "unspecified EDA operation")[:240],
-                "input_sha256": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
-                "action_sha256": hashlib.sha256(action_canonical.encode("utf-8")).hexdigest(),
-            },
+            payload=audit_payload,
         )
         return run_id, request_id
 
@@ -545,6 +856,31 @@ class MCPRuntimeServer:
             return
         run_id, request_id = audit
         run = value.get("run") if isinstance(value.get("run"), dict) else None
+        execution: dict[str, Any] = {
+            "linked": run is not None,
+            "run_id": run.get("run_id") if run else None,
+            "request_id": run.get("request_id") if run else None,
+            "job_id": run.get("job_id") if run else None,
+            "state": run.get("state") if run else value.get("status"),
+            "terminal": bool(run.get("terminal")) if run else True,
+        }
+        if isinstance(value.get("steps"), list):
+            execution["steps"] = [
+                {
+                    "step_id": str(step.get("step_id") or "")[:64],
+                    "operation": str(step.get("operation") or "")[:160],
+                    "run_id": (step.get("run") or {}).get("run_id"),
+                    "request_id": (step.get("run") or {}).get("request_id"),
+                    "job_id": (step.get("run") or {}).get("job_id"),
+                    "state": (step.get("run") or {}).get("state"),
+                    "terminal": bool((step.get("run") or {}).get("terminal")),
+                }
+                for step in value["steps"][:16]
+                if isinstance(step, dict) and isinstance(step.get("run"), dict)
+            ]
+            execution["linked"] = bool(execution["steps"])
+            execution["state"] = value.get("status")
+            execution["terminal"] = value.get("status") in {"passed", "failed", "cancelled"}
         self._audit.append(
             run_id=run_id,
             request_id=request_id,
@@ -556,14 +892,7 @@ class MCPRuntimeServer:
                     "mcp_server_ms": elapsed_ms,
                     "client_transport_ms": value.get("client_transport_ms"),
                 },
-                "execution": {
-                    "linked": run is not None,
-                    "run_id": run.get("run_id") if run else None,
-                    "request_id": run.get("request_id") if run else None,
-                    "job_id": run.get("job_id") if run else None,
-                    "state": run.get("state") if run else value.get("status"),
-                    "terminal": bool(run.get("terminal")) if run else True,
-                },
+                "execution": execution,
             },
         )
         self._audit.finalize(run_id)

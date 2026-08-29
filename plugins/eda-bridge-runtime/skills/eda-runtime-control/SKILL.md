@@ -39,6 +39,12 @@ Runtime merely because SSH is absent.
 - After capabilities establish a non-mutating operation, use `eda.read` so the Agent client can
   authorize the call through a statically read-only tool. Runtime rejects unknown or mutating
   operations on that lane. Keep `eda.submit` for mutations and unresolved safety classes.
+- When 2..16 typed operations are already decided, ordered, and share one connection, use one
+  `eda.run_plan` call instead of spending an Agent turn per step. Give every step its own concise
+  `purpose`; give every mutating step its own stable `idempotency_key`; request `wait` only where a
+  later step depends on a durable result. Runtime validates the whole plan before its first
+  mutation, then stops at the first failed or non-terminal unawaited step. Do not use a plan for a
+  single operation, open-ended diagnosis, branching engineering judgment, or unrelated targets.
 - For a mutation, use one stable `idempotency_key` for the same intended change. A retry observes
   the same operation instead of starting a duplicate.
 - An accepted durable job is not a completed job. Prefer one `eda.job.wait` call when the task can

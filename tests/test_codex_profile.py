@@ -52,6 +52,7 @@ def test_unattended_profile_approves_only_typed_runtime_mutation(tmp_path):
     profile = output.read_text(encoding="utf-8")
 
     assert '[mcp_servers."eda-bridge-runtime".tools."eda.submit"]' in profile
+    assert '[mcp_servers."eda-bridge-runtime".tools."eda.run_plan"]' in profile
     assert 'approval_mode = "approve"' in profile
     assert "dangerously-bypass" not in profile
 

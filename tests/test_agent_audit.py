@@ -95,7 +95,11 @@ def test_codex_hook_accepts_protocol_native_mcp_names(tmp_path):
 
 @pytest.mark.parametrize(
     ("codex_name", "runtime_name"),
-    [("eda_read", "eda.read"), ("eda_job_wait", "eda.job.wait")],
+    [
+        ("eda_read", "eda.read"),
+        ("eda_run_plan", "eda.run_plan"),
+        ("eda_job_wait", "eda.job.wait"),
+    ],
 )
 def test_codex_hook_covers_read_and_wait_tools(tmp_path, codex_name, runtime_name):
     event = {
@@ -106,3 +110,43 @@ def test_codex_hook_covers_read_and_wait_tools(tmp_path, codex_name, runtime_nam
 
     assert record_codex_hook(event, phase="pre", database=database) is True
     assert audit_events(database)[0]["payload"]["tool"] == runtime_name
+
+
+def test_codex_hook_aggregates_plan_state_instead_of_first_successful_step(tmp_path):
+    event = {
+        **_event("tool-plan"),
+        "tool_name": "mcp__eda_bridge_runtime__eda_run_plan",
+    }
+    database = tmp_path / "plan.sqlite3"
+    assert record_codex_hook(event, phase="pre", database=database) is True
+    post = {
+        **event,
+        "tool_response": {
+            "structuredContent": {
+                "status": "waiting",
+                "planned_step_count": 2,
+                "steps": [
+                    {
+                        "step_id": "create",
+                        "operation": "project.create",
+                        "run": {
+                            "protocol": RUN_VIEW_PROTOCOL,
+                            "run_id": "run-create",
+                            "request_id": "request-create",
+                            "job_id": "job-create",
+                            "state": "running",
+                            "terminal": False,
+                        },
+                    }
+                ],
+            }
+        },
+    }
+    assert record_codex_hook(post, phase="post", database=database) is True
+
+    execution = audit_events(database)[1]["payload"]["execution"]
+    assert execution["state"] == "waiting"
+    assert execution["terminal"] is False
+    assert execution["run_id"] is None
+    assert execution["job_id"] == "job-create"
+    assert execution["steps"][0]["state"] == "running"

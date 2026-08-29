@@ -3,6 +3,22 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Runtime alpha.13 validated-plan acceptance
+
+- All Python tests and Ruff checks passed after three independent review rounds. The review-found
+  target-specific capability, durable identity, idempotency, interruption, and audit aggregation
+  defects are retained as regression tests.
+- The Pi adapter exposes the same ten Runtime tools as Codex, including `eda.run_plan`; its Node
+  client tests passed against the candidate Runtime package.
+- On the configured remote `display4` profile, one Codex call created a disposable AEDT 2026.1
+  HFSS 3D Layout project, waited for three durable jobs, freshly inspected the saved Bundle, and
+  exported a verified 800 x 600 PNG. It did not solve, use GUI automation, or access customer data.
+- Compared with the prior seven-call lifecycle, the one-call plan reduced input tokens from 165,016
+  to 49,300 and Agent/client time from 51.079 s to 37.648 s while Runtime/SSH/AEDT time remained
+  comparable at 67.985 s versus 66.297 s.
+- The exact scratch project, AEDB, results directory, and PNG were realpath-checked under the
+  evaluation root, verified, and removed after measurement.
+
 ## 2026-08-29 Runtime alpha.12 matrix acceptance
 
 - The published package, local Codex plugin, Agent-host Runtime, and both isolated remote Bridge

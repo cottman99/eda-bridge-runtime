@@ -5,7 +5,7 @@ description: Route local or SSH EDA work through the stable EDA Bridge Runtime f
 
 # EDA Runtime control for Pi
 
-Use the nine `eda_*` tools for EDA work. Do not use shell commands as an alternate EDA control
+Use the ten `eda_*` tools for EDA work. Do not use shell commands as an alternate EDA control
 path. Every call needs one concise `purpose` explaining the immediate engineering reason.
 
 When the pasted EDA context and the selected vendor Skill already identify the connection and
@@ -15,6 +15,11 @@ capabilities first. Use discovery only when information is genuinely missing or 
 After capabilities establish that an operation is non-mutating, use `eda_read`; it is the
 client-visible read-only permission lane and rejects unknown or mutating operations. Keep
 `eda_submit` for mutations and for calls whose safety cannot yet be proven.
+
+When 2..16 typed operations are already decided and ordered on one connection, use one
+`eda_run_plan` call. Give every step a concise purpose and every mutating step a unique stable
+idempotency key. Ask Runtime to wait only when a later step depends on a durable result. Keep
+single operations, open-ended diagnosis, branching judgment, and unrelated targets outside plans.
 
 Mutating calls require a stable `idempotency_key`. Never blindly repeat a mutation after timeout or
 disconnect; inspect its durable job or Run state first. `eda_connection_reset` only refreshes the

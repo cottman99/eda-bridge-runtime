@@ -36,10 +36,11 @@ disconnect, and returns the result with its linked timing and evidence.
 
 ## Current alpha
 
-`0.1.0a12` adds bounded ADS and AnsysEM documentation-evidence cases, privacy-preserving response
-size metrics, a sequential cross-Agent evaluation matrix, and a Pi profile installer that never
-modifies or exposes credentials. It builds on alpha.11's clean Skill discovery and stable-session
-audit attribution.
+`0.1.0a13` adds one-call validated execution plans for short deterministic EDA sequences. Runtime
+prevalidates target-specific capabilities and unique mutation identities before the first change,
+waits for durable dependencies internally, stops on failure, and retains each step's purpose, Run,
+timing, and audit link. Codex and Pi expose the same operation; single operations still use the
+smaller direct tools.
 Every MCP client contributes its
 observed client identity, concise purpose, argument fingerprint, timings, and linked Run without
 depending on a Codex- or Pi-specific hook. Agent hooks may add richer model/session metadata, but
@@ -57,7 +58,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a12"
+python -m pip install "eda-bridge-runtime==0.1.0a13"
 eda-runtime doctor
 ```
 

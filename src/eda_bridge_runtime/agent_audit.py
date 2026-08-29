@@ -19,6 +19,7 @@ _TOOL_NAMES = {
     "eda_capabilities": "eda.capabilities",
     "eda_read": "eda.read",
     "eda_submit": "eda.submit",
+    "eda_run_plan": "eda.run_plan",
     "eda_job_status": "eda.job.status",
     "eda_job_wait": "eda.job.wait",
     "eda_job_events": "eda.job.events",
@@ -28,6 +29,7 @@ _TOOL_NAMES = {
     "eda.capabilities": "eda.capabilities",
     "eda.read": "eda.read",
     "eda.submit": "eda.submit",
+    "eda.run_plan": "eda.run_plan",
     "eda.job.status": "eda.job.status",
     "eda.job.wait": "eda.job.wait",
     "eda.job.events": "eda.job.events",
@@ -130,6 +132,32 @@ def _fingerprint(tool_name: str, tool_input: Mapping[str, Any]) -> str:
 
 
 def _execution_reference(value: Any) -> dict[str, Any]:
+    if plan := _find_plan_view(value):
+        steps = []
+        for item in plan.get("steps") or []:
+            run = _find_run_view(item)
+            if run is not None:
+                steps.append(
+                    {
+                        "step_id": str(item.get("step_id") or "")[:64],
+                        "operation": str(item.get("operation") or "")[:160],
+                        "run_id": str(run.get("run_id") or "") or None,
+                        "request_id": str(run.get("request_id") or "") or None,
+                        "job_id": str(run.get("job_id") or "") or None,
+                        "state": str(run.get("state") or "unknown"),
+                        "terminal": bool(run.get("terminal", False)),
+                    }
+                )
+        status = str(plan.get("status") or "unknown")
+        return {
+            "linked": bool(steps),
+            "run_id": None,
+            "request_id": None,
+            "job_id": next((step["job_id"] for step in reversed(steps) if step["job_id"]), None),
+            "state": status,
+            "terminal": status in {"passed", "failed", "cancelled"},
+            "steps": steps,
+        }
     run = _find_run_view(value)
     if run is None:
         return {"linked": False}
@@ -141,6 +169,26 @@ def _execution_reference(value: Any) -> dict[str, Any]:
         "state": str(run.get("state") or "unknown"),
         "terminal": bool(run.get("terminal", False)),
     }
+
+
+def _find_plan_view(value: Any, *, depth: int = 0) -> Mapping[str, Any] | None:
+    if depth > 8:
+        return None
+    if isinstance(value, Mapping):
+        if (
+            isinstance(value.get("steps"), list)
+            and "planned_step_count" in value
+            and "status" in value
+        ):
+            return value
+        for item in value.values():
+            if found := _find_plan_view(item, depth=depth + 1):
+                return found
+    elif isinstance(value, list):
+        for item in value:
+            if found := _find_plan_view(item, depth=depth + 1):
+                return found
+    return None
 
 
 def _find_run_view(value: Any, *, depth: int = 0) -> Mapping[str, Any] | None:

@@ -70,8 +70,8 @@ def render_profile(
         'args = ["mcp", "serve"]',
         "required = true",
         'enabled_tools = ["eda.connections.list", "eda.connection.reset", '
-        '"eda.context.resolve", "eda.capabilities", "eda.read", "eda.submit", "eda.job.status", '
-        '"eda.job.wait", "eda.job.events"]',
+        '"eda.context.resolve", "eda.capabilities", "eda.read", "eda.submit", '
+        '"eda.run_plan", "eda.job.status", "eda.job.wait", "eda.job.events"]',
         "",
         "[[hooks.PreToolUse]]",
         'matcher = "^mcp__eda_bridge_runtime__.*$"',
@@ -94,6 +94,9 @@ def render_profile(
         lines.extend(
             [
                 '[mcp_servers."eda-bridge-runtime".tools."eda.submit"]',
+                'approval_mode = "approve"',
+                "",
+                '[mcp_servers."eda-bridge-runtime".tools."eda.run_plan"]',
                 'approval_mode = "approve"',
                 "",
             ]
@@ -143,7 +146,10 @@ def main() -> int:
     parser.add_argument(
         "--approve-mutations",
         action="store_true",
-        help="Pre-approve only eda.submit for a separately authorized unattended profile.",
+        help=(
+            "Pre-approve only typed Runtime mutation tools for a separately authorized "
+            "unattended profile."
+        ),
     )
     parser.add_argument("--keep-name", action="append", dest="keep_names")
     args = parser.parse_args()

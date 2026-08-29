@@ -63,6 +63,27 @@ def tool_fact(tool: str, result: Any) -> dict[str, Any]:
     }
 
 
+def tool_facts(tool: str, result: Any) -> list[dict[str, Any]]:
+    """Keep one Agent call while exposing nested Runtime plan runs to deterministic scoring."""
+    top = tool_fact(tool, result)
+    result = result if isinstance(result, dict) else {}
+    structured = result.get("structured_content") or result.get("structuredContent")
+    structured = structured if isinstance(structured, dict) else {}
+    steps = structured.get("steps") if isinstance(structured.get("steps"), list) else []
+    if not steps:
+        return [top]
+    nested: list[dict[str, Any]] = []
+    for step in steps:
+        if not isinstance(step, dict):
+            continue
+        fact = tool_fact(tool, {"structuredContent": step})
+        # The top-level plan timing and response size already contain every nested step.
+        fact["client_transport_ms"] = None
+        fact["response_payload_chars"] = 0
+        nested.append(fact)
+    return [top, *nested]
+
+
 def runtime_metrics(facts: list[dict[str, Any]]) -> dict[str, int | float]:
     runs = {fact["run_id"] for fact in facts if fact["run_id"]}
     jobs = {fact["job_id"] for fact in facts if fact["job_id"]}
@@ -128,7 +149,7 @@ def parse_codex(events: list[dict[str, Any]]) -> dict[str, Any]:
             attempts.append(tool)
             if item.get("status") == "completed" and not item.get("error"):
                 tools.append(tool)
-                facts.append(tool_fact(tool, item.get("result")))
+                facts.extend(tool_facts(tool, item.get("result")))
         if event.get("type") == "item.completed" and item.get("type") == "agent_message":
             messages += 1
             final_text = str(item.get("text") or "")
@@ -160,7 +181,7 @@ def parse_pi(events: list[dict[str, Any]]) -> dict[str, Any]:
             attempts.append(tool)
             if not event.get("isError", False):
                 tools.append(tool)
-                facts.append(tool_fact(tool, event.get("result")))
+                facts.extend(tool_facts(tool, event.get("result")))
         if event.get("type") != "message_end":
             continue
         message = event.get("message") if isinstance(event.get("message"), dict) else {}
@@ -267,6 +288,7 @@ def codex_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
 
 
 def pi_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
+    selected_tools = sorted({tool.replace(".", "_") for tool in case.get("allowed_tools", [])})
     command = [
         args.pi_command,
         "--offline",
@@ -286,7 +308,7 @@ def pi_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
         str(args.pi_skill),
         "--no-builtin-tools",
         "--tools",
-        "eda_connections_list",
+        ",".join(selected_tools),
         case["prompt"],
     ]
     return native_command(command)
