@@ -3,6 +3,25 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Runtime alpha.19 mechanical read-preflight acceptance
+
+- A real ADS session-status task used exactly one `eda.read`. Runtime mechanically obtained the
+  missing capability metadata, rejected no safety boundary, executed the typed read, and returned
+  the exact projected count. Agent calls fell from two to one, input tokens from the prior
+  three-trial median of 52,781 to 37,839 (28.3%), and model-visible response characters from 2,731
+  to 20. Runtime/SSH/ADS time remained 1.125 s.
+- A real AnsysEM fresh project inspect likewise used exactly one inline-wait `eda.read`. Calls fell
+  from the original three-call lifecycle to one, input tokens from 66,853 to 51,634 (22.8%), and
+  response characters from 2,840 to 954. Wall time was 31.236 s versus the prior 35.063-second
+  median; each is a small sample, so the release claims call and context reduction, not latency.
+- Unit coverage proves a mutating operation requested through the read lane triggers the same
+  mechanical metadata preflight and is rejected before the vendor operation executes. Compact
+  audit retained one logical read rather than attributing internal discovery to the Agent.
+- The complete 127-test Python suite, Ruff, formatting, package build, Twine checks, and all three
+  Pi adapter tests passed. Local and remote Runtime/plugin installs plus both isolated remote Bridge
+  environments report the alpha.19 candidate. The disposable AnsysEM Bundle and staging files were
+  removed after exact-path verification.
+
 ## 2026-08-29 Runtime alpha.18 one-call durable-operation acceptance
 
 - A real AnsysEM project inspect used one capability call plus one inline-wait read and returned the
