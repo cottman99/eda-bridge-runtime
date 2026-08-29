@@ -28,6 +28,15 @@ credentials, host address, or task-specific geometry is included here.
 - The measured vendor boundary remained approximately one second for both clients. The corrected
   single samples retained Pi's lower Agent-side latency and provider-reported input counts, but are
   functional spot checks rather than new statistical performance claims.
+- Bounded documentation spot checks queried at most three sources and retrieved one passage capped
+  at 2,000 characters without retaining raw text. Pi passed ADS and AnsysEM on the first attempt in
+  15.844 and 13.532 seconds. Codex passed AnsysEM in 17.094 seconds, but its first ADS attempt made
+  zero tool calls and returned an explicit failed result; an independent retry passed in 19.265
+  seconds. The first failure is retained as Agent reliability evidence rather than hidden by retry.
+- Successful ADS calls returned the same three sources and 1,309-character bounded excerpt for both
+  clients; successful AnsysEM calls returned the same three sources and 2,000-character excerpt.
+  The retrieval boundary was 1.1-1.6 seconds, while Agent-side work dominated. No document corpus,
+  customer data, or raw Agent stream is committed.
 
 ## 2026-08-30 Runtime alpha.25 Agent-host acceptance
 
