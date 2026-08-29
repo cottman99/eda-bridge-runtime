@@ -26,6 +26,13 @@ the same Runtime/Bridge contracts.
 | L6 generated-input Momentum solve (Codex 2/3; Pi 3/3) | 3 each | 38.814 s | 21.701 s | 44.1% | Mixed Agent and solver |
 | L6 one-turn ADS plus AnsysEM | 3 each, both 3/3 | 103.691 s | 92.718 s | 10.6% | AEDT lifecycle |
 
+An alpha.26 public-install spot check is retained separately from the repeated rows above. With one
+trial per Agent and vendor, Pi completed ADS/AnsysEM capability reads in 9.375/8.984 seconds and
+Codex in 16.375/13.266 seconds. It also exposed and corrected an ambiguous `operation_count` gate:
+Codex had reported one tool call instead of the nine/fourteen supported operations, while Pi had
+reported the intended values. The case now states the semantic meaning and rejects a count of one
+without pinning vendor-version totals.
+
 ## Evidence-backed decisions
 
 1. **Keep both Agents, with Pi as the bounded-execution default.** Pi autonomously passed mutation,
