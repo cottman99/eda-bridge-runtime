@@ -72,6 +72,8 @@ For acceptance of a launcher generated from the public Runtime package, pass
 `--pi-use-launcher-profile`. The runner then retains the launcher's installed extension and Skills
 instead of injecting a second repository copy, while still restricting visible tools to the case's
 `allowed_tools` list.
+The matrix runner accepts the same flag and forwards it only to Pi child cases, so installed-profile
+comparisons do not require hand-running each case.
 
 `summarize_results.py` combines only normalized results. It omits every Agent
 final payload and raw trace, distinguishes authentication from Runtime/EDA
