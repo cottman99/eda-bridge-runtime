@@ -22,3 +22,8 @@ python evals/run_case.py --case evals/cases/l0_connections.json `
 
 Pi uses the checked-in thin adapter and the same case prompt. Authentication remains in the private
 Agent profile and is never copied into a case or result.
+
+`summarize_results.py` combines only normalized results. It omits every Agent
+final payload and raw trace, distinguishes authentication from Runtime/EDA
+failure, and only calls a case cross-Agent comparable when more than one Agent
+actually passed that same case.
