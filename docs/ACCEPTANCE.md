@@ -20,6 +20,14 @@ credentials, host address, or task-specific geometry is included here.
   about shortened Skill descriptions. Three Runtime discovery trials passed 3/3 with 26.9% lower
   median wall time than the earlier profile baseline; ADS and AnsysEM results remain separately
   recorded below so the release does not claim a universal latency improvement.
+- Trusted Publishing built, tested, published, and reinstalled the exact public `0.1.0a21` package.
+  The public package was then installed in the local and remote shared Runtime plus both isolated
+  vendor-Bridge environments; all six imports reported the same version. Remote doctor preserved
+  the required virtual display.
+- One final installed-profile Codex discovery used exactly one Runtime call and passed with two
+  registered connections. The audit row included an automatically inferred MCP lifecycle ID. Its
+  29.342-second wall time is retained as an installed-state correctness sample, not presented as a
+  latency improvement over the repeated pre-release baseline.
 
 ## 2026-08-29 Codex profile system-Skill isolation
 
