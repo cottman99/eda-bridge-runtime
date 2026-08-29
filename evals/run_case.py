@@ -15,6 +15,11 @@ from typing import Any
 
 def canonical_tool(name: str) -> str:
     value = name.removeprefix("mcp__eda_bridge_runtime__")
+    # Pi exposes MCP-compatible names with underscores. Most Runtime names map
+    # each underscore to a namespace separator, but run_plan intentionally keeps
+    # its operation separator because that is the public Runtime tool name.
+    if value == "eda_run_plan":
+        return "eda.run_plan"
     if value.startswith("eda_"):
         return value.replace("_", ".", 1).replace("_", ".")
     return value

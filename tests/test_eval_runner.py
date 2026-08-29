@@ -137,6 +137,23 @@ def test_pi_runtime_details_contribute_the_same_execution_facts():
     assert observation["facts"][0]["client_transport_ms"] == 3.5
 
 
+def test_pi_plan_alias_preserves_public_runtime_tool_name():
+    runner = load_runner()
+    events = [
+        {
+            "type": "tool_execution_end",
+            "toolName": "eda_run_plan",
+            "isError": False,
+            "result": {"details": {"runtime": {"status": "passed", "steps": []}}},
+        }
+    ]
+
+    observation = runner.parse_pi(events)
+
+    assert observation["attempts"] == ["eda.run_plan"]
+    assert observation["tools"] == ["eda.run_plan"]
+
+
 def test_codex_mutation_approval_uses_review_not_unrestricted_bypass():
     runner = load_runner()
     args = SimpleNamespace(

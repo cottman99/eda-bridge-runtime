@@ -39,9 +39,10 @@ boundaries, not ADS versus AEDT product speed.
    dominates more than half of the wall time.
 4. Both cases completed without arbitrary code, GUI gestures, solve, customer
    data, blind replay, or retained disposable artifacts.
-5. The dedicated Pi profile is now authenticated and has passed the L0-L2
-   read-only matrix. A matching L5 lifecycle row remains pending; the earlier
-   missing-authentication result is not treated as a Bridge or EDA failure.
+5. The dedicated Pi profile is now authenticated and has passed matching L5 one-call lifecycles.
+   The cross-client results are recorded separately in
+   `BASELINE_2026-08-30_CODEX_PI_L5.md`; the earlier missing-authentication result remains excluded
+   from Bridge and EDA reliability.
 6. The validated plan reduced Agent calls by 85.7%, input tokens by 70.1%, Agent/client time by
    26.3%, and total wall time by 10.0%. Runtime/SSH/AEDT time changed by only +2.5%, confirming that
    the gain came from removing repeated model turns rather than weakening the EDA lifecycle.
