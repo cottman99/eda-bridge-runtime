@@ -183,6 +183,7 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
           timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: 90000 })),
           poll_interval_ms: Type.Optional(Type.Integer({ minimum: 100, maximum: 5000 })),
         })),
+        result_view: Type.Optional(ResultView),
       }, { additionalProperties: false }), { minItems: 2, maxItems: 16 }),
       ...TargetFields,
     }),
@@ -211,6 +212,7 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
       eda: Type.Optional(Type.String()),
       timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: 90000 })),
       poll_interval_ms: Type.Optional(Type.Integer({ minimum: 100, maximum: 5000 })),
+      result_view: Type.Optional(ResultView),
     }),
   );
   register(

@@ -78,15 +78,14 @@ def _json_pointer(value: Any, pointer: str) -> Any:
     return selected
 
 
-def _project_response_result(response: dict[str, Any], result_view: Any) -> dict[str, Any]:
+def _result_view_fields(result_view: Any) -> list[tuple[str, str, str]]:
     if not isinstance(result_view, dict) or set(result_view) != {"fields"}:
         raise ValueError("result_view must contain only fields")
     fields = result_view.get("fields")
     if not isinstance(fields, list) or not 1 <= len(fields) <= 16:
         raise ValueError("result_view fields must contain 1..16 selectors")
     names: set[str] = set()
-    selected: dict[str, Any] = {}
-    result = response.get("result")
+    normalized: list[tuple[str, str, str]] = []
     for field in fields:
         if not isinstance(field, dict) or not {"name", "pointer"} <= set(field):
             raise ValueError("every result_view field requires name and pointer")
@@ -107,6 +106,16 @@ def _project_response_result(response: dict[str, Any], result_view: Any) -> dict
         mode = mode_value
         if mode not in {"value", "count", "exists"}:
             raise ValueError("result_view mode must be value, count, or exists")
+        _json_pointer({}, pointer)
+        normalized.append((name, pointer, mode))
+    return normalized
+
+
+def _project_response_result(response: dict[str, Any], result_view: Any) -> dict[str, Any]:
+    fields = _result_view_fields(result_view)
+    selected: dict[str, Any] = {}
+    result = response.get("result")
+    for name, pointer, mode in fields:
         value = _json_pointer(result, pointer)
         if mode == "exists":
             selected[name] = value is not _MISSING
@@ -279,6 +288,7 @@ TOOLS = [
                                     },
                                 }
                             ),
+                            "result_view": _RESULT_VIEW_SCHEMA,
                         },
                         ["step_id", "purpose", "operation", "payload"],
                     ),
@@ -322,6 +332,7 @@ TOOLS = [
                 "job_id": {"type": "string"},
                 "connection_id": {"type": "string"},
                 "eda": {"type": "string"},
+                "result_view": _RESULT_VIEW_SCHEMA,
                 "timeout_ms": {"type": "integer", "minimum": 1000, "maximum": 90000},
                 "poll_interval_ms": {"type": "integer", "minimum": 100, "maximum": 5000},
             },
@@ -593,7 +604,7 @@ class MCPRuntimeServer:
         projected = project_run(response_value)
         client_response = response_value
         if (
-            name == "eda.read"
+            name in {"eda.read", "eda.job.wait"}
             and arguments.get("result_view") is not None
             and response_value.get("status") == "passed"
         ):
@@ -676,6 +687,7 @@ class MCPRuntimeServer:
             "expected_effect",
             "idempotency_key",
             "wait",
+            "result_view",
         }
         mutation_keys: set[str] = set()
         for step, effective_target in zip(raw_steps, effective_targets, strict=True):
@@ -706,6 +718,12 @@ class MCPRuntimeServer:
             if not isinstance(payload, dict):
                 raise ValueError(f"step {step.get('step_id')!r} payload must be an object")
             mutates = bool(metadata[operation].get("mutates", True))
+            if step.get("result_view") is not None:
+                _result_view_fields(step["result_view"])
+                if mutates:
+                    raise ValueError(
+                        f"step {step.get('step_id')!r} result_view is allowed only for read steps"
+                    )
             if "mutating" in payload and bool(payload["mutating"]) != mutates:
                 raise ValueError(
                     f"step {step.get('step_id')!r} mutating flag contradicts capability metadata"
@@ -819,6 +837,34 @@ class MCPRuntimeServer:
                     break
                 transport_ms += float(value.get("client_transport_ms") or 0)
                 run = value["run"]
+            if step.get("result_view") is not None and run.get("state") == "passed":
+                try:
+                    value = {
+                        **value,
+                        "response": _project_response_result(
+                            value["response"], step["result_view"]
+                        ),
+                    }
+                except Exception as exc:
+                    results.append(
+                        {
+                            "step_id": str(step["step_id"]),
+                            "purpose": str(step["purpose"]),
+                            "operation": operation,
+                            "mutates": mutates,
+                            **value,
+                            "result_view_error": {
+                                "code": type(exc).__name__,
+                                "message": str(exc),
+                            },
+                        }
+                    )
+                    status = "interrupted"
+                    plan_error = {
+                        "code": "result_view_failed",
+                        "message": "read step completed but its result view could not be applied",
+                    }
+                    break
             results.append(
                 {
                     "step_id": str(step["step_id"]),

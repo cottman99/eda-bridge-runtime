@@ -588,6 +588,92 @@ def test_run_plan_prevalidates_then_executes_steps_with_individual_purposes():
     assert registry.transport.requests[2].payload["mutating"] is False
 
 
+def test_run_plan_projects_each_read_step_without_returning_full_results():
+    registry = FakeRegistry()
+    registry.transport = PlanTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Inspect two targets with bounded results",
+                    "connection_id": "ansys-one",
+                    "steps": [
+                        {
+                            "step_id": "first",
+                            "purpose": "Inspect the first target",
+                            "operation": "project.inspect",
+                            "payload": {"name": "first-full-value"},
+                            "result_view": {"fields": [{"name": "name", "pointer": "/observed"}]},
+                        },
+                        {
+                            "step_id": "second",
+                            "purpose": "Inspect the second target",
+                            "operation": "project.inspect",
+                            "payload": {"name": "second-full-value"},
+                            "result_view": {"fields": [{"name": "name", "pointer": "/observed"}]},
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    value = response["result"]["structuredContent"]
+    assert value["status"] == "passed"
+    assert [step["response"]["result"] for step in value["steps"]] == [
+        {"name": "first-full-value"},
+        {"name": "second-full-value"},
+    ]
+    assert all(step["response"]["result_view"]["projected"] for step in value["steps"])
+
+
+def test_run_plan_rejects_a_result_view_on_mutation_before_first_change():
+    registry = FakeRegistry()
+    registry.transport = PlanTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run_plan",
+                "arguments": {
+                    "purpose": "Reject result projection on a mutation",
+                    "connection_id": "ansys-one",
+                    "steps": [
+                        {
+                            "step_id": "create",
+                            "purpose": "Create the project",
+                            "operation": "project.create",
+                            "payload": {},
+                            "idempotency_key": "view-create",
+                            "result_view": {"fields": [{"name": "changed", "pointer": "/changed"}]},
+                        },
+                        {
+                            "step_id": "inspect",
+                            "purpose": "Inspect the project",
+                            "operation": "project.inspect",
+                            "payload": {},
+                        },
+                    ],
+                },
+            },
+        )
+    )
+
+    assert response["result"]["isError"] is True
+    assert (
+        "allowed only for read steps" in response["result"]["structuredContent"]["error"]["message"]
+    )
+    assert [request.operation for request in registry.transport.requests] == [
+        "runtime.capabilities"
+    ]
+
+
 def test_run_plan_rejects_all_invalid_steps_before_first_mutation():
     registry = FakeRegistry()
     registry.transport = PlanTransport()
@@ -1236,6 +1322,36 @@ def test_mcp_job_wait_polls_inside_runtime_until_terminal():
     assert value["run"]["state"] == "passed"
     assert value["run"]["terminal"] is True
     assert len(registry.transport.requests) == 3
+
+
+def test_mcp_job_wait_can_project_a_terminal_durable_result():
+    registry = FakeRegistry()
+    registry.transport = EventuallyTerminalTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.job.wait",
+                "arguments": {
+                    "purpose": "Wait for only the required durable result facts",
+                    "connection_id": "ansys-one",
+                    "job_id": "job-one",
+                    "timeout_ms": 1000,
+                    "poll_interval_ms": 100,
+                    "result_view": {
+                        "fields": [{"name": "job_field_count", "pointer": "/job", "mode": "count"}]
+                    },
+                },
+            },
+        )
+    )
+
+    value = response["result"]["structuredContent"]
+    assert value["run"]["state"] == "passed"
+    assert value["response"]["result"] == {"job_field_count": 4}
+    assert "job_id" not in value["response"]["result"]
 
 
 def test_mcp_connection_reset_closes_only_runtime_owned_transport():

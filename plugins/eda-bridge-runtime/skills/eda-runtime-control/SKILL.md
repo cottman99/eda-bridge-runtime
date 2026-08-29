@@ -42,7 +42,8 @@ Runtime merely because SSH is absent.
   response contract is already known and the task needs only a few facts from a large result, add
   `result_view` selectors using RFC 6901 JSON Pointers relative to the Bridge result. Use only
   deterministic `value`, `count`, or `exists` modes; omit the view when exploration needs the full
-  response. Never guess a pointer.
+  response. The same view is available on a terminal `eda.job.wait` and on read-only plan steps.
+  Runtime rejects plan views on mutations before execution. Never guess a pointer.
 - When 2..16 typed operations are already decided, ordered, and share one connection, use one
   `eda.run_plan` call instead of spending an Agent turn per step. Give every step its own concise
   `purpose`; give every mutating step its own stable `idempotency_key`; request `wait` only where a

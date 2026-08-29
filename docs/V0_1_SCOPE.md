@@ -1,5 +1,13 @@
 # Version 0.1 scope
 
+## 0.1.0a17 — durable and planned bounded reads
+
+- Carry the same deterministic `result_view` through terminal `eda.job.wait` responses and
+  read-only `eda.run_plan` steps so synchronous ADS and durable AnsysEM reads share one contract.
+- Reject a plan result view on every mutating step during prevalidation, before the first change.
+- Make the generated Pi launcher load the Runtime extension and administrator-selected EDA Skills
+  itself while exposing read plus the ten Runtime tools and excluding shell/write/edit.
+
 ## 0.1.0a16 — deterministic bounded read results
 
 - Add an optional `result_view` to the statically read-only lane so known large Bridge results can

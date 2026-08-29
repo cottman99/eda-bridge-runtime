@@ -75,6 +75,9 @@ an optional `result_view`. Each selector uses an RFC 6901 JSON Pointer relative 
 Bridge response and creates the normal compact Run view before returning only the selected result
 facts to the Agent. Invalid value/count pointers fail explicitly. Omitting `result_view` preserves
 the full response, which remains the correct choice for exploration.
+The same selector contract applies to a terminal `eda.job.wait` response and to read-only
+`eda.run_plan` steps. A plan rejects `result_view` on a mutating step during prevalidation, before
+any change begins.
 
 For 2..16 already-decided operations on one connection, `eda.run_plan` performs one capability
 preflight, validates the complete typed sequence before the first mutation, executes in order,

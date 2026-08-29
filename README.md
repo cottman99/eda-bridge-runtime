@@ -39,6 +39,8 @@ Agent context. Full responses remain the default for exploration.
 
 ## Current alpha
 
+`0.1.0a17` carries the same bounded result views through durable waits and read-only plan steps,
+while rejecting result projection on mutations before any change begins.
 `0.1.0a16` adds deterministic bounded views for known large read results, preserving the normal
 Run evidence while sending only selected values, counts, or existence facts into Agent context.
 It also makes audit analysis use complete Runtime-observed calls instead of raw event windows.
@@ -70,7 +72,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a16"
+python -m pip install "eda-bridge-runtime==0.1.0a17"
 eda-runtime doctor
 ```
 

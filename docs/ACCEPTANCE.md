@@ -3,6 +3,21 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Runtime alpha.17 durable and planned bounded-read acceptance
+
+- One real ADS read plan obtained the exact 13-session count and `ok` Bridge status through two
+  projected `session.status` steps. It used one Runtime connection, 1.328 s measured transport,
+  and no mutation, GUI automation, or solve.
+- The same two-step plan without views returned 15,408 structured characters; the projected plan
+  returned 1,654, an 89.3% reduction. The unprojected facts were intentionally omitted from the
+  measurement output rather than copied into logs or documentation.
+- Regression tests apply the same view after a terminal durable wait, preserve full failures and
+  non-terminal states, and reject every plan view on a mutating step before the first change.
+- The self-contained daily Pi launcher loaded five selected Skills and exposed ten Runtime tools
+  plus read. An authentication-free RPC status call found two configured EDA connections in
+  181.4 ms; shell/write/edit were absent and the empty credential file remained unchanged.
+- The complete 119-test Python suite, Ruff, formatting, and all three Pi adapter tests passed.
+
 ## 2026-08-29 bounded Codex model-routing probe
 
 - With the same narrow profile and Runtime targets, `gpt-5.6-luna` passed the ADS and AnsysEM L1
