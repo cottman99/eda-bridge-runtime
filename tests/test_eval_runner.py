@@ -111,6 +111,47 @@ def test_pi_tool_alias_and_unexpected_tool_are_detected():
     assert "unexpected_tools:bash" in scored["failures"]
 
 
+def test_codex_command_execution_is_detected_as_an_unexpected_tool():
+    runner = load_runner()
+    events = [
+        {
+            "type": "item.started",
+            "item": {"id": "item-shell", "type": "command_execution", "status": "in_progress"},
+        },
+        {
+            "type": "item.completed",
+            "item": {"id": "item-shell", "type": "command_execution", "status": "completed"},
+        },
+        {
+            "type": "item.completed",
+            "item": {
+                "id": "item-warning",
+                "type": "error",
+                "message": "Skill descriptions were shortened",
+            },
+        },
+        {
+            "type": "item.completed",
+            "item": {"id": "item-final", "type": "agent_message", "text": '{"status":"blocked"}'},
+        },
+    ]
+
+    observation = runner.parse_codex(events)
+    scored = runner.score(
+        {
+            "allowed_tools": [],
+            "required_tools": {},
+            "budgets": {"max_tool_calls": 0},
+            "expected_final": {"prefix": {"status": "blocked"}},
+        },
+        observation,
+        0,
+    )
+
+    assert observation["attempts"] == ["codex.command_execution"]
+    assert scored["failures"] == ["unexpected_tools:codex.command_execution"]
+
+
 def test_pi_runtime_details_contribute_the_same_execution_facts():
     runner = load_runner()
     events = [
@@ -387,6 +428,13 @@ def test_auth_failure_is_reduced_to_non_secret_classification():
         runner.launch_failure("No matching provider is authenticated. Use --provider.")
         == "agent_auth_unavailable"
     )
+    assert (
+        runner.launch_failure(
+            "A child command reported: No API key found for one provider",
+            agent_started=True,
+        )
+        is None
+    )
 
 
 def test_agent_reported_tool_unavailable_is_classified_without_raw_trace():
@@ -430,7 +478,7 @@ def test_score_accepts_bounded_string_prefix():
         "required_tools": {},
         "budgets": {"max_tool_calls": 0},
         "expected_runtime": {},
-        "expected_final": {"prefix": {"status": "blocked"}},
+        "expected_final": {"prefix": {"status": "block"}},
     }
     observation = {
         "tools": [],
@@ -444,3 +492,6 @@ def test_score_accepts_bounded_string_prefix():
         "failures": [],
         "final": {"status": "blocked_missing_target"},
     }
+
+    observation["final_text"] = '{"status":"blocking_question"}'
+    assert runner.score(case, observation, 0)["passed"] is True

@@ -62,7 +62,7 @@ def tool_fact(tool: str, result: Any) -> dict[str, Any]:
     transport_ms = structured.get("client_transport_ms")
     transport_ms = (
         float(transport_ms)
-        if isinstance(transport_ms, (int, float)) and not isinstance(transport_ms, bool)
+        if isinstance(transport_ms, int | float) and not isinstance(transport_ms, bool)
         else None
     )
     return {
@@ -166,14 +166,30 @@ def parse_codex(events: list[dict[str, Any]]) -> dict[str, Any]:
         "output_tokens": 0,
         "reasoning_output_tokens": 0,
     }
+    attempted_items: set[str] = set()
     for event in events:
         if event.get("type") == "turn.completed":
             for key in usage:
                 usage[key] += int((event.get("usage") or {}).get(key, 0))
         item = event.get("item") if isinstance(event.get("item"), dict) else {}
+        item_type = str(item.get("type") or "")
+        item_id = str(item.get("id") or "")
+        if (
+            event.get("type") in {"item.started", "item.completed"}
+            and item_type
+            and item_type not in {"agent_message", "error", "reasoning"}
+            and (not item_id or item_id not in attempted_items)
+        ):
+            tool = (
+                canonical_tool(str(item.get("tool") or ""))
+                if item_type == "mcp_tool_call"
+                else f"codex.{item_type}"
+            )
+            attempts.append(tool)
+            if item_id:
+                attempted_items.add(item_id)
         if event.get("type") == "item.completed" and item.get("type") == "mcp_tool_call":
             tool = canonical_tool(str(item.get("tool") or ""))
-            attempts.append(tool)
             if item.get("status") == "completed" and not item.get("error"):
                 call_facts = tool_facts(tool, item.get("result"))
                 facts.extend(call_facts)
@@ -433,7 +449,11 @@ def render_prompt(case: dict[str, Any], supplied: dict[str, str]) -> str:
     return prompt
 
 
-def launch_failure(output: str) -> str | None:
+def launch_failure(output: str, *, agent_started: bool = False) -> str | None:
+    """Classify a client startup failure before any Agent message or tool attempt exists."""
+
+    if agent_started:
+        return None
     lowered = output.casefold()
     patterns = (
         (
@@ -547,7 +567,10 @@ def main() -> int:
     events = json_lines(output)
     observation = parse_codex(events) if args.agent == "codex" else parse_pi(events)
     scored = score(case, observation, exit_code)
-    classified_failure = launch_failure(output)
+    classified_failure = launch_failure(
+        output,
+        agent_started=bool(observation["messages"] or observation["attempts"]),
+    )
     if classified_failure and classified_failure not in scored["failures"]:
         scored["failures"].append(classified_failure)
         scored["passed"] = False
