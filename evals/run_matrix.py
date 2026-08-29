@@ -12,14 +12,20 @@ from typing import Any
 
 
 def load_cases(
-    case_root: Path, *, max_level: int, approve_mutations: bool
+    case_root: Path,
+    *,
+    max_level: int,
+    approve_mutations: bool,
+    case_ids: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     selected: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
     for path in case_root.glob("*.json"):
         case = json.loads(path.read_text(encoding="utf-8"))
         case["_path"] = path
-        if int(case["level"]) > max_level:
+        if case_ids is not None and str(case["case_id"]) not in case_ids:
+            continue
+        if case_ids is None and int(case["level"]) > max_level:
             continue
         mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
         if mutation != "forbidden" and not approve_mutations:
@@ -50,6 +56,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--agents", nargs="+", choices=("codex", "pi"), default=["codex", "pi"])
     parser.add_argument("--max-level", type=int, default=4)
+    parser.add_argument("--case-id", action="append", default=[])
     parser.add_argument("--approve-mutations", action="store_true")
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--var", action="append", default=[])
@@ -65,11 +72,20 @@ def main() -> int:
         parser.error("--repetitions must be between 1 and 10")
 
     eval_root = Path(__file__).resolve().parent
+    requested_case_ids = set(args.case_id) if args.case_id else None
     cases, skipped = load_cases(
         eval_root / "cases",
         max_level=args.max_level,
         approve_mutations=args.approve_mutations,
+        case_ids=requested_case_ids,
     )
+    if requested_case_ids:
+        found_case_ids = {str(case["case_id"]) for case in cases} | {
+            str(item["case_id"]) for item in skipped
+        }
+        missing = sorted(requested_case_ids - found_case_ids)
+        if missing:
+            parser.error(f"unknown --case-id value(s): {', '.join(missing)}")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     results: list[dict[str, Any]] = []
     unavailable_agents: set[str] = set()

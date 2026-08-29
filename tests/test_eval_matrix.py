@@ -31,6 +31,22 @@ def test_matrix_selects_by_level_and_requires_explicit_mutation_approval(tmp_pat
     assert skipped == [{"case_id": "l3.mutation", "reason": "mutation_not_approved"}]
 
 
+def test_matrix_can_select_exact_cases_without_replaying_lower_levels(tmp_path):
+    matrix = load_matrix()
+    write_case(tmp_path, "l0.safe", 0, "forbidden")
+    write_case(tmp_path, "l2.target", 2, "forbidden")
+
+    selected, skipped = matrix.load_cases(
+        tmp_path,
+        max_level=0,
+        approve_mutations=False,
+        case_ids={"l2.target"},
+    )
+
+    assert [case["case_id"] for case in selected] == ["l2.target"]
+    assert skipped == []
+
+
 def test_matrix_result_paths_preserve_single_run_names_and_separate_trials(tmp_path):
     matrix = load_matrix()
 

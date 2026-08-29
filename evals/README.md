@@ -43,6 +43,8 @@ failure, and only calls a case cross-Agent comparable when more than one Agent
 actually passed that same case.
 
 `run_matrix.py` runs selected cases sequentially so two Agents never contend for one EDA target.
+Use repeatable `--case-id` options to run only named cases; an explicit case selection does not
+replay lower levels merely because the selected case has a higher level.
 Use `--repetitions 2` through `--repetitions 10` when a bounded repeated sample is needed.
 The default remains one run and preserves the original result filenames. Repeated runs receive
 explicit trial numbers, while the compact summary reports pass rate and medians by case, Agent,
