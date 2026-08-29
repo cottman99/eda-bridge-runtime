@@ -29,6 +29,11 @@ All paths emit the same event model into one logical execution ledger:
 The ledger keeps declared intent separate from observed execution. Physical
 client and server ledger segments may live on different hosts; `request_id`,
 `run_id`, `trace_id`, sequence numbers, and event hashes make them mergeable.
+Its authority begins when a client actually calls Runtime. A client that makes
+no call cannot create a Runtime fact, so zero-call omissions and unsupported
+success claims belong to the Agent client/evaluator (or a future Harness)
+record. This is a deliberate observability boundary, not a reason for Runtime
+to parse chat transcripts or infer actions that never occurred.
 
 ## Three logical responsibility domains
 
@@ -37,7 +42,7 @@ and SSH are interfaces or internal modules, not additional product layers.
 
 | Domain | Owns | Does not own |
 |---|---|---|
-| User and Agent | Intent, engineering judgment, concise purpose | Durable execution state |
+| User and Agent | Intent, engineering judgment, concise purpose, attempted-or-omitted call record | Durable execution state |
 | Runtime kernel | Identity enrichment, facts, routing, transport, leases, jobs, Run projection | EDA semantics |
 | Vendor adapter and bridge | Typed EDA capabilities, native API calls, EDA lifecycle, result normalization | Agent policy or cross-EDA governance |
 

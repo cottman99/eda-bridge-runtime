@@ -54,6 +54,12 @@ credentials, host address, or task-specific geometry is included here.
   miss made zero tool attempts but claimed success and was classified as
   `agent_reported_unverified_success`. Every actually executed replay returned the original Runtime
   Run without repeating vendor mutation. All owned scratch was process-checked and removed.
+- A scoped Runtime audit reconstructed the eleven successful L3 Agent sessions without reading a
+  chat transcript: 33 completed calls, eleven proven intentional replays, zero failures, and zero
+  avoidable-work findings. Runtime-local processing totaled 15 ms versus 244.919 seconds at the
+  Bridge/EDA transport boundary. The zero-call Codex miss was correctly absent from Runtime facts
+  and present in the evaluator record, proving the documented client-versus-Runtime observability
+  boundary.
 
 ## 2026-08-30 Runtime alpha.22 installed acceptance
 
