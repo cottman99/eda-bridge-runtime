@@ -12,9 +12,17 @@ def load_matrix():
     return module
 
 
-def write_case(root: Path, case_id: str, level: int, mutation: str) -> None:
+def write_case(
+    root: Path, case_id: str, level: int, mutation: str, solve: str = "forbidden"
+) -> None:
     (root / f"{case_id}.json").write_text(
-        json.dumps({"case_id": case_id, "level": level, "safety": {"mutation": mutation}}),
+        json.dumps(
+            {
+                "case_id": case_id,
+                "level": level,
+                "safety": {"mutation": mutation, "solve": solve},
+            }
+        ),
         encoding="utf-8",
     )
 
@@ -25,7 +33,9 @@ def test_matrix_selects_by_level_and_requires_explicit_mutation_approval(tmp_pat
     write_case(tmp_path, "l3.mutation", 3, "disposable-only")
     write_case(tmp_path, "l5.later", 5, "forbidden")
 
-    selected, skipped = matrix.load_cases(tmp_path, max_level=4, approve_mutations=False)
+    selected, skipped = matrix.load_cases(
+        tmp_path, max_level=4, approve_mutations=False, approve_solves=False
+    )
 
     assert [case["case_id"] for case in selected] == ["l0.safe"]
     assert skipped == [{"case_id": "l3.mutation", "reason": "mutation_not_approved"}]
@@ -40,10 +50,42 @@ def test_matrix_can_select_exact_cases_without_replaying_lower_levels(tmp_path):
         tmp_path,
         max_level=0,
         approve_mutations=False,
+        approve_solves=False,
         case_ids={"l2.target"},
     )
 
     assert [case["case_id"] for case in selected] == ["l2.target"]
+    assert skipped == []
+
+
+def test_matrix_requires_separate_explicit_solve_approval(tmp_path):
+    matrix = load_matrix()
+    write_case(
+        tmp_path,
+        "l6.solve",
+        6,
+        "disposable-only",
+        solve="one-generated-input-only",
+    )
+
+    selected, skipped = matrix.load_cases(
+        tmp_path,
+        max_level=6,
+        approve_mutations=True,
+        approve_solves=False,
+    )
+
+    assert selected == []
+    assert skipped == [{"case_id": "l6.solve", "reason": "solve_not_approved"}]
+
+    selected, skipped = matrix.load_cases(
+        tmp_path,
+        max_level=6,
+        approve_mutations=True,
+        approve_solves=True,
+    )
+
+    assert [case["case_id"] for case in selected] == ["l6.solve"]
     assert skipped == []
 
 

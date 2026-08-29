@@ -465,6 +465,11 @@ def main() -> int:
         action="store_true",
         help="Allow a case declared disposable-only to request client-reviewed mutations.",
     )
+    parser.add_argument(
+        "--approve-solves",
+        action="store_true",
+        help="Allow an explicitly selected case to run its declared bounded solver workload.",
+    )
     parser.add_argument("--cwd", type=Path, default=Path.cwd())
     parser.add_argument("--output", type=Path)
     parser.add_argument("--raw-output", type=Path)
@@ -486,6 +491,9 @@ def main() -> int:
     mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
     if mutation != "forbidden" and not args.approve_mutations:
         parser.error("mutation case requires explicit --approve-mutations")
+    solve = str((case.get("safety") or {}).get("solve") or "forbidden")
+    if solve != "forbidden" and not args.approve_solves:
+        parser.error("solve case requires explicit --approve-solves")
     validate_case(case)
     case["prompt"] = render_prompt(case, variables(args.var))
     schema_path: Path | None = None
