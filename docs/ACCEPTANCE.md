@@ -3,6 +3,29 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 Runtime alpha.22 installed acceptance
+
+- The release candidate passed 140 Python tests, three Pi adapter tests, Ruff check and format
+  check, baseline-JSON validation, wheel/sdist build, public CI, Trusted Publishing, and an exact
+  public-package reinstall check.
+- The public release was installed into the local shared Runtime and both isolated remote vendor
+  Bridge environments; all three report `0.1.0a22`. The Codex marketplace installed plugin
+  `0.1.0-alpha.22` side by side without restarting an active desktop session.
+- A dedicated Pi work profile retained its existing OAuth material byte for byte while the
+  installer added separate work, login, and status launchers. The status launcher reported the
+  requested provider ready without printing credentials.
+- Across 24 interleaved read-only trials on the same model and reasoning setting, Codex passed
+  23/24 and Pi passed 24/24. Pi used roughly half the wall time in the small read cases. The single
+  Codex miss made no tool call and explicitly reported tool unavailability, so the evaluator now
+  classifies that separately from Runtime, Bridge, transport, EDA, and reasoning failures.
+- One Pi documentation trial supplied an exact connection name in the vendor-selector field. The
+  request was safely rejected before EDA execution. Adding machine-visible selector semantics to
+  both client schemas fixed the generic ambiguity without changing the case prompt; the repeated
+  ADS documentation case then passed 3/3.
+- The sanitized baselines contain only aggregate timing, outcome, and call-count evidence. Raw
+  Agent traces, credentials, host details, documentation passages, and customer data were not
+  retained.
+
 ## 2026-08-30 task-scoped audit and balanced evaluation candidate
 
 - The complete suite passed 137 tests with Ruff check and format check clean.
