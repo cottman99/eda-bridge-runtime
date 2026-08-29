@@ -1,5 +1,12 @@
 # Version 0.1 scope
 
+## 0.1.0a25 — direct MCP transport retained in isolated Codex profiles
+
+- Keep Codex's internal Code Mode host enabled because Codex 0.151 uses that process for direct MCP
+  transport, while keeping Agent-visible Code Mode and shell tools disabled.
+- Add a generated-profile regression assertion so future isolation changes cannot silently remove
+  the only intended Runtime execution path.
+
 ## 0.1.0a24 — source-free Agent profile installation
 
 - Package the Codex EDA profile generator in the Runtime CLI, so a local or remote Agent host can

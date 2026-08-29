@@ -163,7 +163,9 @@ def render_profile(
         "apps = false",
         "browser_use = false",
         "code_mode = false",
-        "code_mode_host = false",
+        # Codex 0.151 uses the host process for direct MCP transport even when
+        # Agent-visible Code Mode is disabled. Keep the transport, not the tool.
+        "code_mode_host = true",
         "computer_use = false",
         "image_generation = false",
         "memories = false",

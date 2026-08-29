@@ -49,6 +49,10 @@ Skills while excluding inherited general-purpose execution tools only from that 
 
 ## Current alpha
 
+`0.1.0a25` retains Codex's internal MCP host while keeping Agent-visible Code Mode and shell tools
+disabled. This corrects the packaged alpha.24 profile on Codex 0.151 without reopening an alternate
+execution path.
+
 `0.1.0a24` packages the isolated Codex EDA profile installer, so the same one-command setup works on
 local and remote Agent hosts without a source checkout. It also makes Codex evaluation fail closed
 on shell and other non-MCP actions, and adds ambiguity guards that require one blocking question
@@ -108,7 +112,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a24"
+python -m pip install "eda-bridge-runtime==0.1.0a25"
 eda-runtime doctor
 ```
 
