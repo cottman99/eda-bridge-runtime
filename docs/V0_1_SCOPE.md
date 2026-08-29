@@ -1,5 +1,12 @@
 # Version 0.1 scope
 
+## 0.1.0a5 — agent lifecycle audit
+
+- Capture Codex lifecycle identity outside model context with plugin-scoped hooks.
+- Keep tool permissions and inputs unchanged; never auto-approve an EDA operation for telemetry.
+- Link the completed MCP call to its actual Runtime Run in an append-only hash chain.
+- Record field provenance and omit raw operation payloads and chat transcripts.
+
 ## 0.1.0a1 — contracts and core
 
 - Versioned request, response, event, identity, and context contracts.

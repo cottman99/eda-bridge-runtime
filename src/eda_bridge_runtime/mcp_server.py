@@ -138,6 +138,7 @@ class MCPRuntimeServer:
         self.registry = registry or ConnectionRegistry()
         self._transports: dict[str, Any] = {}
         self._client = "mcp-client"
+        self._client_version = "unknown"
 
     def close(self) -> None:
         for transport in self._transports.values():
@@ -153,6 +154,7 @@ class MCPRuntimeServer:
         if method == "initialize":
             client_info = message.get("params", {}).get("clientInfo") or {}
             self._client = str(client_info.get("name") or self._client)
+            self._client_version = str(client_info.get("version") or self._client_version)
             requested = message.get("params", {}).get("protocolVersion")
             selected = (
                 requested if requested in {LEGACY_PROTOCOL, "2025-06-18"} else LEGACY_PROTOCOL
@@ -271,7 +273,14 @@ class MCPRuntimeServer:
             if name == "eda.job.events":
                 payload["after_cursor"] = int(arguments.get("after_cursor", 0))
             target = {"eda": spec.eda}
-        actor = ActorIdentity.detect({"client": self._client_name(message), "harness": "mcp"})
+        client_name, client_version = self._client_info(message)
+        actor = ActorIdentity.detect(
+            observed={
+                "client": client_name,
+                "client_version": client_version,
+                "harness": "mcp",
+            }
+        )
         request = RequestEnvelope(
             purpose=str(arguments["purpose"]),
             target=target,
@@ -302,10 +311,13 @@ class MCPRuntimeServer:
             "response": response_value,
         }
 
-    def _client_name(self, message: dict[str, Any]) -> str:
+    def _client_info(self, message: dict[str, Any]) -> tuple[str, str]:
         meta = (message.get("params") or {}).get("_meta") or {}
         info = meta.get("io.modelcontextprotocol/clientInfo") or {}
-        return str(info.get("name") or self._client)
+        return (
+            str(info.get("name") or self._client),
+            str(info.get("version") or self._client_version),
+        )
 
     @staticmethod
     def _modern(message: dict[str, Any]) -> bool:

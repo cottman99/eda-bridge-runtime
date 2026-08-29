@@ -40,6 +40,24 @@ def test_actor_unknown_does_not_block(monkeypatch):
     assert actor.model.provenance == "unknown"
 
 
+def test_actor_sources_are_explicit_and_observation_wins(monkeypatch):
+    monkeypatch.setenv("CODEX_MODEL", "configured-model")
+    actor = ActorIdentity.detect(
+        {"model": "declared-model"},
+        observed={
+            "model": "observed-model",
+            "session_id": "session-one",
+            "tool_call_id": "tool-one",
+        },
+        inferred={"harness": "mcp"},
+    )
+    assert actor.model.value == "observed-model"
+    assert actor.model.provenance == "observed"
+    assert actor.session_id.provenance == "observed"
+    assert actor.tool_call_id.value == "tool-one"
+    assert actor.harness.provenance == "inferred"
+
+
 def test_response_failed_requires_error():
     with pytest.raises(ValueError, match="requires error"):
         ResponseEnvelope(request_id="r", run_id="x", status="failed")
@@ -93,7 +111,5 @@ def test_run_projection_normalizes_durable_state_and_redacts_artifact_path():
     assert view["terminal"] is False
     assert view["run_id"] == "original-run"
     assert view["job_id"] == "job-1"
-    assert view["evidence_refs"] == [
-        {"logical_name": "result.csv", "sha256": "a" * 64, "size": 12}
-    ]
+    assert view["evidence_refs"] == [{"logical_name": "result.csv", "sha256": "a" * 64, "size": 12}]
     assert "private" not in str(view)

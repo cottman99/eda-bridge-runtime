@@ -57,9 +57,10 @@ def test_connection_registry_resolves_same_eda_by_origin(tmp_path):
                 origin_id=f"origin-{suffix}",
             )
         )
-    assert registry.resolve(
-        eda="ansys-electronics-desktop", origin_id="origin-b"
-    ).connection_id == "ansys-b"
+    assert (
+        registry.resolve(eda="ansys-electronics-desktop", origin_id="origin-b").connection_id
+        == "ansys-b"
+    )
 
 
 class FakeTransport:
@@ -255,12 +256,13 @@ def test_mcp_initialize_supplies_client_identity_and_compact_run_projection():
     request = registry.transport.requests[0]
     value = response["result"]["structuredContent"]
     assert request.actor.client.value == "codex-desktop"
+    assert request.actor.client.provenance == "observed"
+    assert request.actor.client_version.value == "1"
+    assert request.actor.client_version.provenance == "observed"
     assert value["run"]["state"] == "running"
     assert value["run"]["run_id"] == "original-run"
     assert value["run"]["job_id"] == "job-one"
-    assert response["result"]["content"][0]["text"].endswith(
-        "ansys-one | original-run | job-one"
-    )
+    assert response["result"]["content"][0]["text"].endswith("ansys-one | original-run | job-one")
 
 
 def test_mcp_capability_discovery_is_read_only_and_summary_is_bounded():

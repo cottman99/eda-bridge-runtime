@@ -3,6 +3,21 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Codex lifecycle-audit acceptance
+
+- A freshly installed `0.1.0-alpha.5` plugin loaded its bundled
+  `hooks/hooks.json` in a new Codex CLI session and called `eda.connections.list` exactly once.
+  This non-interactive acceptance used Codex's explicit hook-trust bypass after the installed Hook
+  file was inspected; normal interactive use presents the standard one-time trust review.
+- The pre- and post-tool hooks produced two consecutive, hash-linked audit events. They observed
+  the Codex model, session, turn, tool-call identity, permission mode, and concise declared purpose.
+- The events stored a SHA-256 fingerprint instead of the raw MCP arguments. No chat transcript,
+  customer data, connection details, or credentials were copied into the Agent audit.
+- The diagnostic connection-list call correctly recorded `execution.linked=false` because it does
+  not create an EDA Run. Runtime operation tests cover completion linkage to the returned Run view.
+- The two hook records were 609 ms apart, including the MCP call itself. Hook handlers do not
+  rewrite the pending call or return an allow decision, so telemetry cannot bypass tool approval.
+
 ## 2026-08-28 convergence acceptance
 
 - The installed Agent-side MCP exposed six typed tools, including `eda.capabilities`.

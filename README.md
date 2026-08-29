@@ -22,6 +22,11 @@ took, and what result or artifact was produced.
 
 ## Current alpha
 
+`0.1.0a5` adds agent-host lifecycle auditing without changing tool permissions. Codex hooks record
+session, turn, model, permission mode, tool-call identity, concise purpose, and a content hash before
+an EDA Runtime call, then link the completed call to its actual Run. The audit is append-only,
+hash-chained, and stores neither raw operation payloads nor chat transcripts.
+
 `0.1.0a4` adds rich bounded Context snapshots, stable origin routing, direct
 one-submit execution, and automatic origin binding during connection setup.
 Vendor Skills can declare the Runtime MCP directly, so users select one

@@ -51,6 +51,16 @@ def _parser() -> argparse.ArgumentParser:
     mcp_sub = mcp.add_subparsers(dest="mcp_command", required=True)
     mcp_serve = mcp_sub.add_parser("serve")
     mcp_serve.add_argument("--registry", type=Path)
+    hook = sub.add_parser("hook")
+    hook_sub = hook.add_subparsers(dest="hook_command", required=True)
+    for phase in ("codex-pre-tool-use", "codex-post-tool-use"):
+        item = hook_sub.add_parser(phase)
+        item.add_argument("--database", type=Path)
+    audit = sub.add_parser("audit")
+    audit_sub = audit.add_subparsers(dest="audit_command", required=True)
+    audit_list = audit_sub.add_parser("list")
+    audit_list.add_argument("--database", type=Path)
+    audit_list.add_argument("--limit", type=int, default=20)
     return parser
 
 
@@ -111,6 +121,22 @@ def main(argv: list[str] | None = None) -> int:
         from .mcp_server import serve_mcp
 
         serve_mcp(registry=ConnectionRegistry(args.registry))
+        return 0
+    if args.command == "hook":
+        from .agent_audit import record_codex_hook
+
+        try:
+            event = json.load(sys.stdin)
+            phase = "pre" if args.hook_command == "codex-pre-tool-use" else "post"
+            record_codex_hook(event, phase=phase, database=args.database)
+        except Exception:
+            # Audit is fail-open: telemetry must never alter or block an EDA call.
+            return 0
+        return 0
+    if args.command == "audit" and args.audit_command == "list":
+        from .agent_audit import audit_events
+
+        print(json.dumps({"events": audit_events(args.database, limit=args.limit)}, indent=2))
         return 0
     if args.command == "ledger":
         with ExecutionLedger(args.database) as ledger:

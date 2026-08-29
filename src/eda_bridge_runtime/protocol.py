@@ -41,14 +41,29 @@ class ActorIdentity:
     model: SourcedValue = field(default_factory=lambda: SourcedValue("unknown", "unknown"))
     provider: SourcedValue = field(default_factory=lambda: SourcedValue("unknown", "unknown"))
     reasoning: SourcedValue = field(default_factory=lambda: SourcedValue("unknown", "unknown"))
-    harness: SourcedValue = field(default_factory=lambda: SourcedValue("none", "runtime_detected"))
+    harness: SourcedValue = field(default_factory=lambda: SourcedValue("none", "inferred"))
     skill: SourcedValue = field(default_factory=lambda: SourcedValue("unknown", "unknown"))
     client: SourcedValue = field(default_factory=lambda: SourcedValue("unknown", "unknown"))
+    client_version: SourcedValue = field(default_factory=lambda: SourcedValue("unknown", "unknown"))
+    session_id: SourcedValue = field(default_factory=lambda: SourcedValue("unknown", "unknown"))
+    turn_id: SourcedValue = field(default_factory=lambda: SourcedValue("unknown", "unknown"))
+    tool_call_id: SourcedValue = field(default_factory=lambda: SourcedValue("unknown", "unknown"))
+    permission_mode: SourcedValue = field(
+        default_factory=lambda: SourcedValue("unknown", "unknown")
+    )
 
     @classmethod
-    def detect(cls, declared: Mapping[str, str] | None = None) -> ActorIdentity:
+    def detect(
+        cls,
+        declared: Mapping[str, str] | None = None,
+        *,
+        observed: Mapping[str, str] | None = None,
+        inferred: Mapping[str, str] | None = None,
+    ) -> ActorIdentity:
         """Collect cheap metadata without delaying or blocking a request."""
         declared = declared or {}
+        observed = observed or {}
+        inferred = inferred or {}
         env_map = {
             "agent_family": ("CODEX_AGENT_FAMILY", "CODEX"),
             "agent_version": ("CODEX_VERSION",),
@@ -58,16 +73,25 @@ class ActorIdentity:
             "harness": ("EDA_HARNESS",),
             "skill": ("EDA_SKILL",),
             "client": ("EDA_CLIENT",),
+            "client_version": ("EDA_CLIENT_VERSION",),
+            "session_id": ("EDA_SESSION_ID",),
+            "turn_id": ("EDA_TURN_ID",),
+            "tool_call_id": ("EDA_TOOL_CALL_ID",),
+            "permission_mode": ("EDA_PERMISSION_MODE",),
         }
 
         def resolve(name: str) -> SourcedValue:
+            if value := observed.get(name):
+                return SourcedValue(str(value), "observed")
             if value := declared.get(name):
                 return SourcedValue(str(value), "declared")
             for env_name in env_map[name]:
                 if value := os.environ.get(env_name):
-                    return SourcedValue(value, "runtime_detected")
+                    return SourcedValue(value, "configured")
+            if value := inferred.get(name):
+                return SourcedValue(str(value), "inferred")
             default = "none" if name == "harness" else "unknown"
-            provenance = "runtime_detected" if name == "harness" else "unknown"
+            provenance = "inferred" if name == "harness" else "unknown"
             return SourcedValue(default, provenance)
 
         return cls(**{name: resolve(name) for name in env_map})
@@ -172,9 +196,7 @@ def project_run(response: Mapping[str, Any]) -> dict[str, Any]:
     job = result.get("job")
     job = job if isinstance(job, Mapping) else {}
     state = str(job.get("state") or response.get("status") or "unknown")
-    run_id = str(
-        job.get("run_id") or result.get("original_run_id") or response.get("run_id") or ""
-    )
+    run_id = str(job.get("run_id") or result.get("original_run_id") or response.get("run_id") or "")
     request_id = str(
         job.get("request_id")
         or result.get("original_request_id")
@@ -182,9 +204,15 @@ def project_run(response: Mapping[str, Any]) -> dict[str, Any]:
         or ""
     )
     job_id = str(job.get("job_id") or result.get("job_id") or "") or None
-    updated_at = str(
-        job.get("updated_at") or response.get("completed_at") or response.get("created_at") or ""
-    ) or None
+    updated_at = (
+        str(
+            job.get("updated_at")
+            or response.get("completed_at")
+            or response.get("created_at")
+            or ""
+        )
+        or None
+    )
     return {
         "protocol": RUN_VIEW_PROTOCOL,
         "run_id": run_id,

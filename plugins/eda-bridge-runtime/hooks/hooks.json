@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__eda_bridge_runtime__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "eda-runtime hook codex-pre-tool-use",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__eda_bridge_runtime__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "eda-runtime hook codex-post-tool-use",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}

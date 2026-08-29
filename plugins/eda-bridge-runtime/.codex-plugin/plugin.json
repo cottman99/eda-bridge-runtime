@@ -1,6 +1,6 @@
 {
   "name": "eda-bridge-runtime",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "description": "Stable local and SSH execution path for EDA agent bridges",
   "author": {
     "name": "Pengfei Li",
@@ -17,7 +17,11 @@
     "longDescription": "Routes typed ADS and AnsysEM operations through persistent connections, durable jobs, secret-free context, and an append-only execution ledger.",
     "developerName": "Pengfei Li",
     "category": "Developer Tools",
-    "capabilities": ["Interactive", "Read", "Write"],
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
     "defaultPrompt": [
       "Use the selected EDA design and inspect available operations.",
       "Submit this EDA change through the stable Runtime path.",

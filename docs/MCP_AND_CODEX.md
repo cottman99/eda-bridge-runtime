@@ -6,6 +6,17 @@ The plugin and Skill belong on the Agent host. A remote EDA host needs only the
 shared Runtime protocol plus its vendor bridge and adapter service unless an
 Agent also runs there.
 
+The plugin also installs `PreToolUse` and `PostToolUse` hooks scoped only to its own MCP tools.
+They write an Agent-host append-only audit that records the Codex session, turn, active model,
+permission mode, tool-call identity, concise purpose, and a hash of the arguments. Completion links
+that identity to the returned Runtime Run. Hooks do not rewrite inputs, approve tools, parse the
+chat transcript, or store raw operation payloads. Inspect the bounded recent view with
+`eda-runtime audit list`.
+
+Codex asks for one-time trust when a new or changed plugin Hook is first used. Review and approve
+the two bundled audit commands; routine calls need no extra Agent prompt after that. Automated
+acceptance may use Codex's explicit hook-trust bypass only after validating the installed Hook file.
+
 The stdio server supports both the legacy MCP initialization era through `2025-11-25` and the
 stateless `2026-07-28` discovery era. It exposes six tools:
 
