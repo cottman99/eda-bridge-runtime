@@ -1,5 +1,12 @@
 # Version 0.1 scope
 
+## 0.1.0a8 — capability-aware submission and low-token durable waiting
+
+- Cache advertised operation mutability per Runtime connection so read-only operations do not
+  require the Agent to inject Runtime bookkeeping into vendor payloads.
+- Add `eda.job.wait` so durable work can reach terminal state without one model turn per poll.
+- Keep bounded structured Runtime facts visible to Pi while preserving full UI/audit details.
+
 ## 0.1.0a7 — thin Agent adapters without another execution stack
 
 - Add a native Pi package that maps exactly seven Pi tools to the seven Runtime MCP tools through

@@ -3,6 +3,20 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Pi autonomous Runtime alpha.8 acceptance
+
+- Pi `0.84.4` with `openai-codex/gpt-5.5` received one complete task file, read the selected
+  vendor Skill, discovered capabilities once, and completed a fresh HFSS 3D Layout scratch-project
+  create plus bundle inspection without shell, GUI, solve, or human correction.
+- Repeating the identical mutation returned the same durable Run and job.
+- Capability-aware submission classified the later project inspection as read-only without asking
+  the model to inject Runtime bookkeeping into the vendor payload.
+- `eda.job.wait` reduced the successful workflow from 28 tool calls and 29 assistant turns in the
+  diagnostic run to 7 tool calls and 8 turns. Processed tokens fell from 374394 to 59350, elapsed
+  time from 158 to 73 seconds, and reported model cost from USD 0.551460 to USD 0.137743.
+- Independent fresh inspection confirmed the project file, EDB directory, and `edb.def`; no solve
+  was run.
+
 ## 2026-08-29 Pi adapter and actor-metadata acceptance
 
 - The Python suite passed 58 tests, including bounded Agent-declared actor metadata whose

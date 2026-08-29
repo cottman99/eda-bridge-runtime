@@ -26,7 +26,7 @@ the two bundled audit commands; routine calls need no extra Agent prompt after t
 acceptance may use Codex's explicit hook-trust bypass only after validating the installed Hook file.
 
 The stdio server supports both the legacy MCP initialization era through `2025-11-25` and the
-stateless `2026-07-28` discovery era. It exposes seven tools:
+stateless `2026-07-28` discovery era. It exposes eight tools:
 
 - `eda.context.resolve`
 - `eda.connections.list`
@@ -34,6 +34,7 @@ stateless `2026-07-28` discovery era. It exposes seven tools:
 - `eda.capabilities`
 - `eda.submit`
 - `eda.job.status`
+- `eda.job.wait`
 - `eda.job.events`
 
 Operation, status, and event calls include an additive compact `run` object.

@@ -139,6 +139,26 @@ TOOLS = [
         "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
     },
     {
+        "name": "eda.job.wait",
+        "title": "Wait for Durable EDA Job",
+        "description": (
+            "Wait for one existing durable job to become terminal without replaying it or "
+            "spending one Agent turn per status poll. Returns the latest state on timeout."
+        ),
+        "inputSchema": _object_schema(
+            {
+                "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
+                "job_id": {"type": "string"},
+                "connection_id": {"type": "string"},
+                "eda": {"type": "string"},
+                "timeout_ms": {"type": "integer", "minimum": 1000, "maximum": 90000},
+                "poll_interval_ms": {"type": "integer", "minimum": 100, "maximum": 5000},
+            },
+            ["purpose", "job_id"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
+    },
+    {
         "name": "eda.job.events",
         "title": "Read Durable EDA Job Events",
         "description": "Read incremental durable-job events after a cursor without replaying work.",
@@ -169,6 +189,7 @@ class MCPRuntimeServer:
         self._client = "mcp-client"
         self._client_version = "unknown"
         self._audit = ExecutionLedger(audit_database) if audit_database else None
+        self._operation_metadata: dict[str, dict[str, dict[str, Any]]] = {}
 
     def close(self) -> None:
         for transport in self._transports.values():
@@ -260,6 +281,7 @@ class MCPRuntimeServer:
         if name == "eda.connection.reset":
             spec = self.registry.resolve(connection_id=str(arguments["connection_id"]))
             transport = self._transports.pop(spec.connection_id, None)
+            self._operation_metadata.pop(spec.connection_id, None)
             if transport is not None:
                 transport.close()
             return {
@@ -318,8 +340,13 @@ class MCPRuntimeServer:
             else:
                 operation = str(arguments["operation"])
                 payload = dict(arguments["payload"])
+                metadata = self._operation_metadata.get(spec.connection_id, {}).get(operation)
+                if "mutating" not in payload and metadata is not None:
+                    payload["mutating"] = bool(metadata.get("mutates", True))
         else:
-            operation = "runtime.job_status" if name == "eda.job.status" else "runtime.job_events"
+            operation = (
+                "runtime.job_events" if name == "eda.job.events" else "runtime.job_status"
+            )
             payload = {"mutating": False, "job_id": str(arguments["job_id"])}
             if name == "eda.job.events":
                 payload["after_cursor"] = int(arguments.get("after_cursor", 0))
@@ -341,18 +368,57 @@ class MCPRuntimeServer:
         started = time.monotonic()
         try:
             response = transport.request(request)
+            response_value = response.to_dict()
+            if name == "eda.job.wait":
+                timeout_ms = int(arguments.get("timeout_ms", 60_000))
+                interval_ms = int(arguments.get("poll_interval_ms", 1_000))
+                deadline = time.monotonic() + timeout_ms / 1000
+                while not project_run(response_value).get("terminal", False):
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        break
+                    time.sleep(min(interval_ms / 1000, remaining))
+                    request = RequestEnvelope(
+                        purpose=str(arguments["purpose"]),
+                        target=target,
+                        operation=operation,
+                        payload=payload,
+                        actor=actor,
+                    )
+                    response = transport.request(request)
+                    response_value = response.to_dict()
         except Exception:
             # The failed request is never replayed. Discard only the broken
             # connection so a later, explicit call can establish a new one.
             self._transports.pop(spec.connection_id, None)
             transport.close()
             raise
-        response_value = response.to_dict()
+        if name == "eda.capabilities":
+            self._remember_capabilities(spec.connection_id, response_value)
+        projected = project_run(response_value)
         return {
             "connection_id": spec.connection_id,
             "client_transport_ms": round((time.monotonic() - started) * 1000, 3),
-            "run": project_run(response_value),
+            "run": projected,
             "response": response_value,
+            **(
+                {"wait_timed_out": True}
+                if name == "eda.job.wait" and not projected.get("terminal", False)
+                else {}
+            ),
+        }
+
+    def _remember_capabilities(self, connection_id: str, response: dict[str, Any]) -> None:
+        result = response.get("result") or {}
+        data = result.get("data") if isinstance(result, dict) else {}
+        capabilities = data.get("capabilities") if isinstance(data, dict) else {}
+        operations = capabilities.get("operations") if isinstance(capabilities, dict) else []
+        if not isinstance(operations, list):
+            return
+        self._operation_metadata[connection_id] = {
+            str(item["id"]): dict(item)
+            for item in operations
+            if isinstance(item, dict) and item.get("id")
         }
 
     def _client_info(self, message: dict[str, Any]) -> tuple[str, str]:

@@ -1,6 +1,6 @@
 {
   "name": "@eda-bridge-runtime/pi-eda-runtime",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "private": true,
   "description": "Thin Pi Agent client adapter for EDA Bridge Runtime",
   "type": "module",
@@ -9,7 +9,7 @@
     "eda"
   ],
   "peerDependencies": {
-    "@mariozechner/pi-coding-agent": "^0.73.1",
+    "@earendil-works/pi-coding-agent": "^0.84.4",
     "typebox": "^1.1.24"
   },
   "pi": {

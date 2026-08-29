@@ -38,8 +38,10 @@ Runtime merely because SSH is absent.
   repeat doctor, environment, or full-state probes when the connection and target are unchanged.
 - For a mutation, use one stable `idempotency_key` for the same intended change. A retry observes
   the same operation instead of starting a duplicate.
-- An accepted durable job is not a completed job. Use `eda.job.status` or incremental
-  `eda.job.events`; never resubmit merely because SSH or the conversation disconnected.
+- An accepted durable job is not a completed job. Prefer one `eda.job.wait` call when the task can
+  wait for completion. Use `eda.job.status` for one observation after reconnecting and incremental
+  `eda.job.events` only for diagnostic detail; never resubmit merely because SSH or the conversation
+  disconnected.
 - Read the compact `run` projection for both synchronous and durable work. Its
   state is the EDA operation state; the outer status of a status-query call is
   only the success of that observation.

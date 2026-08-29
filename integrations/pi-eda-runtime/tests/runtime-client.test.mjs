@@ -3,15 +3,15 @@ import { test } from "node:test";
 
 import { RuntimeClient } from "../lib/runtime-client.mjs";
 
-test("persistent client lists the seven installed Runtime tools", async () => {
+test("persistent client lists the eight installed Runtime tools", async () => {
   const client = new RuntimeClient({
     command: process.env.EDA_RUNTIME_COMMAND ?? "eda-runtime",
     timeoutMs: 10_000,
-    clientInfo: { name: "pi-agent-test", version: "0.73.1" },
+    clientInfo: { name: "pi-agent-test", version: "0.84.4" },
   });
   try {
     const result = await client.listTools();
-    assert.equal(result.tools.length, 7);
+    assert.equal(result.tools.length, 8);
     assert.deepEqual(
       result.tools.map((tool) => tool.name),
       [
@@ -21,6 +21,7 @@ test("persistent client lists the seven installed Runtime tools", async () => {
         "eda.capabilities",
         "eda.submit",
         "eda.job.status",
+        "eda.job.wait",
         "eda.job.events",
       ],
     );

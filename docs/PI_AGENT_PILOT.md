@@ -21,18 +21,19 @@ or a second audit database.
 ## Implemented pilot
 
 The Agent host currently uses Node `24.20.0`, npm `11.19.0`, and pinned Pi
-`@mariozechner/pi-coding-agent@0.73.1`. The dedicated profile lives outside the repository and
-contains no credentials. Its launcher disables all built-in tools and automatic global Skill
-discovery, then explicitly loads only three Skills: Runtime control, ADS operation, and AnsysEM
-operation. The engineer still starts one command and uses natural language; Pi selects the Skill.
+`@earendil-works/pi-coding-agent@0.84.4`. The dedicated profile lives outside the repository and
+contains no credentials. Its launcher keeps only Pi's read-only file tool, disables shell/write/edit
+and automatic global Skill discovery, then explicitly loads only three Skills: Runtime control,
+ADS operation, and AnsysEM operation. The engineer still starts one command and uses natural
+language; Pi selects and reads the relevant Skill.
 
-The checked-in package is `integrations/pi-eda-runtime`. It registers exactly seven `eda_*` tools,
+The checked-in package is `integrations/pi-eda-runtime`. It registers exactly eight `eda_*` tools,
 maintains one persistent `eda-runtime mcp serve` child, and adds `/eda-runtime-status`. It does not
 contain SSH or vendor logic. Pi supplies provider, model, reasoning, session, and tool-call identity
 directly from its extension context; Runtime stores these as declared facts and stores MCP client
 identity as observed fact.
 
-Measured acceptance on the Agent host:
+Initial alpha.7 acceptance on the Agent host (retained as historical evidence):
 
 - package client test: seven tools plus a registry read passed;
 - real Pi RPC load: exactly seven Runtime tools and the three intended Skills were visible after
@@ -77,16 +78,14 @@ Example profile settings (paths are intentionally generic):
 }
 ```
 
-The normal EDA profile deliberately excludes all built-in tools through the launcher because Pi
-0.73.1 does not expose a `defaultTools` settings key. A separate maintenance launch may enable
-them when developing adapters; ordinary model operations do not receive an alternate shell route
-around Runtime.
+The normal EDA profile enables only the built-in `read` tool so Pi can actually load selected
+Skills. It does not receive shell, edit, or write as an alternate route around Runtime.
 
 ## Stage 2: one thin Pi package
 
 The reviewed Pi package in this repository contains:
 
-- a native Pi extension that exposes only the seven Runtime tools;
+- a native Pi extension that exposes only the eight Runtime tools;
 - the Runtime control Skill and references to selected vendor Skills;
 - optional Pi lifecycle enrichment; the Runtime already records the mandatory base facts;
 - a small status view for active connection, Run state, and elapsed time.
@@ -99,7 +98,13 @@ enrich the Runtime actor contract with those observed values, while the Runtime 
 Agent's concise `purpose`, MCP client identity, timing, and linked Run. Missing fields remain
 `unknown`; the extension must not parse the transcript to reconstruct them.
 
-## Stage 3: pending A/B acceptance before broader use
+## Stage 3: A/B acceptance and autonomous retest
+
+The alpha.8 autonomous retest passed without human correction. Pi read the selected Skill,
+discovered the missing operation schema once, reused one mutation idempotency key, waited inside
+Runtime, and completed fresh bundle inspection. Compared with the preceding diagnostic run,
+tool calls fell from 28 to 7, assistant turns from 29 to 8, processed tokens from 374394 to 59350,
+and elapsed time from 158 to 73 seconds.
 
 Run the same bounded task through Codex and Pi using one unchanged Context and connection:
 

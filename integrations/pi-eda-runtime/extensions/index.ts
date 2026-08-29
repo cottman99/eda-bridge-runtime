@@ -1,9 +1,10 @@
-import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
+import { modelVisibleResult, runtimeFailed } from "../lib/model-visible-result.mjs";
 import { RuntimeClient } from "../lib/runtime-client.mjs";
 
-const PI_AGENT_VERSION = "0.73.1";
+const PI_AGENT_VERSION = "0.84.4";
 const JsonObject = Type.Record(Type.String(), Type.Unknown());
 const TargetFields = {
   target: Type.Optional(JsonObject),
@@ -73,11 +74,12 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
           `${elapsedMs} ms`,
         ].join(" | ");
         return {
-          content: (result.content ?? [{ type: "text", text: "EDA Runtime returned no summary" }])
-            .filter((item) => item.type === "text")
-            .map((item) => ({ type: "text" as const, text: item.text ?? "" })),
+          content: [{
+            type: "text" as const,
+            text: modelVisibleResult(result.content, value),
+          }],
           details: { runtime: value, elapsedMs },
-          isError: Boolean(result.isError),
+          isError: runtimeFailed(value, Boolean(result.isError)),
         };
       },
     });
@@ -125,8 +127,12 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
     "Submit one typed operation. Mutations require a stable idempotency key and are never blindly replayed.",
     Type.Object({
       purpose: Type.String({ minLength: 3, maxLength: 240 }),
-      operation: Type.String(),
-      payload: JsonObject,
+      operation: Type.String({
+        description: "Exact registered operation name from the selected vendor capability; never guess or translate it.",
+      }),
+      payload: Type.Record(Type.String(), Type.Unknown(), {
+        description: "Payload conforming exactly to that operation's capability schema.",
+      }),
       ...TargetFields,
       expected_effect: Type.Optional(Type.String()),
       idempotency_key: Type.Optional(Type.String()),
@@ -142,6 +148,20 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
       job_id: Type.String(),
       connection_id: Type.Optional(Type.String()),
       eda: Type.Optional(Type.String()),
+    }),
+  );
+  register(
+    "eda_job_wait",
+    "eda.job.wait",
+    "Wait for EDA Job",
+    "Wait for one durable job to reach terminal state without replaying it or spending one model turn per poll.",
+    Type.Object({
+      purpose: Type.String({ minLength: 3, maxLength: 240 }),
+      job_id: Type.String(),
+      connection_id: Type.Optional(Type.String()),
+      eda: Type.Optional(Type.String()),
+      timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: 90000 })),
+      poll_interval_ms: Type.Optional(Type.Integer({ minimum: 100, maximum: 5000 })),
     }),
   );
   register(

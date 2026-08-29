@@ -36,7 +36,8 @@ disconnect, and returns the result with its linked timing and evidence.
 
 ## Current alpha
 
-`0.1.0a7` makes the Runtime itself the stable fact recorder. Every MCP client contributes its
+`0.1.0a8` keeps the Runtime as the stable fact recorder and adds capability-aware read/write
+classification plus one-call durable-job waiting. Every MCP client contributes its
 observed client identity, concise purpose, argument fingerprint, timings, and linked Run without
 depending on a Codex- or Pi-specific hook. Agent hooks may add richer model/session metadata, but
 they are optional enrichment. Agent adapters may attach bounded provider, model, reasoning,
@@ -53,7 +54,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a7"
+python -m pip install "eda-bridge-runtime==0.1.0a8"
 eda-runtime doctor
 ```
 

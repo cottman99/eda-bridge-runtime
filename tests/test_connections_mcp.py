@@ -158,6 +158,50 @@ class DurableTransport(FakeTransport):
         )
 
 
+class CapabilityAwareTransport(FakeTransport):
+    def request(self, request):
+        self.requests.append(request)
+        if request.operation == "runtime.capabilities":
+            result = {
+                "data": {
+                    "capabilities": {
+                        "operations": [
+                            {"id": "project.inspect", "mutates": False},
+                            {"id": "project.create", "mutates": True},
+                        ]
+                    }
+                }
+            }
+        else:
+            request.require_idempotency()
+            result = {"observed": True}
+        return ResponseEnvelope(
+            request_id=request.request_id,
+            run_id=request.run_id,
+            status="passed",
+            result=result,
+        )
+
+
+class EventuallyTerminalTransport(FakeTransport):
+    def request(self, request):
+        self.requests.append(request)
+        state = "passed" if len(self.requests) >= 3 else "running"
+        return ResponseEnvelope(
+            request_id=request.request_id,
+            run_id=request.run_id,
+            status="passed",
+            result={
+                "job": {
+                    "job_id": request.payload["job_id"],
+                    "request_id": "original-request",
+                    "run_id": "original-run",
+                    "state": state,
+                }
+            },
+        )
+
+
 def _rpc(request_id, method, params=None):
     value = {"jsonrpc": "2.0", "id": request_id, "method": method}
     if params is not None:
@@ -186,6 +230,7 @@ def test_mcp_supports_legacy_and_modern_discovery():
         "eda.capabilities",
         "eda.submit",
         "eda.job.status",
+        "eda.job.wait",
         "eda.job.events",
     ]
 
@@ -314,7 +359,70 @@ def test_mcp_stdio_bad_frame_does_not_kill_server():
     serve_mcp(source, destination, registry=FakeRegistry())
     responses = [json.loads(line) for line in destination.getvalue().splitlines()]
     assert responses[0]["error"]["code"] == -32700
-    assert len(responses[1]["result"]["tools"]) == 7
+    assert len(responses[1]["result"]["tools"]) == 8
+
+
+def test_mcp_uses_cached_capability_mutability_for_submit_payload():
+    registry = FakeRegistry()
+    registry.transport = CapabilityAwareTransport()
+    server = MCPRuntimeServer(registry)
+    server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Discover exact read operation metadata",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    response = server.handle(
+        _rpc(
+            2,
+            "tools/call",
+            {
+                "name": "eda.submit",
+                "arguments": {
+                    "purpose": "Inspect one project without mutation",
+                    "connection_id": "ansys-one",
+                    "operation": "project.inspect",
+                    "payload": {},
+                },
+            },
+        )
+    )
+    assert response["result"]["isError"] is False
+    assert registry.transport.requests[-1].payload["mutating"] is False
+
+
+def test_mcp_job_wait_polls_inside_runtime_until_terminal():
+    registry = FakeRegistry()
+    registry.transport = EventuallyTerminalTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.job.wait",
+                "arguments": {
+                    "purpose": "Wait for the existing durable job",
+                    "connection_id": "ansys-one",
+                    "job_id": "job-one",
+                    "timeout_ms": 1000,
+                    "poll_interval_ms": 100,
+                },
+            },
+        )
+    )
+    value = response["result"]["structuredContent"]
+    assert response["result"]["isError"] is False
+    assert value["run"]["state"] == "passed"
+    assert value["run"]["terminal"] is True
+    assert len(registry.transport.requests) == 3
 
 
 def test_mcp_connection_reset_closes_only_runtime_owned_transport():
