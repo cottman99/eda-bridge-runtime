@@ -21,7 +21,7 @@ the same Runtime/Bridge contracts.
 | L5 ADS structured-design plan | 1 each | 34.957 s | 18.815 s | 46.2% | Agent/client |
 | L5 AnsysEM project-evidence plan | 3 each, both 3/3 | 90.871 s | 84.140 s | 7.4% | AEDT lifecycle |
 | L6 generated-input Momentum solve (Codex 2/3; Pi 3/3) | 3 each | 38.814 s | 21.701 s | 44.1% | Mixed Agent and solver |
-| L6 one-turn ADS plus AnsysEM | 1 each | 101.906 s | 90.060 s | 11.6% | AEDT lifecycle |
+| L6 one-turn ADS plus AnsysEM | 3 each, both 3/3 | 103.691 s | 92.718 s | 10.6% | AEDT lifecycle |
 
 ## Evidence-backed decisions
 
@@ -50,9 +50,9 @@ the same Runtime/Bridge contracts.
 
 ## Remaining evidence gaps
 
-- Repeat L3, ADS L5, and cross-EDA lifecycle cases before using their wall-time differences as
-  regression thresholds. The AnsysEM L5 and generated-input Momentum cases now have three trials
-  per Agent.
+- Repeat L3 and ADS L5 lifecycle cases before using their wall-time differences as regression
+  thresholds. AnsysEM L5, generated-input Momentum, and cross-EDA coordination now have three
+  trials per Agent.
 - Add live ADS 2024 Update 2 and ADS 2023 Update 2 evidence only when those installations are
   available; version strings alone must not promote their support tier.
 - Continue product-specific capability growth inside each Bridge. Runtime should gain another

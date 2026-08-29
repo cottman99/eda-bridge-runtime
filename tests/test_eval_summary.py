@@ -94,6 +94,26 @@ def test_summary_reports_repeated_trial_reliability_and_medians():
     assert reliability["median_input_tokens"] == 30.0
 
 
+def test_summary_assigns_distinct_trials_when_direct_results_omit_them():
+    values = [result("pi"), result("pi"), result("pi")]
+    for value in values:
+        value.pop("trial")
+
+    summary = load_summary().summarize(values)
+
+    assert [item["trial"] for item in summary["rows"]] == [1, 2, 3]
+    assert summary["reliability"][0]["trials"] == 3
+
+
+def test_summary_preserves_explicit_trials_while_filling_a_gap():
+    values = [result("pi", trial=2), result("pi")]
+    values[1].pop("trial")
+
+    summary = load_summary().summarize(values)
+
+    assert [item["trial"] for item in summary["rows"]] == [1, 2]
+
+
 def test_summary_distinguishes_correct_but_slow_from_functional_failure():
     summary = load_summary().summarize(
         [result("codex", passed=False, failures=["wall_budget_exceeded"])]
