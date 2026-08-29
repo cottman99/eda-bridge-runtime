@@ -3,6 +3,23 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 Runtime alpha.26 source-free Pi acceptance
+
+- Trusted Publishing built, tested, published, and reinstalled exact public `0.1.0a26`. The suite
+  passed 155 Python tests on Python 3.10 and 3.13 plus three native Pi adapter tests; Ruff, lock,
+  wheel/sdist build, Twine, and clean PyPI reinstall checks passed.
+- The public wheel regenerated the authenticated dedicated Pi profile without a repository path.
+  Its credential file hash remained unchanged, and the work launcher resolved the Runtime extension
+  and control Skill from installed package assets while retaining four explicitly selected vendor
+  Skills, read-only file access, and the ten typed Runtime tools.
+- The first installed-profile evaluation failed before Agent startup because the evaluator injected
+  the repository extension in addition to the launcher's installed extension, producing duplicate
+  tool registrations. This was an evaluator source-tree assumption, not a Pi or Runtime execution
+  failure. Installed-launcher mode now retains launcher assets while still case-limiting tools.
+- With that correction, connection discovery passed in 7.750 seconds with one Runtime call and two
+  connections. The ADS ambiguity guard passed in 8.375 seconds with zero tool attempts and exactly
+  one blocking question. No EDA application or SSH connection was opened by either case.
+
 ## 2026-08-30 Runtime alpha.25 Agent-host acceptance
 
 - Trusted Publishing built, tested, published, and reinstalled exact public packages for

@@ -68,6 +68,10 @@ configuration; normal EDA evaluations retain the narrow profile.
 
 Pi uses the checked-in thin adapter and the same case prompt. Authentication remains in the private
 Agent profile and is never copied into a case or result.
+For acceptance of a launcher generated from the public Runtime package, pass
+`--pi-use-launcher-profile`. The runner then retains the launcher's installed extension and Skills
+instead of injecting a second repository copy, while still restricting visible tools to the case's
+`allowed_tools` list.
 
 `summarize_results.py` combines only normalized results. It omits every Agent
 final payload and raw trace, distinguishes authentication from Runtime/EDA
