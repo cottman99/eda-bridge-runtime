@@ -19,6 +19,9 @@ compact result, measured Bridge/SSH transport time, remaining Agent/client-side 
 raw trace hash. Response text itself is never retained. The non-transport partition is deliberately
 named by measurement boundary: it includes Agent startup, reasoning, final rendering, and client
 overhead, so it is not mislabeled as pure model inference time.
+Client completion and Runtime success are separate facts: a completed Codex or Pi tool event whose
+Runtime Run is failed/cancelled is retained for timing evidence but is not counted as a succeeded
+tool call. Pi's private `details.runtime` and Codex structured content normalize to the same facts.
 This lets mutation cases prove idempotency from Runtime responses instead of trusting the Agent's
 summary. Client-specific notions such as a Codex
 user turn versus a Pi assistant message are not mislabeled as one comparable metric. Never commit

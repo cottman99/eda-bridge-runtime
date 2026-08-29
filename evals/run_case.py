@@ -32,11 +32,19 @@ def json_lines(output: str) -> list[dict[str, Any]]:
     return values
 
 
-def tool_fact(tool: str, result: Any) -> dict[str, Any]:
-    """Reduce one tool result to non-sensitive execution facts for scoring."""
+def structured_tool_result(result: Any) -> dict[str, Any]:
     result = result if isinstance(result, dict) else {}
     structured = result.get("structured_content") or result.get("structuredContent")
-    structured = structured if isinstance(structured, dict) else {}
+    if isinstance(structured, dict):
+        return structured
+    details = result.get("details") if isinstance(result.get("details"), dict) else {}
+    runtime = details.get("runtime")
+    return runtime if isinstance(runtime, dict) else {}
+
+
+def tool_fact(tool: str, result: Any) -> dict[str, Any]:
+    """Reduce one tool result to non-sensitive execution facts for scoring."""
+    structured = structured_tool_result(result)
     run = structured.get("run") if isinstance(structured.get("run"), dict) else {}
     response = structured.get("response") if isinstance(structured.get("response"), dict) else {}
     response_result = response.get("result") if isinstance(response.get("result"), dict) else {}
@@ -66,9 +74,7 @@ def tool_fact(tool: str, result: Any) -> dict[str, Any]:
 def tool_facts(tool: str, result: Any) -> list[dict[str, Any]]:
     """Keep one Agent call while exposing nested Runtime plan runs to deterministic scoring."""
     top = tool_fact(tool, result)
-    result = result if isinstance(result, dict) else {}
-    structured = result.get("structured_content") or result.get("structuredContent")
-    structured = structured if isinstance(structured, dict) else {}
+    structured = structured_tool_result(result)
     steps = structured.get("steps") if isinstance(structured.get("steps"), list) else []
     if not steps:
         return [top]
@@ -82,6 +88,22 @@ def tool_facts(tool: str, result: Any) -> list[dict[str, Any]]:
         fact["response_payload_chars"] = 0
         nested.append(fact)
     return [top, *nested]
+
+
+def tool_result_succeeded(result: Any, facts: list[dict[str, Any]]) -> bool:
+    result = result if isinstance(result, dict) else {}
+    if result.get("isError") is True or result.get("is_error") is True:
+        return False
+    structured = structured_tool_result(result)
+    if structured.get("error"):
+        return False
+    failure_states = {"blocked", "cancelled", "error", "failed", "interrupted", "waiting"}
+    statuses = {
+        str(value).casefold()
+        for value in (structured.get("status"), facts[0].get("state") if facts else None)
+        if value
+    }
+    return not bool(statuses & failure_states)
 
 
 def runtime_metrics(facts: list[dict[str, Any]]) -> dict[str, int | float]:
@@ -148,8 +170,10 @@ def parse_codex(events: list[dict[str, Any]]) -> dict[str, Any]:
             tool = canonical_tool(str(item.get("tool") or ""))
             attempts.append(tool)
             if item.get("status") == "completed" and not item.get("error"):
-                tools.append(tool)
-                facts.extend(tool_facts(tool, item.get("result")))
+                call_facts = tool_facts(tool, item.get("result"))
+                facts.extend(call_facts)
+                if tool_result_succeeded(item.get("result"), call_facts):
+                    tools.append(tool)
         if event.get("type") == "item.completed" and item.get("type") == "agent_message":
             messages += 1
             final_text = str(item.get("text") or "")
@@ -180,8 +204,10 @@ def parse_pi(events: list[dict[str, Any]]) -> dict[str, Any]:
             tool = canonical_tool(str(event.get("toolName") or ""))
             attempts.append(tool)
             if not event.get("isError", False):
-                tools.append(tool)
-                facts.extend(tool_facts(tool, event.get("result")))
+                call_facts = tool_facts(tool, event.get("result"))
+                facts.extend(call_facts)
+                if tool_result_succeeded(event.get("result"), call_facts):
+                    tools.append(tool)
         if event.get("type") != "message_end":
             continue
         message = event.get("message") if isinstance(event.get("message"), dict) else {}

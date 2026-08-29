@@ -111,6 +111,32 @@ def test_pi_tool_alias_and_unexpected_tool_are_detected():
     assert "unexpected_tools:bash" in scored["failures"]
 
 
+def test_pi_runtime_details_contribute_the_same_execution_facts():
+    runner = load_runner()
+    events = [
+        {
+            "type": "tool_execution_end",
+            "toolName": "eda_read",
+            "isError": False,
+            "result": {
+                "details": {
+                    "runtime": {
+                        "client_transport_ms": 3.5,
+                        "run": {"run_id": "pi-run", "state": "passed"},
+                        "response": {"result": {"observed": True}},
+                    }
+                }
+            },
+        }
+    ]
+
+    observation = runner.parse_pi(events)
+
+    assert observation["tools"] == ["eda.read"]
+    assert observation["facts"][0]["run_id"] == "pi-run"
+    assert observation["facts"][0]["client_transport_ms"] == 3.5
+
+
 def test_codex_mutation_approval_uses_review_not_unrestricted_bypass():
     runner = load_runner()
     args = SimpleNamespace(
@@ -150,6 +176,32 @@ def test_top_level_diagnostic_result_contributes_only_a_size_fact():
 
     assert observation["facts"][0]["response_payload_chars"] > 2
     assert "private" not in str(observation["facts"])
+
+
+def test_completed_client_call_with_failed_runtime_run_is_not_counted_as_succeeded():
+    runner = load_runner()
+    events = [
+        {
+            "type": "item.completed",
+            "item": {
+                "type": "mcp_tool_call",
+                "tool": "eda.read",
+                "status": "completed",
+                "result": {
+                    "structured_content": {
+                        "run": {"run_id": "run-failed", "state": "failed"},
+                        "response": {"status": "failed", "error": {"code": "bad_query"}},
+                    }
+                },
+            },
+        }
+    ]
+
+    observation = runner.parse_codex(events)
+
+    assert observation["attempts"] == ["eda.read"]
+    assert observation["tools"] == []
+    assert observation["facts"][0]["state"] == "failed"
 
 
 def test_plan_call_counts_nested_runs_without_double_counting_transport():
