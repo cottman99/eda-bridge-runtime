@@ -1,5 +1,13 @@
 # Version 0.1 scope
 
+## 0.1.0a14 — canonical Skill selection
+
+- Keep historical plugin caches intact while enabling exactly one canonical path for each requested
+  Skill name in generated Codex EDA profiles.
+- Prefer an explicitly installed direct Skill; otherwise select the highest versioned plugin-cache
+  copy and explicitly disable older copies.
+- Retain deterministic regression coverage for both duplicate-cache and direct-install precedence.
+
 ## 0.1.0a13 — validated deterministic execution plans
 
 - Execute 2..16 already-decided typed steps through one Agent call and one persistent connection;

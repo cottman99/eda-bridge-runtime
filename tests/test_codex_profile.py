@@ -66,3 +66,53 @@ def test_profile_ignores_hidden_skill_backups(tmp_path):
 
     assert (current, "ads-agent-bridge") in discovered
     assert (hidden, "ads-agent-bridge") not in discovered
+
+
+def test_profile_enables_only_latest_cached_version_of_same_skill(tmp_path):
+    installer = load_installer()
+    cache = tmp_path / "plugins" / "cache" / "runtime" / "eda-runtime"
+    old = write_skill(cache / "0.1.0-alpha.12" / "skills", "runtime", "eda-runtime-control")
+    current = write_skill(cache / "0.1.0-alpha.13" / "skills", "runtime", "eda-runtime-control")
+
+    output, enabled, disabled = installer.install_profile(tmp_path)
+    profile = output.read_text(encoding="utf-8")
+
+    assert enabled == 1
+    assert disabled == 1
+    assert f"path = {installer.json.dumps(str(old))}\nenabled = false" in profile
+    assert f"path = {installer.json.dumps(str(current))}\nenabled = true" in profile
+
+
+def test_direct_skill_outweighs_newer_plugin_cache_copy(tmp_path):
+    installer = load_installer()
+    direct = write_skill(tmp_path / "skills", "ads", "ads-agent-bridge")
+    cached = write_skill(
+        tmp_path / "plugins" / "cache" / "ads" / "ads" / "99.0.0" / "skills",
+        "ads",
+        "ads-agent-bridge",
+    )
+
+    output, enabled, disabled = installer.install_profile(tmp_path)
+    profile = output.read_text(encoding="utf-8")
+
+    assert enabled == 1
+    assert disabled == 1
+    assert f"path = {installer.json.dumps(str(direct))}\nenabled = true" in profile
+    assert f"path = {installer.json.dumps(str(cached))}\nenabled = false" in profile
+
+
+def test_cached_versions_follow_semantic_prerelease_order(tmp_path):
+    installer = load_installer()
+    cache = tmp_path / "plugins" / "cache" / "runtime" / "eda-runtime"
+    alpha = write_skill(cache / "1.0.0-alpha.99" / "skills", "runtime", "eda-runtime-control")
+    beta = write_skill(cache / "1.0.0-beta.2" / "skills", "runtime", "eda-runtime-control")
+    stable = write_skill(cache / "1.0.0" / "skills", "runtime", "eda-runtime-control")
+
+    output, enabled, disabled = installer.install_profile(tmp_path)
+    profile = output.read_text(encoding="utf-8")
+
+    assert enabled == 1
+    assert disabled == 2
+    assert f"path = {installer.json.dumps(str(alpha))}\nenabled = false" in profile
+    assert f"path = {installer.json.dumps(str(beta))}\nenabled = false" in profile
+    assert f"path = {installer.json.dumps(str(stable))}\nenabled = true" in profile

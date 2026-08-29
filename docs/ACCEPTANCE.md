@@ -3,6 +3,14 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Runtime alpha.14 canonical-Skill acceptance
+
+- A real Codex-home discovery selected exactly five intended EDA Skills. Runtime resolved to the
+  installed alpha.13 plugin while the four directly installed vendor Skills remained canonical.
+- Regression tests prove that retained older plugin-cache copies are explicitly disabled and that
+  an explicit direct installation outranks even a higher-version cached copy.
+- The complete Python suite, Ruff checks, and formatting checks passed before publication.
+
 ## 2026-08-29 Runtime alpha.13 validated-plan acceptance
 
 - All Python tests and Ruff checks passed after three independent review rounds. The review-found

@@ -36,7 +36,9 @@ disconnect, and returns the result with its linked timing and evidence.
 
 ## Current alpha
 
-`0.1.0a13` adds one-call validated execution plans for short deterministic EDA sequences. Runtime
+`0.1.0a14` keeps generated Codex profiles narrow when several cached releases expose the same
+Skill: one canonical source is enabled and retained older copies are explicitly disabled.
+`0.1.0a13` added one-call validated execution plans for short deterministic EDA sequences. Runtime
 prevalidates target-specific capabilities and unique mutation identities before the first change,
 waits for durable dependencies internally, stops on failure, and retains each step's purpose, Run,
 timing, and audit link. Codex and Pi expose the same operation; single operations still use the
@@ -58,7 +60,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a13"
+python -m pip install "eda-bridge-runtime==0.1.0a14"
 eda-runtime doctor
 ```
 
