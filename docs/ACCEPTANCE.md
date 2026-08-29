@@ -20,15 +20,17 @@ credentials, host address, or task-specific geometry is included here.
 
 ## 2026-08-29 bounded Codex model-routing probe
 
-- With the same narrow profile and Runtime targets, `gpt-5.6-luna` passed the ADS and AnsysEM L1
-  capability cases but changed the exact L0 contract from `status=ready` to `status=ok`; the
-  deterministic scorer correctly rejected it despite the semantically plausible answer.
-- Its three wall times were 26.844, 23.062, and 22.860 s versus 26.375, 24.062, and 24.031 s for
-  `gpt-5.5`. The roughly 0--5% difference was not accompanied by lower input usage; each Luna run
-  used about 5--6% more input tokens in this sample.
-- The result does not justify automatic routing of routine EDA work to Luna. `gpt-5.5` remains the
-  correctness baseline until a larger repeated sample or an authenticated Pi comparison proves a
-  better tradeoff.
+- With the same narrow profile and Runtime targets, the initial `gpt-5.6-luna` probe passed the ADS
+  and AnsysEM L1 capability cases but changed the exact L0 contract from `status=ready` to
+  `status=ok`; the deterministic scorer correctly rejected it.
+- A subsequent matched three-trial L0 sample made the distinction conclusive for this bounded
+  contract. `gpt-5.5` was semantically correct in 3/3 trials, passed the strict 30-second contract
+  in 2/3, and had a 29.855-second median. Luna was semantically correct in 0/3: two trials reported
+  zero configured connections after observing two, and one again returned `status=ok`. It passed
+  the wall budget in 2/3 with a 28.174-second median.
+- Luna's small 1.681-second median advantage therefore does not justify routing routine EDA work
+  to it: the exact-answer failure is much larger than the unstable speed difference. `gpt-5.5`
+  remains the correctness baseline until an authenticated Pi comparison proves a better tradeoff.
 
 ## 2026-08-29 Runtime alpha.16 bounded-read acceptance
 
