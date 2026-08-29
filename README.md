@@ -39,6 +39,12 @@ Agent context. Full responses remain the default for exploration.
 
 ## Current alpha
 
+`0.1.0a23` makes plan-step field boundaries machine-visible: vendor payload cannot silently absorb
+Runtime wait or audit controls, and bounded solver evaluations require an approval independent of
+disposable mutation approval. The authenticated Codex/Pi ladder now reaches idempotent mutation,
+complete vendor lifecycles, a real generated-input Momentum solve, and one-turn cross-EDA
+coordination without inventing a cross-vendor transaction.
+
 `0.1.0a22` gives every MCP client lifecycle an automatic anonymous audit correlation when the Agent
 cannot declare its own session, and reports only paired timing partitions while identifying legacy
 measurements that cannot be compared. Generated Codex EDA profiles now explicitly isolate built-in
@@ -87,7 +93,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a22"
+python -m pip install "eda-bridge-runtime==0.1.0a23"
 eda-runtime doctor
 ```
 
