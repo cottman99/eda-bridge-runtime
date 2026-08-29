@@ -21,6 +21,9 @@ Level 6 adds one explicitly selected generated-input Momentum solve. Fixture pre
 outside the Agent turn; the Agent receives only exact source/output/project variables and must use
 one typed Runtime call. The Bridge preserves the source, commits only a verified finite complete
 N-port result, and owns solver-tree cleanup.
+The same level also includes one-turn cross-EDA coordination. It deliberately uses one validated
+plan per exact vendor connection and does not invent a cross-vendor transaction or shared rollback
+claim.
 
 Raw Agent streams may contain local target facts and are not saved unless `--raw-output` is supplied.
 Normalized results contain only cross-client metrics with matching definitions, the canonical tool

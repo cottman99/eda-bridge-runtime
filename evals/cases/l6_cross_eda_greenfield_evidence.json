@@ -1,0 +1,43 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l6.cross-eda-greenfield-evidence",
+  "level": 6,
+  "title": "One-turn ADS and AnsysEM greenfield evidence coordination",
+  "variables": ["ADS_CONNECTION", "ADS_SOURCE_WORKSPACE", "ADS_OUTPUT_WORKSPACE", "ADS_CREATE_KEY", "ADS_APPLY_KEY", "ANSYS_CONNECTION", "ANSYS_PROJECT", "ANSYS_IMAGE", "ANSYS_CREATE_KEY"],
+  "prompt": "Use exactly two EDA Bridge Runtime tool calls, both eda.run_plan. Do not call capabilities. First call on connection '{{ADS_CONNECTION}}' with purpose 'Coordinate ADS side of cross-EDA greenfield evidence' and exactly two ordered steps. ADS step create: purpose 'Create disposable cross-EDA ADS source', operation workspace.create, idempotency_key='{{ADS_CREATE_KEY}}', payload workspace='{{ADS_SOURCE_WORKSPACE}}', library='RuntimeEval_lib', cell='Main', display=':4.0'. ADS step apply: purpose 'Apply and freshly verify cross-EDA ADS schematic', operation design.apply, idempotency_key='{{ADS_APPLY_KEY}}', payload display=':4.0' and plan={schema_version:'ads.design-plan/v1',operation_id:'cross_eda_eval_design_plan',source_workspace:'{{ADS_SOURCE_WORKSPACE}}',output_workspace:'{{ADS_OUTPUT_WORKSPACE}}',design:'RuntimeEval_lib:Main:schematic',expected_before:{instance_names:[]},operations:[{op:'add_instance',item:['ads_rflib','R','symbol'],at:[0,0],name:'R1',parameters:{R:'50 Ohm'}},{op:'add_instance',item:['ads_rflib','C','symbol'],at:[2,0],name:'C1',angle:-90,parameters:{C:'1 pF'}},{op:'add_instance',item:['ads_rflib','GROUND','symbol'],at:[2,-1],name:'G1',angle:-90},{op:'add_wire',points:[[1,0],[2,0]],label:'OUT'}],assertions:{instance_names:['C1','G1','R1'],parameters:[{instance:'R1',parameter:'R',value:'50 Ohm'},{instance:'C1',parameter:'C',value:'1 pF'}],netlist_contains:['R1','C1']}}. Second call on connection '{{ANSYS_CONNECTION}}' with purpose 'Coordinate AnsysEM side of cross-EDA greenfield evidence' and exactly three ordered steps. Ansys step create: purpose 'Create disposable cross-EDA AnsysEM project', operation project.create, idempotency_key='{{ANSYS_CREATE_KEY}}', payload project='{{ANSYS_PROJECT}}', design='CrossEdaEvalLayout', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', redact_paths=true. At the create step level, not inside payload, set wait={timeout_ms:90000,poll_interval_ms:1000}. Ansys step inspect: purpose 'Verify persisted cross-EDA AnsysEM Bundle', operation project.inspect, payload with the same project, version, profile, display and redact_paths=true. At the inspect step level, not inside payload, set wait={timeout_ms:90000,poll_interval_ms:1000}. Ansys step image: purpose 'Export cross-EDA AnsysEM evidence image', operation layout.export_image, payload project='{{ANSYS_PROJECT}}', design='CrossEdaEvalLayout', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', output='{{ANSYS_IMAGE}}', width=800, height=600, redact_paths=true. At the image step level, not inside payload, set wait={timeout_ms:90000,poll_interval_ms:1000}. Do not replay either plan, use shell/files/documentation/GUI/arbitrary code, solve, access customer data, or claim a cross-vendor transaction. From both actual plan responses return only compact JSON with status='passed', ads_source_preserved, ads_fresh_reopen, ads_assertion_count, ansys_bundle_complete, ansys_image_verified, and ansys_validation_count.",
+  "required_tools": {
+    "eda.run_plan": 2
+  },
+  "allowed_tools": [
+    "eda.run_plan"
+  ],
+  "expected_runtime": {
+    "equals": {
+      "deduplicated_calls": 0,
+      "reused_run_calls": 0,
+      "distinct_projected_runs": 5,
+      "distinct_jobs": 3
+    }
+  },
+  "expected_final": {
+    "equals": {
+      "status": "passed",
+      "ads_source_preserved": true,
+      "ads_fresh_reopen": true,
+      "ads_assertion_count": 7,
+      "ansys_bundle_complete": true,
+      "ansys_image_verified": true,
+      "ansys_validation_count": 2
+    },
+    "minimum": {}
+  },
+  "budgets": {
+    "max_tool_calls": 2,
+    "max_wall_seconds": 300
+  },
+  "safety": {
+    "mutation": "disposable-only",
+    "solve": "forbidden",
+    "customer_data": "forbidden"
+  }
+}
