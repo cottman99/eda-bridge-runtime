@@ -3,6 +3,25 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Codex profile system-Skill isolation
+
+- The dedicated EDA profile generator previously ignored every hidden directory, which correctly
+  excluded user backups but also omitted Codex's official `.system` Skill root from its disable
+  rules. The generator now recognizes only that named hidden root and continues to ignore nested or
+  unrelated hidden backups.
+- This follows the official `skills.config enabled=false` mechanism. Codex's official source marks
+  disabled catalog entries non-model-visible before rendering; no parallel Skill loader or custom
+  prompt layer was added. See [Codex Skills](https://developers.openai.com/codex/skills/) and the
+  pinned [catalog visibility implementation](https://github.com/openai/codex/blob/6478a751fde8884b2fdc76486fe23175a8e795d4/codex-rs/ext/skills/src/catalog.rs).
+- After regenerating the local profile, the Skill-description budget warning disappeared. Three
+  repeated L0 connection reads passed 3/3; median wall time was 21.834 s versus the prior 29.855 s,
+  and median input was 34,667 versus 36,393. The sample supports profile hygiene and the measured
+  result, not a universal latency claim.
+- Six same-contract AnsysEM L2 reads passed 5/6. Every passing run used one `eda.read`; the sole
+  failure made no tool attempt and entered neither Runtime nor SSH. That remaining Codex selection
+  limitation is preserved in the baseline rather than hidden by an evaluator retry or misassigned
+  to the EDA stack.
+
 ## 2026-08-29 Runtime alpha.20 Agent-contract acceptance
 
 - The Codex evaluator now exposes only each case's declared Runtime tools and generates a strict

@@ -68,6 +68,17 @@ def test_profile_ignores_hidden_skill_backups(tmp_path):
     assert (hidden, "ads-agent-bridge") not in discovered
 
 
+def test_profile_discovers_official_system_skills_but_not_nested_hidden_backups(tmp_path):
+    installer = load_installer()
+    system = write_skill(tmp_path / "skills", ".system/openai-docs", "openai-docs")
+    hidden = write_skill(tmp_path / "skills", ".system/.backup/openai-docs-old", "openai-docs")
+
+    discovered = installer.discover_skills(tmp_path)
+
+    assert (system, "openai-docs") in discovered
+    assert (hidden, "openai-docs") not in discovered
+
+
 def test_profile_enables_only_latest_cached_version_of_same_skill(tmp_path):
     installer = load_installer()
     cache = tmp_path / "plugins" / "cache" / "runtime" / "eda-runtime"

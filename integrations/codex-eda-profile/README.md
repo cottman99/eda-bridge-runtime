@@ -4,7 +4,8 @@ This optional Agent-host helper generates one narrow Codex profile for EDA work.
 native profile and per-Skill enablement settings; it does not create another execution path.
 
 The generated profile keeps the Runtime, ADS, AnsysEM, and their documentation Skills enabled and
-disables unrelated discovered Skills only for `codex --profile eda-runtime`. It disables general
+disables unrelated discovered Skills—including bundled `.system` Skills—only for
+`codex --profile eda-runtime`. Other hidden backup directories remain undiscovered. It disables general
 plugin discovery, declares the single Runtime MCP directly, and preserves the Runtime's two Codex
 audit hooks inline. The user's ordinary Codex configuration remains unchanged. Browser, Apps,
 Computer Use, memory injection, multi-agent, and shell snapshotting are disabled in this profile

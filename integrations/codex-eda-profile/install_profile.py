@@ -35,14 +35,20 @@ _PRERELEASE_RANK = {
 
 
 def discover_skills(codex_home: Path) -> list[tuple[Path, str]]:
-    roots = [codex_home / "skills", codex_home / "plugins" / "cache"]
+    roots = [
+        (codex_home / "skills", frozenset({".system"})),
+        (codex_home / "plugins" / "cache", frozenset()),
+    ]
     found: list[tuple[Path, str]] = []
-    for root in roots:
+    for root, allowed_hidden_roots in roots:
         if not root.is_dir():
             continue
         for skill_file in root.rglob("SKILL.md"):
             relative = skill_file.relative_to(root)
-            if any(part.startswith(".") for part in relative.parts):
+            if any(
+                part.startswith(".") and not (index == 0 and part in allowed_hidden_roots)
+                for index, part in enumerate(relative.parts)
+            ):
                 continue
             try:
                 header = skill_file.read_text(encoding="utf-8")[:4096]
