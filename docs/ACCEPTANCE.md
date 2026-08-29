@@ -3,6 +3,18 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 bounded Codex model-routing probe
+
+- With the same narrow profile and Runtime targets, `gpt-5.6-luna` passed the ADS and AnsysEM L1
+  capability cases but changed the exact L0 contract from `status=ready` to `status=ok`; the
+  deterministic scorer correctly rejected it despite the semantically plausible answer.
+- Its three wall times were 26.844, 23.062, and 22.860 s versus 26.375, 24.062, and 24.031 s for
+  `gpt-5.5`. The roughly 0--5% difference was not accompanied by lower input usage; each Luna run
+  used about 5--6% more input tokens in this sample.
+- The result does not justify automatic routing of routine EDA work to Luna. `gpt-5.5` remains the
+  correctness baseline until a larger repeated sample or an authenticated Pi comparison proves a
+  better tradeoff.
+
 ## 2026-08-29 Runtime alpha.16 bounded-read acceptance
 
 - The same real ADS `session.status` task returned the same 13-session count with two calls before
