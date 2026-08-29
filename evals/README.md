@@ -83,6 +83,10 @@ summary are written.
 Mutation approval is a two-part gate: the matrix must select the case explicitly and the child
 runner receives a separate mutation flag. Codex then uses its client-reviewed approval path; the
 runner never silently switches to an unrestricted sandbox or bypasses approval.
+Solver approval is independent. A solve-capable case remains skipped even when disposable
+mutations are approved; it must also be selected explicitly and receive `--approve-solves`.
+Approving a bounded solve never enables arbitrary commands or changes the case's declared solver
+limit.
 An empty or entirely skipped matrix exits distinctly instead of reporting vacuous success.
 Codex and Pi model selectors are separate because Pi requires the provider-qualified
 `openai-codex/gpt-5.5` name while Codex accepts `gpt-5.5`.

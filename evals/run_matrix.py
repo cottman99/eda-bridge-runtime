@@ -16,6 +16,7 @@ def load_cases(
     *,
     max_level: int,
     approve_mutations: bool,
+    approve_solves: bool,
     case_ids: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     selected: list[dict[str, Any]] = []
@@ -30,6 +31,10 @@ def load_cases(
         mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
         if mutation != "forbidden" and not approve_mutations:
             skipped.append({"case_id": case["case_id"], "reason": "mutation_not_approved"})
+            continue
+        solve = str((case.get("safety") or {}).get("solve") or "forbidden")
+        if solve != "forbidden" and not approve_solves:
+            skipped.append({"case_id": case["case_id"], "reason": "solve_not_approved"})
             continue
         selected.append(case)
     selected.sort(key=lambda item: (int(item["level"]), str(item["case_id"])))
@@ -94,6 +99,7 @@ def main() -> int:
     parser.add_argument("--max-level", type=int, default=4)
     parser.add_argument("--case-id", action="append", default=[])
     parser.add_argument("--approve-mutations", action="store_true")
+    parser.add_argument("--approve-solves", action="store_true")
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--var", action="append", default=[])
     parser.add_argument("--codex-model", default="gpt-5.5")
@@ -113,6 +119,7 @@ def main() -> int:
         eval_root / "cases",
         max_level=args.max_level,
         approve_mutations=args.approve_mutations,
+        approve_solves=args.approve_solves,
         case_ids=requested_case_ids,
     )
     if requested_case_ids:
@@ -187,6 +194,9 @@ def main() -> int:
         mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
         if args.approve_mutations and mutation != "forbidden":
             command.append("--approve-mutations")
+        solve = str((case.get("safety") or {}).get("solve") or "forbidden")
+        if args.approve_solves and solve != "forbidden":
+            command.append("--approve-solves")
         completed = subprocess.run(
             command, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )  # noqa: S603
