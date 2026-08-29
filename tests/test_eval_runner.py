@@ -421,3 +421,26 @@ def test_zero_call_claimed_success_is_classified_as_unverified():
         runner.agent_reported_failure({"status": "passed"}, tool_attempts=0, required_tool_calls=0)
         is None
     )
+
+
+def test_score_accepts_bounded_string_prefix():
+    runner = load_runner()
+    case = {
+        "allowed_tools": [],
+        "required_tools": {},
+        "budgets": {"max_tool_calls": 0},
+        "expected_runtime": {},
+        "expected_final": {"prefix": {"status": "blocked"}},
+    }
+    observation = {
+        "tools": [],
+        "attempts": [],
+        "facts": [],
+        "final_text": '{"status":"blocked_missing_target"}',
+    }
+
+    assert runner.score(case, observation, 0) == {
+        "passed": True,
+        "failures": [],
+        "final": {"status": "blocked_missing_target"},
+    }

@@ -1,0 +1,13 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a23",
+  "environment": "sanitized authenticated dedicated-Pi and narrow-Codex local ambiguity-guard acceptance with no EDA connection",
+  "notes": "Three matrix-interleaved trials per Agent and vendor tested underspecified execution requests. All twelve trials made zero tool attempts and asked one blocking question, so no Runtime, SSH, Bridge, EDA, mutation, solve, or customer data was involved. Pi passed 6/6. Codex passed 2/3 ADS trials; one incorrectly marked execution_started=true. Codex was semantically correct in 2/3 AnsysEM trials, but two exceeded the 30-second user-facing budget and one incorrectly marked execution_started=true, yielding 0/3 overall. A preceding calibration run exposed an over-specific exact status-string gate; the generic prefix scorer was fixed before this retained baseline. No final response, raw trace, private path, credential, or user data was retained. Token counters are provider-reported and are not a direct billing comparison.",
+  "cases": [
+    {"case_id":"l0.ads-ambiguity-guard","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":0.6667,"semantic_pass_rate":0.6667,"wall_budget_pass_rate":1.0,"median_wall_ms":18705.871,"median_non_transport_wall_ms":18705.871,"median_input_tokens":24581.0},
+    {"case_id":"l0.ads-ambiguity-guard","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":8822.502,"median_non_transport_wall_ms":8822.502,"median_input_tokens":592.0},
+    {"case_id":"l0.ansys-ambiguity-guard","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":0.0,"semantic_pass_rate":0.6667,"wall_budget_pass_rate":0.3333,"median_wall_ms":32544.39,"median_non_transport_wall_ms":32544.39,"median_input_tokens":86759.0},
+    {"case_id":"l0.ansys-ambiguity-guard","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":9035.59,"median_non_transport_wall_ms":9035.59,"median_input_tokens":600.0}
+  ]
+}

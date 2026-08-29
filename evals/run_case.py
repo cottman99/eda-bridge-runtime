@@ -286,6 +286,10 @@ def score(case: dict[str, Any], observation: dict[str, Any], exit_code: int) -> 
         for path, value in expected.get("equals", {}).items():
             if nested_value(final, path) != value:
                 failures.append(f"final_mismatch:{path}")
+        for path, value in expected.get("prefix", {}).items():
+            actual = nested_value(final, path)
+            if not isinstance(actual, str) or not actual.startswith(str(value)):
+                failures.append(f"final_prefix_mismatch:{path}")
         for path, value in expected.get("minimum", {}).items():
             actual = nested_value(final, path)
             if not isinstance(actual, int | float) or actual < value:
@@ -327,7 +331,11 @@ def codex_command(args: argparse.Namespace, case: dict[str, Any], output_schema:
 def final_output_schema(case: dict[str, Any]) -> dict[str, Any]:
     """Constrain only the response shape; scoring still decides whether values are correct."""
     expected = case["expected_final"]
-    examples = {**expected.get("minimum", {}), **expected.get("equals", {})}
+    examples = {
+        **expected.get("minimum", {}),
+        **expected.get("prefix", {}),
+        **expected.get("equals", {}),
+    }
     properties: dict[str, dict[str, str]] = {}
     for name, value in examples.items():
         value_type = (

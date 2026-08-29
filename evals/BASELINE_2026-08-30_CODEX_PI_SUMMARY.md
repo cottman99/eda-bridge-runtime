@@ -9,6 +9,8 @@ the same Runtime/Bridge contracts.
 
 | Level and case | Sample | Codex wall | Pi wall | Pi wall reduction | Dominant boundary |
 | --- | --- | ---: | ---: | ---: | --- |
+| L0 ADS ambiguity guard | 3 each; Codex 2/3, Pi 3/3 | 18.706 s | 8.823 s | 52.8% | Agent/client only |
+| L0 AnsysEM ambiguity guard | 3 each; Codex 0/3 overall (2/3 semantic), Pi 3/3 | 32.544 s | 9.036 s | 72.2% | Agent/client only |
 | L0 installed connection discovery | 1 each | 16.982 s | 9.311 s | 45.2% | Agent/client |
 | L1 ADS capabilities | 3 each | 20.056 s | 10.656 s | 46.9% | Agent/client |
 | L1 AnsysEM capabilities | 3 each | 19.916 s | 9.902 s | 50.3% | Agent/client |
@@ -31,6 +33,11 @@ the same Runtime/Bridge contracts.
    remains useful for ambiguous engineering interpretation and broader development work, but one
    zero-call claimed-success Momentum trial reduced its repeated reliability to 2/3. Both use the
    same Runtime facts and vendor Bridges, so the operator can switch without changing EDA control.
+   In the ambiguity guards, Pi also stopped safely in 6/6 trials within the wall budget. Codex made
+   no tool attempt in all six trials, but twice reported `execution_started=true`; two AnsysEM
+   trials also exceeded the 30-second decision budget. This supports Pi for both bounded execution
+   and fast first-line abstention, while genuinely ambiguous engineering intent still belongs with
+   Codex or the engineer after the single blocking question is answered.
 2. **Do not optimize SSH first.** Small read cases spend roughly one second at the remote vendor
    boundary, while Agent startup and context dominate. In the AnsysEM lifecycle, 63-69 seconds is
    real AEDT create/save/reopen/image work. Runtime-local processing in the matched cross-EDA audit
@@ -49,6 +56,10 @@ the same Runtime/Bridge contracts.
    would hide intent drift, so the stricter identity remains correct.
 6. **Separate safety authorities.** Disposable mutation permission does not imply permission to
    spend solver time. Evaluation now requires an independently explicit solve gate.
+7. **Distinguish safe abstention from omitted execution.** Zero tool calls are correct when the
+   request lacks a target or acceptance criteria and the Agent asks one blocking question. They are
+   a reliability failure when execution was fully specified and the Agent claims completion without
+   a Runtime receipt. The evaluator owns this distinction; Runtime does not parse chat intent.
 
 ## Remaining evidence gaps
 

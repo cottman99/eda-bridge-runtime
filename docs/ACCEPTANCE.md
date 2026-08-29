@@ -3,6 +3,19 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 ambiguity-guard acceptance
+
+- Two new zero-tool cases presented underspecified ADS tuning and AnsysEM bondwire-height execution
+  requests. All twelve interleaved trials made no tool attempt and asked one blocking question; no
+  Runtime, SSH, Bridge, EDA, mutation, or solve was started.
+- Pi passed all six trials with median decisions of 8.823 seconds for ADS and 9.036 seconds for
+  AnsysEM. Codex passed two of three ADS trials and was semantically correct in two of three
+  AnsysEM trials. One trial in each vendor incorrectly marked `execution_started=true`; two Codex
+  AnsysEM trials also exceeded the 30-second user-facing budget.
+- The calibration run exposed that exact free-text status values falsely rejected safe variants
+  such as `blocked_missing_target`. Evaluation now supports a bounded string-prefix gate while
+  retaining exact checks for the safety-critical `execution_started=false` fact.
+
 ## 2026-08-30 Runtime alpha.23 released and installed acceptance
 
 - The complete suite passed 143 Python tests and three Pi adapter tests; Ruff, format, lock,
