@@ -306,24 +306,37 @@ TOOLS = [
                             "step_id": {"type": "string", "minLength": 1, "maxLength": 64},
                             "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
                             "operation": {"type": "string"},
-                            "payload": {"type": "object"},
+                            "payload": {
+                                "type": "object",
+                                "description": (
+                                    "Vendor Bridge operation payload only. Do not place Runtime "
+                                    "step controls such as wait, idempotency_key, purpose, or "
+                                    "result_view inside payload."
+                                ),
+                            },
                             "target": {"type": "object"},
                             "expected_effect": {"type": "string"},
                             "idempotency_key": {"type": "string"},
-                            "wait": _object_schema(
-                                {
-                                    "timeout_ms": {
-                                        "type": "integer",
-                                        "minimum": 1000,
-                                        "maximum": 90000,
-                                    },
-                                    "poll_interval_ms": {
-                                        "type": "integer",
-                                        "minimum": 100,
-                                        "maximum": 5000,
-                                    },
-                                }
-                            ),
+                            "wait": {
+                                **_object_schema(
+                                    {
+                                        "timeout_ms": {
+                                            "type": "integer",
+                                            "minimum": 1000,
+                                            "maximum": 90000,
+                                        },
+                                        "poll_interval_ms": {
+                                            "type": "integer",
+                                            "minimum": 100,
+                                            "maximum": 5000,
+                                        },
+                                    }
+                                ),
+                                "description": (
+                                    "Runtime durable-job wait policy for this plan step. This is "
+                                    "a sibling of payload and must never be nested inside payload."
+                                ),
+                            },
                             "result_view": _RESULT_VIEW_SCHEMA,
                         },
                         ["step_id", "purpose", "operation", "payload"],
