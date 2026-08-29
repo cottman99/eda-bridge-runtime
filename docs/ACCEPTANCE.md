@@ -63,6 +63,13 @@ credentials, host address, or task-specific geometry is included here.
   and provider-reported input fell from 59,591 to 41,909. Pi passed its independent plan with one
   attempt in 19.313 seconds and 5,215 input tokens. Daily natural-language profiles remain unchanged;
   only pre-resolved typed execution/evaluation uses the narrower administrative profile.
+- The Runtime-only Codex profile and packaged Pi profile then each completed one full AnsysEM
+  greenfield evidence plan with one Agent tool call. Each plan created one project, freshly inspected
+  its complete Bundle, and verified an 800x600 AEDT image through three durable jobs without solving.
+- Codex completed in 102.047 seconds and Pi in 79.312 seconds. Their measured AEDT/Bridge boundaries
+  were nearly identical at 63.312 and 63.422 seconds; remaining Agent-side time was 38.735 versus
+  15.890 seconds. After exact inventory and idle-process verification, both Bundles and images were
+  removed from the owned scratch root.
 
 ## 2026-08-30 Runtime alpha.25 Agent-host acceptance
 
