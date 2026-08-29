@@ -6,6 +6,17 @@ import { RuntimeClient } from "../lib/runtime-client.mjs";
 
 const PI_AGENT_VERSION = "0.84.4";
 const JsonObject = Type.Record(Type.String(), Type.Unknown());
+const ResultView = Type.Object({
+  fields: Type.Array(Type.Object({
+    name: Type.String({ minLength: 1, maxLength: 64 }),
+    pointer: Type.String({ maxLength: 256 }),
+    mode: Type.Optional(Type.Union([
+      Type.Literal("value"),
+      Type.Literal("count"),
+      Type.Literal("exists"),
+    ])),
+  }, { additionalProperties: false }), { minItems: 1, maxItems: 16 }),
+}, { additionalProperties: false });
 const TargetFields = {
   target: Type.Optional(JsonObject),
   context: Type.Optional(Type.String()),
@@ -131,6 +142,7 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
         description: "Exact operation already advertised as non-mutating by the selected Bridge.",
       }),
       payload: Type.Record(Type.String(), Type.Unknown()),
+      result_view: Type.Optional(ResultView),
       ...TargetFields,
     }),
   );

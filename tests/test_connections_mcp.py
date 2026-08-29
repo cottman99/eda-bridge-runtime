@@ -183,6 +183,37 @@ class CapabilityAwareTransport(FakeTransport):
         )
 
 
+class ResultViewTransport(CapabilityAwareTransport):
+    def request(self, request):
+        if request.operation == "project.inspect":
+            self.requests.append(request)
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status="passed",
+                result={
+                    "data": {
+                        "sessions": [{"name": "one"}, {"name": "two"}],
+                        "active": "one",
+                    }
+                },
+            )
+        return super().request(request)
+
+
+class FailedResultViewTransport(ResultViewTransport):
+    def request(self, request):
+        if request.operation == "project.inspect":
+            self.requests.append(request)
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status="failed",
+                error={"code": "native_failure", "message": "Preserve this Bridge failure"},
+            )
+        return super().request(request)
+
+
 class PlanTransport(FakeTransport):
     def request(self, request):
         self.requests.append(request)
@@ -1037,6 +1068,147 @@ def test_mcp_read_requires_cached_non_mutating_capability():
     assert registry.transport.requests[-1].payload["mutating"] is False
     assert rejected["result"]["isError"] is True
     assert rejected["result"]["structuredContent"]["error"]["code"] == "PermissionError"
+
+
+def test_mcp_read_can_return_a_deterministic_bounded_result_view():
+    registry = FakeRegistry()
+    registry.transport = ResultViewTransport()
+    server = MCPRuntimeServer(registry)
+    server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Discover exact read operation metadata",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    response = server.handle(
+        _rpc(
+            2,
+            "tools/call",
+            {
+                "name": "eda.read",
+                "arguments": {
+                    "purpose": "Inspect only the required result facts",
+                    "connection_id": "ansys-one",
+                    "operation": "project.inspect",
+                    "payload": {},
+                    "result_view": {
+                        "fields": [
+                            {
+                                "name": "session_count",
+                                "pointer": "/data/sessions",
+                                "mode": "count",
+                            },
+                            {"name": "active", "pointer": "/data/active"},
+                            {
+                                "name": "has_missing",
+                                "pointer": "/data/missing",
+                                "mode": "exists",
+                            },
+                        ]
+                    },
+                },
+            },
+        )
+    )
+
+    value = response["result"]["structuredContent"]
+    assert value["response"]["result"] == {
+        "session_count": 2,
+        "active": "one",
+        "has_missing": False,
+    }
+    assert value["response"]["result_view"] == {"projected": True, "field_count": 3}
+    assert value["run"]["state"] == "passed"
+    assert "sessions" not in json.dumps(value["response"])
+    assert "result_view" not in registry.transport.requests[-1].payload
+
+
+def test_mcp_read_result_view_rejects_a_missing_value_pointer():
+    registry = FakeRegistry()
+    registry.transport = ResultViewTransport()
+    server = MCPRuntimeServer(registry)
+    server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Discover exact read operation metadata",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    response = server.handle(
+        _rpc(
+            2,
+            "tools/call",
+            {
+                "name": "eda.read",
+                "arguments": {
+                    "purpose": "Reject an invalid result selector",
+                    "connection_id": "ansys-one",
+                    "operation": "project.inspect",
+                    "payload": {},
+                    "result_view": {"fields": [{"name": "missing", "pointer": "/data/missing"}]},
+                },
+            },
+        )
+    )
+
+    assert response["result"]["isError"] is True
+    assert response["result"]["structuredContent"]["error"]["code"] == "ValueError"
+
+
+def test_mcp_read_result_view_does_not_mask_a_bridge_failure():
+    registry = FakeRegistry()
+    registry.transport = FailedResultViewTransport()
+    server = MCPRuntimeServer(registry)
+    server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Discover exact read operation metadata",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    response = server.handle(
+        _rpc(
+            2,
+            "tools/call",
+            {
+                "name": "eda.read",
+                "arguments": {
+                    "purpose": "Preserve a failed native read result",
+                    "connection_id": "ansys-one",
+                    "operation": "project.inspect",
+                    "payload": {},
+                    "result_view": {"fields": [{"name": "missing", "pointer": "/data/missing"}]},
+                },
+            },
+        )
+    )
+
+    value = response["result"]["structuredContent"]
+    assert value["run"]["state"] == "failed"
+    assert value["response"]["error"] == {
+        "code": "native_failure",
+        "message": "Preserve this Bridge failure",
+    }
+    assert "result_view" not in value["response"]
 
 
 def test_mcp_job_wait_polls_inside_runtime_until_terminal():

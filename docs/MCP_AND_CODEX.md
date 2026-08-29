@@ -69,6 +69,13 @@ When capability metadata is required to prove an operation is non-mutating, call
 that single discovery. This lets Agent clients authorize a statically read-only MCP tool while the
 Runtime still rejects unknown or mutating vendor operations before execution.
 
+For a known read response that is much larger than the facts needed by the task, `eda.read` accepts
+an optional `result_view`. Each selector uses an RFC 6901 JSON Pointer relative to the Bridge
+`result` and a deterministic `value`, `count`, or `exists` mode. Runtime receives the complete
+Bridge response and creates the normal compact Run view before returning only the selected result
+facts to the Agent. Invalid value/count pointers fail explicitly. Omitting `result_view` preserves
+the full response, which remains the correct choice for exploration.
+
 For 2..16 already-decided operations on one connection, `eda.run_plan` performs one capability
 preflight, validates the complete typed sequence before the first mutation, executes in order,
 waits for explicitly marked durable dependencies, and stops on the first failure. Each step keeps

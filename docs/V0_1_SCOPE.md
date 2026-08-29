@@ -1,5 +1,17 @@
 # Version 0.1 scope
 
+## 0.1.0a16 — deterministic bounded read results
+
+- Add an optional `result_view` to the statically read-only lane so known large Bridge results can
+  return exact selected values, counts, or existence facts without entering the Agent context in
+  full.
+- Use bounded RFC 6901 JSON Pointers only; reject missing value/count paths and preserve full
+  responses as the default exploratory behavior.
+- Measure the same real ADS session-status task before and after projection, retaining exact
+  correctness and the normal Runtime Run evidence.
+- Make `audit analyze` use the same complete-call, Runtime-preferred source policy as compact audit
+  listing so Hook observations and interleaved event writes cannot distort efficiency findings.
+
 ## 0.1.0a15 — context-light audit retrieval and bounded Windows cleanup
 
 - Keep full append-only audit events unchanged while making recent-call retrieval a compact,

@@ -22,6 +22,9 @@ took, and what result or artifact was produced.
 You state the task and intended target once. The Runtime carries the same
 request through a local or remote path, keeps long work recoverable across a
 disconnect, and returns the result with its linked timing and evidence.
+When a known read result is much larger than the few facts needed, a deterministic
+result view can select those values or counts before the full inventory enters the
+Agent context. Full responses remain the default for exploration.
 
 ## Design promises
 
@@ -36,6 +39,9 @@ disconnect, and returns the result with its linked timing and evidence.
 
 ## Current alpha
 
+`0.1.0a16` adds deterministic bounded views for known large read results, preserving the normal
+Run evidence while sending only selected values, counts, or existence facts into Agent context.
+It also makes audit analysis use complete Runtime-observed calls instead of raw event windows.
 `0.1.0a15` makes routine audit retrieval compact while retaining explicit forensic expansion, and
 hardens bounded Windows transport shutdown when `taskkill` cannot finish the descendant tree.
 `0.1.0a14` kept generated Codex profiles narrow when several cached releases expose the same
@@ -64,7 +70,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a15"
+python -m pip install "eda-bridge-runtime==0.1.0a16"
 eda-runtime doctor
 ```
 

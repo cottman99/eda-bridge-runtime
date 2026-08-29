@@ -14,7 +14,9 @@ capabilities first. Use discovery only when information is genuinely missing or 
 
 After capabilities establish that an operation is non-mutating, use `eda_read`; it is the
 client-visible read-only permission lane and rejects unknown or mutating operations. Keep
-`eda_submit` for mutations and for calls whose safety cannot yet be proven.
+`eda_submit` for mutations and for calls whose safety cannot yet be proven. If a known response is
+large but the task needs only a few facts, use `result_view` with exact RFC 6901 JSON Pointers and
+deterministic `value`, `count`, or `exists` modes. Omit it for exploration and never guess paths.
 
 When 2..16 typed operations are already decided and ordered on one connection, use one
 `eda_run_plan` call. Give every step a concise purpose and every mutating step a unique stable

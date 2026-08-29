@@ -32,6 +32,101 @@ def _object_schema(properties: dict[str, Any], required: list[str] = ()) -> dict
     }
 
 
+_RESULT_VIEW_SCHEMA = _object_schema(
+    {
+        "fields": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 16,
+            "items": _object_schema(
+                {
+                    "name": {"type": "string", "minLength": 1, "maxLength": 64},
+                    "pointer": {"type": "string", "maxLength": 256},
+                    "mode": {"type": "string", "enum": ["value", "count", "exists"]},
+                },
+                ["name", "pointer"],
+            ),
+        }
+    },
+    ["fields"],
+)
+
+
+_MISSING = object()
+
+
+def _json_pointer(value: Any, pointer: str) -> Any:
+    if pointer == "":
+        return value
+    if not pointer.startswith("/"):
+        raise ValueError("result_view pointer must be an RFC 6901 JSON Pointer")
+    selected = value
+    for raw_part in pointer[1:].split("/"):
+        for index, character in enumerate(raw_part):
+            if character == "~" and (index + 1 == len(raw_part) or raw_part[index + 1] not in "01"):
+                raise ValueError("result_view pointer contains an invalid JSON Pointer escape")
+        part = raw_part.replace("~1", "/").replace("~0", "~")
+        if isinstance(selected, dict):
+            selected = selected.get(part, _MISSING)
+        elif isinstance(selected, list) and part.isdigit():
+            index = int(part)
+            selected = selected[index] if index < len(selected) else _MISSING
+        else:
+            selected = _MISSING
+        if selected is _MISSING:
+            break
+    return selected
+
+
+def _project_response_result(response: dict[str, Any], result_view: Any) -> dict[str, Any]:
+    if not isinstance(result_view, dict) or set(result_view) != {"fields"}:
+        raise ValueError("result_view must contain only fields")
+    fields = result_view.get("fields")
+    if not isinstance(fields, list) or not 1 <= len(fields) <= 16:
+        raise ValueError("result_view fields must contain 1..16 selectors")
+    names: set[str] = set()
+    selected: dict[str, Any] = {}
+    result = response.get("result")
+    for field in fields:
+        if not isinstance(field, dict) or not {"name", "pointer"} <= set(field):
+            raise ValueError("every result_view field requires name and pointer")
+        if set(field) - {"name", "pointer", "mode"}:
+            raise ValueError("result_view field contains unknown keys")
+        if not isinstance(field["name"], str) or not isinstance(field["pointer"], str):
+            raise ValueError("result_view name and pointer must be strings")
+        name = field["name"].strip()
+        if not name or len(name) > 64 or name in names:
+            raise ValueError("result_view field names must be unique and contain 1..64 characters")
+        names.add(name)
+        pointer = field["pointer"]
+        if len(pointer) > 256:
+            raise ValueError("result_view pointer must not exceed 256 characters")
+        mode_value = field.get("mode", "value")
+        if not isinstance(mode_value, str):
+            raise ValueError("result_view mode must be a string")
+        mode = mode_value
+        if mode not in {"value", "count", "exists"}:
+            raise ValueError("result_view mode must be value, count, or exists")
+        value = _json_pointer(result, pointer)
+        if mode == "exists":
+            selected[name] = value is not _MISSING
+        elif value is _MISSING:
+            raise ValueError(f"result_view pointer does not exist: {pointer}")
+        elif mode == "count":
+            if not isinstance(value, dict | list | str):
+                raise ValueError(
+                    f"result_view count requires an object, array, or string: {pointer}"
+                )
+            selected[name] = len(value)
+        else:
+            selected[name] = value
+    return {
+        **{key: value for key, value in response.items() if key != "result"},
+        "result": selected,
+        "result_view": {"projected": True, "field_count": len(selected)},
+    }
+
+
 TOOLS = [
     {
         "name": "eda.context.resolve",
@@ -112,6 +207,7 @@ TOOLS = [
                 "context": {"type": "string"},
                 "connection_id": {"type": "string"},
                 "eda": {"type": "string"},
+                "result_view": _RESULT_VIEW_SCHEMA,
             },
             ["purpose", "operation", "payload"],
         ),
@@ -495,11 +591,18 @@ class MCPRuntimeServer:
         if name == "eda.capabilities":
             self._remember_capabilities(spec.connection_id, response_value)
         projected = project_run(response_value)
+        client_response = response_value
+        if (
+            name == "eda.read"
+            and arguments.get("result_view") is not None
+            and response_value.get("status") == "passed"
+        ):
+            client_response = _project_response_result(response_value, arguments["result_view"])
         return {
             "connection_id": spec.connection_id,
             "client_transport_ms": round((time.monotonic() - started) * 1000, 3),
             "run": projected,
-            "response": response_value,
+            "response": client_response,
             **(
                 {"wait_timed_out": True}
                 if name == "eda.job.wait" and not projected.get("terminal", False)

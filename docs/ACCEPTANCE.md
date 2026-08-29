@@ -3,6 +3,21 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Runtime alpha.16 bounded-read acceptance
+
+- The same real ADS `session.status` task returned the same 13-session count with two calls before
+  and after adding one deterministic `result_view`; no shell, GUI, mutation, or extra discovery was
+  introduced.
+- Aggregate model-visible tool payload fell from 9,658 to 2,731 characters, a 71.7% reduction. The
+  selected read result itself became the exact 20-character count fact rather than a 13-session
+  inventory containing workspace, process, display, and diagnostic fields.
+- Wall time varied from 31.062 s to 39.516 s and input tokens from 53,626 to 51,915, so this is
+  accepted as a context-pressure improvement rather than a latency claim. Runtime/SSH/ADS time
+  remained about 1.1--1.3 s across the two-call lifecycle.
+- The complete 115-test Python suite, Ruff, formatting, package build, Twine checks, and all three
+  Pi-adapter tests passed. Regression tests preserve native Bridge failures without masking them as
+  projection errors and reject missing value/count paths.
+
 ## 2026-08-29 Runtime alpha.15 compact-audit and shutdown acceptance
 
 - On 24 real recent calls, compact audit output retained tool, motive, observed client, state,

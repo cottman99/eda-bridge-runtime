@@ -38,7 +38,11 @@ Runtime merely because SSH is absent.
   repeat doctor, environment, or full-state probes when the connection and target are unchanged.
 - After capabilities establish a non-mutating operation, use `eda.read` so the Agent client can
   authorize the call through a statically read-only tool. Runtime rejects unknown or mutating
-  operations on that lane. Keep `eda.submit` for mutations and unresolved safety classes.
+  operations on that lane. Keep `eda.submit` for mutations and unresolved safety classes. When the
+  response contract is already known and the task needs only a few facts from a large result, add
+  `result_view` selectors using RFC 6901 JSON Pointers relative to the Bridge result. Use only
+  deterministic `value`, `count`, or `exists` modes; omit the view when exploration needs the full
+  response. Never guess a pointer.
 - When 2..16 typed operations are already decided, ordered, and share one connection, use one
   `eda.run_plan` call instead of spending an Agent turn per step. Give every step its own concise
   `purpose`; give every mutating step its own stable `idempotency_key`; request `wait` only where a
