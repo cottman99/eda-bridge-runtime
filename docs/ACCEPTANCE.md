@@ -3,6 +3,27 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 Runtime alpha.25 Agent-host acceptance
+
+- Trusted Publishing built, tested, published, and reinstalled exact public packages for
+  `0.1.0a24` and its immediate corrective release `0.1.0a25`. The suite passed 154 tests on Python
+  3.10 and 3.13; Ruff, lock, wheel/sdist build, Twine, and clean PyPI reinstall checks passed.
+- The first installed-package run on Codex 0.151 found that alpha.24 disabled the internal process
+  also required by direct MCP transport. It failed before a Runtime call or EDA action. Alpha.25
+  retains that internal transport host while keeping Agent-visible Code Mode, shell, browser, and
+  inherited non-Runtime MCP servers disabled.
+- The public alpha.25 package generated the local profile with five EDA Skills enabled and 210
+  unrelated Skills disabled. One direct connection read then made exactly one Runtime MCP call and
+  returned the two SSH display4 connections with no alternate action.
+- The same public package upgraded the remote Agent-host Runtime from alpha.21 without a source
+  checkout. It generated five enabled and 170 disabled Skills. On remote Codex 0.145, a first
+  natural-language attempt omitted the required `purpose`; Runtime rejected it before any EDA
+  action. A bounded rerun naming the required purpose succeeded with exactly one MCP call and
+  returned the two local display4 connections.
+- A post-fix ADS ambiguity guard still passed in 10.468 seconds with zero tool attempts and exactly
+  one blocking question, showing that restoring MCP transport did not restore a general execution
+  bypass.
+
 ## 2026-08-30 ambiguity-guard acceptance
 
 - Two ambiguity-guard cases presented underspecified ADS tuning and AnsysEM bondwire-height
