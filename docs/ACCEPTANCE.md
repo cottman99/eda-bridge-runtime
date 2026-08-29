@@ -10,6 +10,12 @@ credentials, host address, or task-specific geometry is included here.
 - Regression tests prove that retained older plugin-cache copies are explicitly disabled and that
   an explicit direct installation outranks even a higher-version cached copy.
 - The complete Python suite, Ruff checks, and formatting checks passed before publication.
+- After publication, one Codex call created an ADS 2026 Update 2.1 source workspace, applied the
+  same structured R/C/GND schematic transaction as the three-call L5 baseline, and freshly reopened
+  seven assertions on `display4`. Calls fell from three to one, wall time from 49.435 s to 35.440 s,
+  and input tokens from 91,219 to 52,371 while measured Runtime/SSH/ADS time remained 2.510 s.
+- The source and output contained 10 and 11 files; their exact disposable root was realpath-checked,
+  removed, and verified absent. No solve, GUI automation, arbitrary code, or customer data was used.
 
 ## 2026-08-29 Runtime alpha.13 validated-plan acceptance
 
