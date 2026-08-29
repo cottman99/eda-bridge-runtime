@@ -1,0 +1,13 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a22",
+  "environment": "sanitized authenticated dedicated-Pi and narrow-Codex remote display4 disposable idempotency acceptance",
+  "notes": "One functional acceptance trial per retained row. Both Agents used independent disposable paths and idempotency keys and repeated the complete request exactly, including purpose. No solve, GUI action, customer data, final response, raw trace, private path, or generated EDA artifact was retained. Token counters are provider-reported and are not a direct billing comparison.",
+  "cases": [
+    {"case_id":"l3.ads-workspace-idempotency","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":1,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":32089.991,"median_input_tokens":81746.0},
+    {"case_id":"l3.ads-workspace-idempotency","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":1,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":18545.503,"median_input_tokens":7552.0},
+    {"case_id":"l3.ansys-project-idempotency","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":1,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":72633.79,"median_input_tokens":81291.0},
+    {"case_id":"l3.ansys-project-idempotency","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":1,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":55064.813,"median_input_tokens":7315.0}
+  ]
+}
