@@ -254,7 +254,9 @@ def test_plan_call_counts_nested_runs_without_double_counting_transport():
 
 def test_windows_command_wrapping_is_shared_by_agent_clients(monkeypatch):
     runner = load_runner()
-    monkeypatch.setattr(runner.os, "name", "nt")
+    # Replace only the loaded runner's platform view. Mutating os.name changes the
+    # process-global module and makes pathlib try to instantiate WindowsPath on Linux.
+    monkeypatch.setattr(runner, "os", SimpleNamespace(name="nt"))
     monkeypatch.setattr(
         runner.shutil,
         "which",
