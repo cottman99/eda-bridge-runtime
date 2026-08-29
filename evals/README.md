@@ -1,5 +1,8 @@
 # Agent and EDA evaluations
 
+The current evidence-backed cross-client conclusions are consolidated in
+[`BASELINE_2026-08-30_CODEX_PI_SUMMARY.md`](BASELINE_2026-08-30_CODEX_PI_SUMMARY.md).
+
 These developer evaluations compare Agent clients through one unchanged Runtime contract. They are
 not part of the Runtime kernel or the end-user workflow.
 
