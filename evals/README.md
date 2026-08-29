@@ -23,6 +23,8 @@ python evals/run_case.py --case evals/cases/l0_connections.json `
 
 `--thinking` is applied to both clients so latency and token comparisons do not silently use
 different reasoning budgets.
+Use `--no-codex-profile` only for a controlled comparison against the user's global Codex
+configuration; normal EDA evaluations retain the narrow profile.
 
 Pi uses the checked-in thin adapter and the same case prompt. Authentication remains in the private
 Agent profile and is never copied into a case or result.

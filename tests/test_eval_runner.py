@@ -159,6 +159,21 @@ def test_codex_command_applies_shared_thinking_budget():
     assert 'model_reasoning_effort="low"' in command
 
 
+def test_codex_command_can_measure_the_unscoped_global_profile():
+    runner = load_runner()
+    args = SimpleNamespace(
+        codex_command="codex",
+        codex_profile=None,
+        model="gpt-5.5",
+        thinking="medium",
+        cwd=Path("workspace"),
+    )
+
+    command = runner.codex_command(args, {"prompt": "inspect"})
+
+    assert "--profile" not in command
+
+
 def test_all_public_eval_cases_have_a_valid_contract():
     runner = load_runner()
     case_root = Path(__file__).parents[1] / "evals" / "cases"

@@ -13,6 +13,10 @@ credentials, host address, or task-specific geometry is included here.
 - The three independent Codex sessions took 19.0, 18.2, and 16.0 seconds, about 53.3 seconds total.
   Their Runtime calls totaled about 1.8 seconds, again locating most elapsed time in fixed Agent
   startup and context rather than SSH or either Bridge.
+- A matched L0 comparison used 82,899 input tokens under the ordinary global Codex configuration
+  and 36,224 under the five-Skill EDA profile, a 56.3% reduction with the same one-call result.
+  Wall time was 20.5 versus 22.3 seconds, so the narrow profile is claimed as context and token
+  economy, not as a reliable latency reduction.
 - The same matrix classified the Pi startup boundary as `agent_auth_unavailable` in about 0.5
   seconds with zero tool calls. The Pi profile installer preserved the credential-file hash and
   correctly reported `login_required`; it did not copy or synthesize another Agent's credentials.

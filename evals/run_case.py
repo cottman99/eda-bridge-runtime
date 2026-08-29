@@ -216,21 +216,26 @@ def score(case: dict[str, Any], observation: dict[str, Any], exit_code: int) -> 
 
 
 def codex_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
-    return [
+    command = [
         args.codex_command,
         "exec",
-        "--profile",
-        args.codex_profile,
-        "--ephemeral",
-        "--json",
-        "--model",
-        args.model,
-        "--config",
-        f'model_reasoning_effort="{args.thinking}"',
-        "-C",
-        str(args.cwd),
-        case["prompt"],
     ]
+    if args.codex_profile:
+        command.extend(["--profile", args.codex_profile])
+    command.extend(
+        [
+            "--ephemeral",
+            "--json",
+            "--model",
+            args.model,
+            "--config",
+            f'model_reasoning_effort="{args.thinking}"',
+            "-C",
+            str(args.cwd),
+            case["prompt"],
+        ]
+    )
+    return command
 
 
 def pi_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
@@ -340,6 +345,9 @@ def main() -> int:
     parser.add_argument("--var", action="append", default=[])
     parser.add_argument("--codex-command", default="codex")
     parser.add_argument("--codex-profile", default="eda-runtime")
+    parser.add_argument(
+        "--no-codex-profile", action="store_const", const=None, dest="codex_profile"
+    )
     parser.add_argument("--pi-command", default="pi-eda.cmd")
     parser.add_argument("--pi-extension", type=Path, default=Path("integrations/pi-eda-runtime"))
     parser.add_argument(
