@@ -1159,26 +1159,13 @@ def test_mcp_uses_cached_capability_mutability_for_submit_payload():
     assert registry.transport.requests[-1].payload["mutating"] is False
 
 
-def test_mcp_read_requires_cached_non_mutating_capability():
+def test_mcp_read_discovers_missing_safety_metadata_without_an_agent_turn():
     registry = FakeRegistry()
     registry.transport = CapabilityAwareTransport()
     server = MCPRuntimeServer(registry)
-    server.handle(
-        _rpc(
-            1,
-            "tools/call",
-            {
-                "name": "eda.capabilities",
-                "arguments": {
-                    "purpose": "Discover exact read operation metadata",
-                    "connection_id": "ansys-one",
-                },
-            },
-        )
-    )
     response = server.handle(
         _rpc(
-            2,
+            1,
             "tools/call",
             {
                 "name": "eda.read",
@@ -1193,7 +1180,7 @@ def test_mcp_read_requires_cached_non_mutating_capability():
     )
     rejected = server.handle(
         _rpc(
-            3,
+            2,
             "tools/call",
             {
                 "name": "eda.read",
@@ -1208,9 +1195,41 @@ def test_mcp_read_requires_cached_non_mutating_capability():
     )
 
     assert response["result"]["isError"] is False
-    assert registry.transport.requests[-1].payload["mutating"] is False
+    assert [request.operation for request in registry.transport.requests[:2]] == [
+        "runtime.capabilities",
+        "project.inspect",
+    ]
+    assert registry.transport.requests[1].payload["mutating"] is False
     assert rejected["result"]["isError"] is True
     assert rejected["result"]["structuredContent"]["error"]["code"] == "PermissionError"
+
+
+def test_mcp_read_preflights_and_rejects_a_mutation_before_execution():
+    registry = FakeRegistry()
+    registry.transport = CapabilityAwareTransport()
+    server = MCPRuntimeServer(registry)
+
+    rejected = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.read",
+                "arguments": {
+                    "purpose": "Reject a mutation before it reaches EDA",
+                    "connection_id": "ansys-one",
+                    "operation": "project.create",
+                    "payload": {},
+                },
+            },
+        )
+    )
+
+    assert rejected["result"]["isError"] is True
+    assert rejected["result"]["structuredContent"]["error"]["code"] == "PermissionError"
+    assert [request.operation for request in registry.transport.requests] == [
+        "runtime.capabilities"
+    ]
 
 
 def test_mcp_read_can_return_a_deterministic_bounded_result_view():

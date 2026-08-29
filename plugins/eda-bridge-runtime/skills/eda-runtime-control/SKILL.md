@@ -36,9 +36,10 @@ Runtime merely because SSH is absent.
 
 - Prefer a typed adapter operation. Inspect capabilities once only when support is uncertain; do not
   repeat doctor, environment, or full-state probes when the connection and target are unchanged.
-- After capabilities establish a non-mutating operation, use `eda.read` so the Agent client can
-  authorize the call through a statically read-only tool. Runtime rejects unknown or mutating
-  operations on that lane. Keep `eda.submit` for mutations and unresolved safety classes. When the
+- Use `eda.read` for an intended non-mutating operation so the Agent client can authorize a
+  statically read-only tool. Runtime mechanically discovers missing safety metadata and rejects
+  unknown or mutating operations before execution; the Agent should not spend a separate turn on
+  that preflight. Keep `eda.submit` for mutations and unresolved safety classes. When the
   response contract is already known and the task needs only a few facts from a large result, add
   `result_view` selectors using RFC 6901 JSON Pointers relative to the Bridge result. Use only
   deterministic `value`, `count`, or `exists` modes; omit the view when exploration needs the full

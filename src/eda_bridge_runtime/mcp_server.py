@@ -211,9 +211,9 @@ TOOLS = [
         "title": "Run Typed Read-Only EDA Operation",
         "description": (
             "Run one operation that the selected Bridge has advertised as non-mutating. "
-            "Capability metadata must already be known; unknown or mutating operations are "
-            "rejected before execution. Add wait to return a durable operation's terminal result "
-            "in this same tool call."
+            "Runtime discovers missing safety metadata mechanically; unknown or mutating "
+            "operations are rejected before execution. Add wait to return a durable operation's "
+            "terminal result in this same tool call."
         ),
         "inputSchema": _object_schema(
             {
@@ -524,6 +524,7 @@ class MCPRuntimeServer:
             eda=selected_eda,
             origin_id=origin_id,
         )
+        preflight_transport_ms = 0.0
         if name in {"eda.read", "eda.submit", "eda.capabilities"}:
             supplied_target = arguments.get("target") or {}
             if not isinstance(supplied_target, dict):
@@ -550,9 +551,23 @@ class MCPRuntimeServer:
                 metadata = self._operation_metadata.get(spec.connection_id, {}).get(operation)
                 if name == "eda.read":
                     if metadata is None:
-                        raise ValueError(
-                            "read operation metadata is unknown; discover capabilities once"
+                        preflight = self._call(
+                            "eda.capabilities",
+                            {
+                                "purpose": (f"Verify read-only metadata for operation {operation}")[
+                                    :240
+                                ],
+                                "connection_id": spec.connection_id,
+                                "target": supplied_target,
+                            },
+                            message,
                         )
+                        preflight_transport_ms = float(preflight.get("client_transport_ms") or 0)
+                        metadata = self._operation_metadata.get(spec.connection_id, {}).get(
+                            operation
+                        )
+                    if metadata is None:
+                        raise ValueError(f"operation {operation!r} is not advertised by the Bridge")
                     if bool(metadata.get("mutates", True)):
                         raise PermissionError(
                             f"operation {operation!r} is not advertised as read-only"
@@ -627,7 +642,9 @@ class MCPRuntimeServer:
             client_response = _project_response_result(response_value, arguments["result_view"])
         return {
             "connection_id": spec.connection_id,
-            "client_transport_ms": round((time.monotonic() - started) * 1000, 3),
+            "client_transport_ms": round(
+                preflight_transport_ms + (time.monotonic() - started) * 1000, 3
+            ),
             "run": projected,
             "response": client_response,
             **(

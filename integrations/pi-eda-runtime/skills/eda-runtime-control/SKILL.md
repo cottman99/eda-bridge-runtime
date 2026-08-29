@@ -12,9 +12,10 @@ When the pasted EDA context and the selected vendor Skill already identify the c
 operation, call `eda_submit` directly. Do not routinely list connections, resolve context, or query
 capabilities first. Use discovery only when information is genuinely missing or stale.
 
-After capabilities establish that an operation is non-mutating, use `eda_read`; it is the
-client-visible read-only permission lane and rejects unknown or mutating operations. Keep
-`eda_submit` for mutations and for calls whose safety cannot yet be proven. If a known response is
+Use `eda_read` for an intended non-mutating operation. Runtime mechanically obtains missing safety
+metadata and rejects unknown or mutating operations before execution, so the Agent should not
+spend a separate turn on that preflight. Keep `eda_submit` for mutations and for calls whose
+safety cannot yet be proven. If a known response is
 large but the task needs only a few facts, use `result_view` with exact RFC 6901 JSON Pointers and
 deterministic `value`, `count`, or `exists` modes. It is also available for terminal waits and
 read-only plan steps; plan mutations reject it. Omit it for exploration and never guess paths.

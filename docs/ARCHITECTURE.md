@@ -11,6 +11,9 @@ already establishes a typed operation, `eda.submit` performs routing, freshness
 validation, and execution in one client call. A bounded inline wait can carry one durable read or
 submission to terminal state without adding another Agent decision; persistence and polling remain
 Runtime job mechanics rather than a new orchestration layer.
+For an intended read, missing vendor safety metadata is acquired as an internal preflight on the
+same connection. The Runtime—not the Agent—proves that the operation is non-mutating before the
+vendor call, while explicit capability discovery remains available for engineering exploration.
 
 When the Agent has already decided a short deterministic sequence,
 `eda.run_plan` submits the typed steps through the same kernel and transport.

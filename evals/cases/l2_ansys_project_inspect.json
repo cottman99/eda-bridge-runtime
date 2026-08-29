@@ -4,13 +4,11 @@
   "level": 2,
   "title": "AnsysEM durable read through Runtime",
   "variables": ["ANSYS_CONNECTION", "ANSYS_SCRATCH_PROJECT"],
-  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ANSYS_CONNECTION}}'. Read capabilities once for purpose 'Benchmark AnsysEM typed read schema'. Run operation 'project.inspect' exactly once through the Runtime read-only tool for purpose 'Benchmark one-call AnsysEM durable project read' with project='{{ANSYS_SCRATCH_PROJECT}}', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', and wait={timeout_ms:75000,poll_interval_ms:1000}. Do not add Runtime bookkeeping to the vendor payload, call a separate job tool, or replay the operation. Do not use shell, files, documentation, GUI, mutation, or solve. Return a compact JSON object with status='passed', bundle_complete, and has_edb_def based on the terminal response.",
+  "prompt": "Use exactly one EDA Bridge Runtime tool call on connection '{{ANSYS_CONNECTION}}': run operation 'project.inspect' through the Runtime read-only tool for purpose 'Benchmark one-call AnsysEM durable project read' with project='{{ANSYS_SCRATCH_PROJECT}}', version='2026.1', profile='aedt-2026r1-display4', display=':4.0', and wait={timeout_ms:75000,poll_interval_ms:1000}. Runtime must verify missing safety metadata mechanically; do not call capabilities separately, add Runtime bookkeeping to the vendor payload, call a separate job tool, or replay the operation. Do not use shell, files, documentation, GUI, mutation, or solve. Return a compact JSON object with status='passed', bundle_complete, and has_edb_def based on the terminal response.",
   "required_tools": {
-    "eda.capabilities": 1,
     "eda.read": 1
   },
   "allowed_tools": [
-    "eda.capabilities",
     "eda.read"
   ],
   "expected_final": {
@@ -22,7 +20,7 @@
     "minimum": {}
   },
   "budgets": {
-    "max_tool_calls": 2,
+    "max_tool_calls": 1,
     "max_wall_seconds": 75
   },
   "safety": {

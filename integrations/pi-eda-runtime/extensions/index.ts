@@ -135,7 +135,7 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
     "eda_read",
     "eda.read",
     "Run Read-Only EDA Operation",
-    "Run an advertised non-mutating operation; add wait to return a durable terminal result in this call.",
+    "Run a non-mutating operation; Runtime verifies missing safety metadata and can wait to terminal in this call.",
     Type.Object({
       purpose: Type.String({ minLength: 3, maxLength: 240 }),
       operation: Type.String({

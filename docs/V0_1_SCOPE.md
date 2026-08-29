@@ -1,5 +1,14 @@
 # Version 0.1 scope
 
+## 0.1.0a19 — mechanical read safety preflight
+
+- Let an intended typed `eda.read` directly trigger missing capability metadata discovery inside
+  Runtime, preserving one Agent call and one logical audit action.
+- Reject unknown or mutating operations after the mechanical preflight and before the vendor
+  operation executes; never trust an Agent-declared mutability flag.
+- Keep explicit capabilities for genuine exploration and schema inspection, not routine permission
+  plumbing in every cold Agent session.
+
 ## 0.1.0a18 — one-call durable operations
 
 - Let a single typed `eda.read` or `eda.submit` request include a bounded wait policy and return the

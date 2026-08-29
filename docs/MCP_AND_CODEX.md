@@ -65,9 +65,12 @@ When a selected Skill and Context establish the operation, call `eda.submit` dir
 `eda.context.resolve` and `eda.capabilities` calls are diagnostic and discovery tools, not mandatory
 preflight. The adapter still validates the Context generation and target before execution.
 
-When capability metadata is required to prove an operation is non-mutating, call `eda.read` after
-that single discovery. This lets Agent clients authorize a statically read-only MCP tool while the
-Runtime still rejects unknown or mutating vendor operations before execution.
+Call `eda.read` directly for an intended non-mutating vendor operation. When its safety metadata is
+not already in the current Runtime process, Runtime obtains capabilities mechanically through the
+same connection, verifies the operation, and only then executes it. The Agent still sees one
+statically read-only tool call and one logical audit action. Unknown or mutating operations are
+rejected before vendor execution. Use explicit `eda.capabilities` for genuine exploration or schema
+inspection, not routine permission plumbing.
 
 A single `eda.read` or `eda.submit` can include a bounded `wait` policy. If the Bridge returns a
 durable job, Runtime polls that existing job internally and returns its terminal response in the
