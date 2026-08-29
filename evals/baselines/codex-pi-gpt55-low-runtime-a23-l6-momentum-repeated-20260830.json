@@ -1,0 +1,11 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a23",
+  "environment": "sanitized authenticated dedicated-Pi and narrow-Codex remote display4 repeated generated-input Momentum acceptance",
+  "notes": "Three interleaved trials per Agent using independent extracted copies of the same installed vendor example, separate idempotency keys, explicit mutation approval, explicit solve approval, and exactly one permitted Runtime submit. Codex passed 2/3; its failed trial made zero tool attempts and claimed unsupported success values, classified as agent_reported_unverified_success. Pi passed 3/3. No customer data, final response, raw trace, private path, or generated EDA artifact was retained. Token counters are provider-reported and are not a direct billing comparison.",
+  "cases": [
+    {"case_id":"l6.ads-generated-momentum","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":0.6667,"semantic_pass_rate":0.6667,"wall_budget_pass_rate":1.0,"median_wall_ms":38814.176,"median_input_tokens":46372.0},
+    {"case_id":"l6.ads-generated-momentum","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":21700.926,"median_input_tokens":3373.0}
+  ]
+}

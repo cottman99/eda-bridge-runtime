@@ -28,6 +28,10 @@ credentials, host address, or task-specific geometry is included here.
 - The Codex marketplace installed plugin `0.1.0-alpha.23` side by side, and the dedicated Pi
   launcher loaded adapter `0.1.0-alpha.12` while preserving its authenticated profile. Installed
   Codex and Pi connection-discovery cases each passed with one tool call and two connections.
+- A post-release repeated Momentum sample used three independent trials per Agent. Pi passed 3/3
+  with a 21.701-second median; Codex passed 2/3 with a 38.814-second median. The Codex failure made
+  zero tool attempts but returned incorrect claimed-success values, so it is classified as
+  `agent_reported_unverified_success`, not as Runtime, transport, Bridge, or solver failure.
 
 ## 2026-08-30 Runtime alpha.22 installed acceptance
 

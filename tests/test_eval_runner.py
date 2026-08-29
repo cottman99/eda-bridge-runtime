@@ -404,3 +404,20 @@ def test_agent_reported_tool_unavailable_is_classified_without_raw_trace():
         )
         is None
     )
+
+
+def test_zero_call_claimed_success_is_classified_as_unverified():
+    runner = load_runner()
+
+    assert (
+        runner.agent_reported_failure(
+            {"status": "passed", "frequency_count": 1},
+            tool_attempts=0,
+            required_tool_calls=1,
+        )
+        == "agent_reported_unverified_success"
+    )
+    assert (
+        runner.agent_reported_failure({"status": "passed"}, tool_attempts=0, required_tool_calls=0)
+        is None
+    )
