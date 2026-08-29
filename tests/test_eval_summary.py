@@ -16,6 +16,7 @@ def result(agent, *, passed=True, failures=None):
         "case_id": "l2.ads-session-status",
         "agent": agent,
         "model": "test",
+        "reasoning": "medium",
         "passed": passed,
         "failures": failures or [],
         "metrics": {
@@ -24,6 +25,10 @@ def result(agent, *, passed=True, failures=None):
             "tool_calls_succeeded": 2 if passed else 0,
             "input_tokens": 20,
             "cached_input_tokens": 5,
+            "output_tokens": 4,
+            "reasoning_output_tokens": 3,
+            "total_response_payload_chars": 200,
+            "largest_response_payload_chars": 150,
         },
         "final": {"private_target": "must not enter summary"},
     }
@@ -35,6 +40,8 @@ def test_summary_is_comparable_and_omits_final_payloads():
     assert summary["cross_agent_comparable_cases"] == 1
     assert summary["outcomes"] == {"passed": 2}
     assert "final" not in summary["rows"][0]
+    assert summary["rows"][0]["reasoning"] == "medium"
+    assert summary["rows"][0]["largest_response_payload_chars"] == 150
 
 
 def test_summary_separates_auth_from_system_failure():

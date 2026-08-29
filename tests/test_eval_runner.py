@@ -153,3 +153,7 @@ def test_auth_failure_is_reduced_to_non_secret_classification():
     runner = load_runner()
 
     assert runner.launch_failure("No API key found for one provider") == "agent_auth_unavailable"
+    assert (
+        runner.launch_failure("No matching provider is authenticated. Use --provider.")
+        == "agent_auth_unavailable"
+    )

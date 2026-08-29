@@ -32,12 +32,17 @@ def row(result: dict[str, Any]) -> dict[str, Any]:
         "domain": match.group("domain") if match else "unknown",
         "agent": str(result.get("agent") or "unknown"),
         "model": str(result.get("model") or "unknown"),
+        "reasoning": str(result.get("reasoning") or "unknown"),
         "outcome": outcome(result),
         "wall_ms": metrics.get("wall_ms"),
         "tool_attempts": metrics.get("tool_attempts"),
         "tool_calls_succeeded": metrics.get("tool_calls_succeeded"),
         "input_tokens": metrics.get("input_tokens"),
         "cached_input_tokens": metrics.get("cached_input_tokens"),
+        "output_tokens": metrics.get("output_tokens"),
+        "reasoning_output_tokens": metrics.get("reasoning_output_tokens"),
+        "total_response_payload_chars": metrics.get("total_response_payload_chars"),
+        "largest_response_payload_chars": metrics.get("largest_response_payload_chars"),
         "failures": list(result.get("failures") or []),
     }
 

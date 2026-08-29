@@ -308,7 +308,14 @@ def render_prompt(case: dict[str, Any], supplied: dict[str, str]) -> str:
 def launch_failure(output: str) -> str | None:
     lowered = output.casefold()
     patterns = (
-        (("no api key found", "credentials_not_configured"), "agent_auth_unavailable"),
+        (
+            (
+                "no api key found",
+                "credentials_not_configured",
+                "no matching provider is authenticated",
+            ),
+            "agent_auth_unavailable",
+        ),
         (("mcp tool is not exposed", "transport closed"), "runtime_mcp_unavailable"),
         (("timed out", "timeoutexpired"), "agent_timeout"),
     )

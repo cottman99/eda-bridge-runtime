@@ -31,3 +31,11 @@ Agent profile and is never copied into a case or result.
 final payload and raw trace, distinguishes authentication from Runtime/EDA
 failure, and only calls a case cross-Agent comparable when more than one Agent
 actually passed that same case.
+
+`run_matrix.py` runs selected cases sequentially so two Agents never contend for one EDA target.
+Mutation cases are skipped unless `--approve-mutations` is explicit. If one Agent lacks
+authentication, its remaining cases are skipped immediately rather than repeating the same costly
+startup failure; the other Agent continues. Only per-case normalized JSON and one compact matrix
+summary are written.
+Codex and Pi model selectors are separate because Pi requires the provider-qualified
+`openai-codex/gpt-5.5` name while Codex accepts `gpt-5.5`.
