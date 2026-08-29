@@ -26,6 +26,16 @@ When a known read result is much larger than the few facts needed, a determinist
 result view can select those values or counts before the full inventory enters the
 Agent context. Full responses remain the default for exploration.
 
+On any host where Codex acts as the Agent, create or refresh its isolated EDA profile directly from
+the installed Runtime package:
+
+```text
+eda-runtime agent-profile codex install
+```
+
+No source checkout is required. The generated profile keeps the Runtime path and selected EDA
+Skills while excluding inherited general-purpose execution tools only from that profile.
+
 ## Design promises
 
 - Local and SSH execution use one protocol and one evidence model.
@@ -38,6 +48,11 @@ Agent context. Full responses remain the default for exploration.
 - EDA-specific behavior lives in adapters, not in the runtime core.
 
 ## Current alpha
+
+`0.1.0a24` packages the isolated Codex EDA profile installer, so the same one-command setup works on
+local and remote Agent hosts without a source checkout. It also makes Codex evaluation fail closed
+on shell and other non-MCP actions, and adds ambiguity guards that require one blocking question
+before an underspecified ADS or AnsysEM mutation.
 
 `0.1.0a23` makes plan-step field boundaries machine-visible: vendor payload cannot silently absorb
 Runtime wait or audit controls, and bounded solver evaluations require an approval independent of
@@ -93,7 +108,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a23"
+python -m pip install "eda-bridge-runtime==0.1.0a24"
 eda-runtime doctor
 ```
 

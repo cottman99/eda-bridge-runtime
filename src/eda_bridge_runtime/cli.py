@@ -19,6 +19,16 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=__version__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("doctor")
+    agent_profile = sub.add_parser("agent-profile")
+    agent_profile_sub = agent_profile.add_subparsers(dest="agent_profile_command", required=True)
+    codex_profile = agent_profile_sub.add_parser("codex")
+    codex_profile_sub = codex_profile.add_subparsers(dest="codex_profile_command", required=True)
+    codex_install = codex_profile_sub.add_parser("install")
+    codex_install.add_argument("--codex-home", type=Path, default=Path.home() / ".codex")
+    codex_install.add_argument("--profile-name", default="eda-runtime")
+    codex_install.add_argument("--runtime-command", default="eda-runtime")
+    codex_install.add_argument("--approve-mutations", action="store_true")
+    codex_install.add_argument("--keep-name", action="append", dest="keep_names")
     context = sub.add_parser("context")
     context_sub = context.add_subparsers(dest="context_command", required=True)
     decode = context_sub.add_parser("decode")
@@ -86,6 +96,30 @@ def main(argv: list[str] | None = None) -> int:
                     "runtime": RuntimeFacts(__version__).to_dict(),
                     "actor": ActorIdentity.detect().to_dict(),
                     "protocols": {"request": 1, "context": [1, 2], "handshake": 1},
+                },
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "agent-profile" and args.agent_profile_command == "codex":
+        from .codex_profile import install_profile
+
+        output, enabled, disabled = install_profile(
+            args.codex_home.expanduser().resolve(),
+            profile_name=args.profile_name,
+            keep_names=set(args.keep_names) if args.keep_names else None,
+            runtime_command=args.runtime_command,
+            approve_mutations=args.approve_mutations,
+        )
+        print(
+            json.dumps(
+                {
+                    "status": "installed",
+                    "agent": "codex",
+                    "profile": args.profile_name,
+                    "path": str(output),
+                    "enabled_skills": enabled,
+                    "disabled_skills": disabled,
                 },
                 indent=2,
             )

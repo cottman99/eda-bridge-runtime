@@ -18,10 +18,12 @@ all of them inside this profile except `eda-bridge-runtime`. This is generated i
 hard-coded list: adding another general-purpose MCP globally cannot silently expand the EDA profile.
 
 ```powershell
-python integrations/codex-eda-profile/install_profile.py `
-  --codex-home "$env:USERPROFILE\.codex"
+eda-runtime agent-profile codex install
 codex exec --profile eda-runtime "Inspect the selected EDA target"
 ```
+
+The repository `install_profile.py` remains a thin compatibility wrapper around the same packaged
+implementation; it is not a second installer.
 
 Regenerate the profile after installing or removing Skills. Engineers do not maintain the generated
 path list by hand. Hidden backup and archive directories are ignored so historical

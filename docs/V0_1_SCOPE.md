@@ -1,5 +1,18 @@
 # Version 0.1 scope
 
+## 0.1.0a24 — source-free Agent profile installation
+
+- Package the Codex EDA profile generator in the Runtime CLI, so a local or remote Agent host can
+  install or refresh its isolated execution path without cloning this repository.
+- Keep the repository installer as a thin compatibility wrapper around the packaged implementation,
+  preventing drift between development and installed-host behavior.
+- Discover and disable inherited non-Runtime MCP servers and unrelated Skills only inside the EDA
+  profile; preserve the user's ordinary Codex configuration unchanged.
+- Count every non-passive Codex event as a tool attempt in evaluations and keep launch-failure
+  classification separate from child-command output, closing two false zero-action result paths.
+- Add underspecified ADS and AnsysEM guard cases that require zero execution attempts and one concise
+  blocking question before any engineering mutation can begin.
+
 ## 0.1.0a23 — explicit plan structure and complete cross-Agent ladder
 
 - Describe vendor payload and Runtime step controls as separate machine-visible fields in both MCP

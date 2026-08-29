@@ -1,14 +1,11 @@
-import importlib.util
+import json
 from pathlib import Path
+
+from eda_bridge_runtime import cli, codex_profile
 
 
 def load_installer():
-    path = Path(__file__).parents[1] / "integrations" / "codex-eda-profile" / "install_profile.py"
-    spec = importlib.util.spec_from_file_location("codex_eda_profile", path)
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return codex_profile
 
 
 def write_skill(root: Path, folder: str, name: str) -> Path:
@@ -79,6 +76,54 @@ def test_profile_fails_closed_when_global_mcp_config_cannot_be_read(tmp_path):
         assert "refusing to generate a leaky EDA profile" in str(exc)
     else:
         raise AssertionError("invalid global config must fail closed")
+
+
+def test_packaged_cli_installs_codex_profile(tmp_path, capsys):
+    write_skill(tmp_path / "skills", "ads", "ads-agent-bridge")
+    (tmp_path / "config.toml").write_text(
+        '[mcp_servers.node_repl]\ncommand = "node"\n', encoding="utf-8"
+    )
+
+    assert (
+        cli.main(
+            [
+                "agent-profile",
+                "codex",
+                "install",
+                "--codex-home",
+                str(tmp_path),
+            ]
+        )
+        == 0
+    )
+    result = json.loads(capsys.readouterr().out)
+    profile = (tmp_path / "eda-runtime.config.toml").read_text(encoding="utf-8")
+
+    assert result["status"] == "installed"
+    assert result["agent"] == "codex"
+    assert result["enabled_skills"] == 1
+    assert '[mcp_servers."node_repl"]\nenabled = false' in profile
+
+
+def test_packaged_cli_creates_missing_codex_home(tmp_path, capsys):
+    codex_home = tmp_path / "new-agent-home"
+
+    assert (
+        cli.main(
+            [
+                "agent-profile",
+                "codex",
+                "install",
+                "--codex-home",
+                str(codex_home),
+            ]
+        )
+        == 0
+    )
+    result = json.loads(capsys.readouterr().out)
+
+    assert result["enabled_skills"] == 0
+    assert (codex_home / "eda-runtime.config.toml").is_file()
 
 
 def test_unattended_profile_approves_only_typed_runtime_mutation(tmp_path):
