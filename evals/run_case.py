@@ -40,12 +40,16 @@ def tool_fact(tool: str, result: Any) -> dict[str, Any]:
     run = structured.get("run") if isinstance(structured.get("run"), dict) else {}
     response = structured.get("response") if isinstance(structured.get("response"), dict) else {}
     response_result = response.get("result") if isinstance(response.get("result"), dict) else {}
+    response_chars = len(
+        json.dumps(response_result, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    )
     return {
         "tool": tool,
         "run_id": str(run.get("run_id") or "") or None,
         "job_id": str(run.get("job_id") or "") or None,
         "state": str(run.get("state") or "") or None,
         "deduplicated": response_result.get("deduplicated") is True,
+        "response_payload_chars": response_chars,
     }
 
 
@@ -66,6 +70,10 @@ def runtime_metrics(facts: list[dict[str, Any]]) -> dict[str, int]:
         "reused_run_calls": reused_run_calls,
         "distinct_projected_runs": len(runs),
         "distinct_jobs": len(jobs),
+        "total_response_payload_chars": sum(fact["response_payload_chars"] for fact in facts),
+        "largest_response_payload_chars": max(
+            (fact["response_payload_chars"] for fact in facts), default=0
+        ),
     }
 
 

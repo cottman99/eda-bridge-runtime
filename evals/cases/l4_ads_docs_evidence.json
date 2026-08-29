@@ -1,0 +1,40 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l4.ads-docs-evidence",
+  "level": 4,
+  "title": "ADS bounded API evidence retrieval",
+  "variables": ["ADS_CONNECTION"],
+  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ADS_CONNECTION}}'. Read capabilities exactly once for purpose 'Benchmark ADS documentation operations'. Then use eda.read operation 'docs.query' exactly once with vendor payload query='create an ADS workspace and schematic design with Python', limit=3 for purpose 'Find bounded ADS API evidence'. Select the most relevant returned source_ref and use eda.read operation 'docs.get' exactly once with vendor payload source_ref=<selected source_ref>, focus='workspace and schematic creation', max_chars=2000 for purpose 'Retrieve one bounded ADS API passage'. Do not use shell, files, browser, GUI, mutation, launch, simulation, or customer data. Do not quote the passage. Return only a compact JSON object with status='passed', source_count from the query, and excerpt_chars from the retrieved bounded text.",
+  "required_tools": {
+    "eda.capabilities": 1,
+    "eda.read": 2
+  },
+  "allowed_tools": [
+    "eda.capabilities",
+    "eda.read"
+  ],
+  "expected_runtime": {
+    "minimum": {
+      "largest_response_payload_chars": 100
+    }
+  },
+  "expected_final": {
+    "equals": {
+      "status": "passed"
+    },
+    "minimum": {
+      "source_count": 1,
+      "excerpt_chars": 1
+    }
+  },
+  "budgets": {
+    "max_tool_calls": 3,
+    "max_wall_seconds": 75
+  },
+  "safety": {
+    "mutation": "forbidden",
+    "solve": "forbidden",
+    "customer_data": "forbidden",
+    "raw_document_text_in_result": "forbidden"
+  }
+}

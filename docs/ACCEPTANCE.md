@@ -23,6 +23,19 @@ credentials, host address, or task-specific geometry is included here.
   Skills. Hidden managed backups were excluded and all four installed vendor Skill entrypoints
   matched their repository sources.
 
+## 2026-08-29 bounded documentation-evidence evaluation
+
+- New ADS and AnsysEM L4 cases each completed capability discovery, documentation query, and one
+  focused source expansion in exactly three safe Runtime calls. Neither case opened EDA, mutated a
+  project, used customer data, or retained document text in its normalized result.
+- ADS found three sources and returned a 1,307-character focused passage; AnsysEM found three and
+  returned the requested 2,000 characters. The scorer independently retained only aggregate
+  response character counts to prove substantive tool responses without trusting the Agent summary.
+- Before Bridge optimization, ADS returned 14,455 aggregate response characters and AnsysEM 5,095.
+  Compact ADS candidate evidence reduced its retest to 9,025 characters, a 37.6% reduction, while
+  preserving the same selected-evidence result. End-to-end ADS latency did not improve in this
+  sample, so the result is claimed as context reduction rather than model-speed improvement.
+
 ## 2026-08-29 scoped unattended mutation evaluation
 
 - The ordinary Codex profile rejected `eda.submit` under non-interactive

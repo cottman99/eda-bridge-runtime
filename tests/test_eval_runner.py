@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -56,11 +57,14 @@ def test_codex_trace_is_normalized_and_scored():
 
     assert runner.score(case, observation, 0)["passed"] is True
     assert observation["usage"]["input_tokens"] == 10
+    assert observation["facts"][0]["response_payload_chars"] > 0
     assert runner.runtime_metrics(observation["facts"]) == {
         "deduplicated_calls": 1,
         "reused_run_calls": 0,
         "distinct_projected_runs": 1,
         "distinct_jobs": 0,
+        "total_response_payload_chars": 21,
+        "largest_response_payload_chars": 21,
     }
 
 
@@ -128,6 +132,14 @@ def test_codex_command_applies_shared_thinking_budget():
     command = runner.codex_command(args, {"prompt": "inspect"})
 
     assert 'model_reasoning_effort="low"' in command
+
+
+def test_all_public_eval_cases_have_a_valid_contract():
+    runner = load_runner()
+    case_root = Path(__file__).parents[1] / "evals" / "cases"
+
+    for case_path in case_root.glob("*.json"):
+        runner.validate_case(json.loads(case_path.read_text(encoding="utf-8")))
 
 
 def test_case_variables_are_required_and_not_stored_in_case_definition():
