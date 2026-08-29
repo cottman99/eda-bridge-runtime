@@ -37,6 +37,13 @@ credentials, host address, or task-specific geometry is included here.
   clients; successful AnsysEM calls returned the same three sources and 2,000-character excerpt.
   The retrieval boundary was 1.1-1.6 seconds, while Agent-side work dominated. No document corpus,
   customer data, or raw Agent stream is committed.
+- An installed-profile ADS session read returned the same 13-session count to both clients with one
+  call and the same 1.110-second vendor boundary. Deterministic result projection reduced the model
+  response to 20 characters; Pi completed in 9.797 seconds and Codex in 15.687 seconds.
+- One-turn ADS-plus-AnsysEM capability discovery then passed for both clients with exactly two
+  sequential Runtime calls and the correct nine/fourteen operation counts. Pi completed in 11.954
+  seconds and Codex in 18.734 seconds. The cross-EDA case inherited the same clarified count
+  semantics, preventing the earlier call-count versus supported-operation ambiguity from returning.
 
 ## 2026-08-30 Runtime alpha.25 Agent-host acceptance
 

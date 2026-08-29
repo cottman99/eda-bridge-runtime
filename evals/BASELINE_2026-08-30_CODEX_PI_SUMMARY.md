@@ -40,6 +40,12 @@ source/excerpt counts. This is further evidence for Pi as the default typed exec
 zero-call Agent failures visible instead of automatically rewriting them as Bridge or retrieval
 failures.
 
+Installed-profile L2 spot checks also passed: both clients returned the same 13-session ADS fact
+from a 20-character projected result, and both coordinated ADS plus AnsysEM capability discovery in
+one turn with two sequential Runtime calls and the correct nine/fourteen supported-operation
+counts. Pi completed these in 9.797/11.954 seconds versus Codex's 15.687/18.734 seconds; the matched
+vendor boundaries again show that most of the gap is Agent-side rather than SSH.
+
 ## Evidence-backed decisions
 
 1. **Keep both Agents, with Pi as the bounded-execution default.** Pi autonomously passed mutation,
