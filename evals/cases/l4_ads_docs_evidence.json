@@ -4,13 +4,11 @@
   "level": 4,
   "title": "ADS bounded API evidence retrieval",
   "variables": ["ADS_CONNECTION"],
-  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ADS_CONNECTION}}'. Read capabilities exactly once for purpose 'Benchmark ADS documentation operations'. Then use eda.read operation 'docs.query' exactly once with vendor payload query='create an ADS workspace and schematic design with Python', limit=3 for purpose 'Find bounded ADS API evidence'. Select the most relevant returned source_ref and use eda.read operation 'docs.get' exactly once with vendor payload source_ref=<selected source_ref>, focus='workspace and schematic creation', max_chars=2000 for purpose 'Retrieve one bounded ADS API passage'. Do not use shell, files, browser, GUI, mutation, launch, simulation, or customer data. Do not quote or count the passage yourself. Return only a compact JSON object with status='passed', source_count copied from query result_count, and excerpt_chars copied from get returned_chars.",
+  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ADS_CONNECTION}}'. Use eda.read operation 'docs.query' exactly once for purpose 'Find bounded ADS API evidence' with the exact vendor payload {\"query\":\"create an ADS workspace and schematic design with Python\",\"limit\":3}. Runtime must verify missing safety metadata mechanically; do not call capabilities separately. Select the most relevant returned source_ref and use eda.read operation 'docs.get' exactly once for purpose 'Retrieve one bounded ADS API passage' with vendor payload {\"source_ref\":<selected source_ref>,\"focus\":\"workspace and schematic creation\",\"max_chars\":2000}. Omit result_view because the exact response pointers are not established; never guess them. Do not use eda.submit, shell, files, browser, GUI, mutation, launch, simulation, or customer data. Do not quote or count the passage yourself. Return only a compact JSON object with status='passed', source_count copied from query result_count, and excerpt_chars copied from get returned_chars.",
   "required_tools": {
-    "eda.capabilities": 1,
     "eda.read": 2
   },
   "allowed_tools": [
-    "eda.capabilities",
     "eda.read"
   ],
   "expected_runtime": {
@@ -28,7 +26,7 @@
     }
   },
   "budgets": {
-    "max_tool_calls": 3,
+    "max_tool_calls": 2,
     "max_wall_seconds": 75
   },
   "safety": {

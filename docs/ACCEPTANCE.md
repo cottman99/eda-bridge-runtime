@@ -17,6 +17,11 @@ credentials, host address, or task-specific geometry is included here.
 - Unit coverage proves a mutating operation requested through the read lane triggers the same
   mechanical metadata preflight and is rejected before the vendor operation executes. Compact
   audit retained one logical read rather than attributing internal discovery to the Agent.
+- The L4 documentation workflow retained the two genuine Agent decisions—bounded query and
+  evidence selection—while removing the capability turn. ADS passed its two-read case. AnsysEM's
+  prose-form payload contract passed 3/5 samples; expressing the same vendor payloads as exact JSON
+  then passed 3/3 with a 29.563-second median. This was fixed in the evaluation contract rather
+  than by adding a document-specific Runtime API.
 - The complete 127-test Python suite, Ruff, formatting, package build, Twine checks, and all three
   Pi adapter tests passed. Local and remote Runtime/plugin installs plus both isolated remote Bridge
   environments report the alpha.19 candidate. The disposable AnsysEM Bundle and staging files were
