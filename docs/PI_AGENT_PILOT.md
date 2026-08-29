@@ -1,10 +1,18 @@
-# Pi Agent pilot for remote EDA work
+# Pi Agent operating profile for remote EDA work
 
 ## Decision
 
-Install Pi on the Agent host as an isolated pilot, not as a replacement for Codex and not on the
-EDA worker by default. The pilot tests whether a small prompt, a narrow tool set, and native Pi
-lifecycle events make routine remote EDA work faster and more predictable.
+Keep Pi and Codex as interchangeable Agent clients of the same Runtime. Use the isolated Pi EDA
+profile as the default for bounded, typed execution after the target and requested outcome are
+clear. Keep Codex as the default for ambiguous engineering interpretation, repository development,
+and work whose scope must still be discovered. Do not install Pi on the EDA worker merely because
+the EDA connection is remote.
+
+This is not a claim that Pi replaces Codex. It is a routing decision backed by repeated acceptance:
+Pi reduced wall time and Agent overhead without increasing wrong-target, bypass, duplicate-run, or
+incomplete-validation rates in the tested ADS, AnsysEM, solver, and cross-EDA cases. The engineer
+does not need to choose an Agent for every command; the host profile or future Harness may apply
+this routing policy while both clients retain the same Context and Runtime facts.
 
 Pi is another Agent client of EDA Bridge Runtime:
 
@@ -18,7 +26,7 @@ The Pi extension is an Agent-client adapter, analogous to the Codex plugin. It i
 architecture layer. It must not implement SSH routing, EDA APIs, retries, idempotency, job state,
 or a second audit database.
 
-## Implemented pilot
+## Implemented operating profile
 
 The generated daily launcher now loads the Runtime extension and the administrator-selected
 Runtime/ADS/AnsysEM Skills itself. Engineers run one command and do not repeat extension or Skill
@@ -54,7 +62,7 @@ Initial alpha.7 acceptance on the Agent host (retained as historical evidence):
 - second call in the same Pi session: 12.8 ms;
 - two registered EDA connections were found without opening EDA or SSH.
 
-## Stage 1: isolated local installation
+## Installation and isolation
 
 - Install a pinned current Pi package on the Agent host.
 - Give the EDA profile its own `PI_CODING_AGENT_DIR` and session directory so it does not inherit a
@@ -63,7 +71,7 @@ Initial alpha.7 acceptance on the Agent host (retained as historical evidence):
   settings, scripts, repositories, or Runtime connection records.
 - Choose the startup model from Pi's live model catalog after login; do not hard-code a model name
   before the installed catalog is inspected.
-- Disable install telemetry for the pilot.
+- Disable install telemetry for the dedicated profile.
 
 Example profile settings (paths are intentionally generic):
 
@@ -93,24 +101,24 @@ Example profile settings (paths are intentionally generic):
 The normal EDA profile enables only the built-in `read` tool so Pi can actually load selected
 Skills. It does not receive shell, edit, or write as an alternate route around Runtime.
 
-## Stage 2: one thin Pi package
+## Thin Pi client package
 
 The reviewed Pi package in this repository contains:
 
-- a native Pi extension that exposes only the nine Runtime tools;
+- a native Pi extension that exposes only the ten Runtime tools;
 - the Runtime control Skill and references to selected vendor Skills;
 - optional Pi lifecycle enrichment; the Runtime already records the mandatory base facts;
 - a small status view for active connection, Run state, and elapsed time.
 
 The extension launches `eda-runtime mcp serve` internally. Engineers do not
-install a generic third-party MCP bundle or maintain MCP JSON by hand merely for this pilot.
+install a generic third-party MCP bundle or maintain MCP JSON by hand for normal EDA work.
 
 Pi exposes session, provider, model, and reasoning metadata to child commands. The extension may
 enrich the Runtime actor contract with those observed values, while the Runtime always retains the
 Agent's concise `purpose`, MCP client identity, timing, and linked Run. Missing fields remain
 `unknown`; the extension must not parse the transcript to reconstruct them.
 
-## Stage 3: A/B acceptance and autonomous retest
+## Promotion evidence
 
 The alpha.8 autonomous retest passed without human correction. Pi read the selected Skill,
 discovered the missing operation schema once, reused one mutation idempotency key, waited inside
@@ -118,7 +126,8 @@ Runtime, and completed fresh bundle inspection. Compared with the preceding diag
 tool calls fell from 28 to 7, assistant turns from 29 to 8, processed tokens from 374394 to 59350,
 and elapsed time from 158 to 73 seconds.
 
-Run the same bounded task through Codex and Pi using one unchanged Context and connection:
+The promotion ladder ran the same bounded task through Codex and Pi using unchanged Context and
+connection contracts. It covered:
 
 1. inspect one target;
 2. submit one non-destructive typed operation;
@@ -126,9 +135,22 @@ Run the same bounded task through Codex and Pi using one unchanged Context and c
 4. intentionally repeat one idempotency key;
 5. verify both Runtime and Agent audit hash chains.
 
-Compare total elapsed time, model time, tool-call count, redundant discovery calls, token usage,
-retries, task correctness, and engineer interventions. Pi is promoted only if it reduces overhead
-without increasing wrong-target, bypass, duplicate-run, or incomplete-validation rates.
+The repeated evidence now includes capabilities, status, documentation retrieval, ADS and AnsysEM
+mutations with exact idempotent replay, structured design inspection, a real Momentum solve,
+candidate begin/abort, and one-turn cross-EDA coordination. The consolidated measurements and
+sample counts are maintained in `../evals/BASELINE_2026-08-30_CODEX_PI_SUMMARY.md`.
+
+## Operating safeguards
+
+- A bounded execution is successful only when a Runtime receipt and case-specific validation
+  exist. Agent prose alone is not evidence of execution.
+- Runtime records calls that reach it. A zero-tool claimed success is a client/evaluator omission,
+  so the Agent host or future Harness must reject it; Runtime must not infer a call from chat text.
+- Do not automatically retry a mutation after an ambiguous transport failure. Reuse the same
+  idempotency key and reconcile the durable Run first.
+- Keep vendor failure boundaries separate even when one Agent turn batches ADS and AnsysEM work.
+- Route back to Codex or an engineer when target, intent, connectivity, or validation criteria are
+  ambiguous. This is task routing, not a different EDA control path.
 
 ## Explicit non-goals
 
@@ -137,4 +159,4 @@ without increasing wrong-target, bypass, duplicate-run, or incomplete-validation
 - no duplicate Runtime or Bridge implementation;
 - no automatic trust of arbitrary workspaces;
 - no uncontrolled third-party Pi packages;
-- no claim that a smaller Agent is better before measured A/B evidence.
+- no claim that Pi is universally better than Codex outside the measured bounded-execution scope.
