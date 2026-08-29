@@ -39,7 +39,9 @@ Agent context. Full responses remain the default for exploration.
 
 ## Current alpha
 
-`0.1.0a17` carries the same bounded result views through durable waits and read-only plan steps,
+`0.1.0a18` lets one typed read or submission optionally wait for its durable terminal result in
+the same Agent call, removing a second status-versus-wait decision without changing Bridge job
+semantics. `0.1.0a17` carries the same bounded result views through durable waits and read-only plan steps,
 while rejecting result projection on mutations before any change begins.
 `0.1.0a16` adds deterministic bounded views for known large read results, preserving the normal
 Run evidence while sending only selected values, counts, or existence facts into Agent context.
@@ -72,7 +74,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a17"
+python -m pip install "eda-bridge-runtime==0.1.0a18"
 eda-runtime doctor
 ```
 

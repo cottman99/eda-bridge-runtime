@@ -52,8 +52,10 @@ Runtime merely because SSH is absent.
   single operation, open-ended diagnosis, branching engineering judgment, or unrelated targets.
 - For a mutation, use one stable `idempotency_key` for the same intended change. A retry observes
   the same operation instead of starting a duplicate.
-- An accepted durable job is not a completed job. Prefer one `eda.job.wait` call when the task can
-  wait for completion. Use `eda.job.status` for one observation after reconnecting and incremental
+- An accepted durable job is not a completed job. For a new `eda.read` or `eda.submit`, request its
+  bounded `wait` option when the task can wait for completion, avoiding a second Agent turn. Use
+  `eda.job.wait` to resume a job already returned to the Agent. Use `eda.job.status` only for one
+  observation after reconnecting and incremental
   `eda.job.events` only for diagnostic detail; never resubmit merely because SSH or the conversation
   disconnected.
 - Read the compact `run` projection for both synchronous and durable work. Its

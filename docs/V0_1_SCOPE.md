@@ -1,5 +1,14 @@
 # Version 0.1 scope
 
+## 0.1.0a18 — one-call durable operations
+
+- Let a single typed `eda.read` or `eda.submit` request include a bounded wait policy and return the
+  terminal durable result without requiring a second Agent tool decision.
+- Keep `eda.job.wait` for reconnecting to an already-returned job and `eda.job.status` for one
+  post-reconnect observation; do not change Bridge job persistence or replay semantics.
+- Preserve terminal result projection for waited reads, mutation idempotency, timeout visibility,
+  and one logical Runtime audit call.
+
 ## 0.1.0a17 — durable and planned bounded reads
 
 - Carry the same deterministic `result_view` through terminal `eda.job.wait` responses and

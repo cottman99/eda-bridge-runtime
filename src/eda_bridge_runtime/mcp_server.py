@@ -51,6 +51,13 @@ _RESULT_VIEW_SCHEMA = _object_schema(
     ["fields"],
 )
 
+_WAIT_SCHEMA = _object_schema(
+    {
+        "timeout_ms": {"type": "integer", "minimum": 1000, "maximum": 90000},
+        "poll_interval_ms": {"type": "integer", "minimum": 100, "maximum": 5000},
+    }
+)
+
 
 _MISSING = object()
 
@@ -205,7 +212,8 @@ TOOLS = [
         "description": (
             "Run one operation that the selected Bridge has advertised as non-mutating. "
             "Capability metadata must already be known; unknown or mutating operations are "
-            "rejected before execution."
+            "rejected before execution. Add wait to return a durable operation's terminal result "
+            "in this same tool call."
         ),
         "inputSchema": _object_schema(
             {
@@ -217,6 +225,7 @@ TOOLS = [
                 "connection_id": {"type": "string"},
                 "eda": {"type": "string"},
                 "result_view": _RESULT_VIEW_SCHEMA,
+                "wait": _WAIT_SCHEMA,
             },
             ["purpose", "operation", "payload"],
         ),
@@ -230,7 +239,8 @@ TOOLS = [
             "the selected Skill establish the operation, call this directly without separate "
             "resolve "
             "or capability probes. A concise purpose is mandatory; mutations require a stable "
-            "idempotency_key and are never blindly replayed."
+            "idempotency_key and are never blindly replayed. Add wait to return a durable "
+            "operation's terminal result in this same tool call."
         ),
         "inputSchema": _object_schema(
             {
@@ -243,6 +253,7 @@ TOOLS = [
                 "eda": {"type": "string"},
                 "expected_effect": {"type": "string"},
                 "idempotency_key": {"type": "string"},
+                "wait": _WAIT_SCHEMA,
             },
             ["purpose", "operation", "payload"],
         ),
@@ -575,20 +586,25 @@ class MCPRuntimeServer:
         try:
             response = transport.request(request)
             response_value = response.to_dict()
-            if name == "eda.job.wait":
-                timeout_ms = int(arguments.get("timeout_ms", 60_000))
-                interval_ms = int(arguments.get("poll_interval_ms", 1_000))
+            inline_wait = arguments.get("wait") if name in {"eda.read", "eda.submit"} else None
+            if name == "eda.job.wait" or inline_wait is not None:
+                wait_options = inline_wait if isinstance(inline_wait, dict) else arguments
+                timeout_ms = int(wait_options.get("timeout_ms", 60_000))
+                interval_ms = int(wait_options.get("poll_interval_ms", 1_000))
                 deadline = time.monotonic() + timeout_ms / 1000
                 while not project_run(response_value).get("terminal", False):
+                    job_id = project_run(response_value).get("job_id")
+                    if not job_id:
+                        raise ValueError("non-terminal operation returned no durable job_id")
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
                         break
                     time.sleep(min(interval_ms / 1000, remaining))
                     request = RequestEnvelope(
-                        purpose=str(arguments["purpose"]),
-                        target=target,
-                        operation=operation,
-                        payload=payload,
+                        purpose=(f"Wait for durable result: {arguments['purpose']}")[:240],
+                        target={"eda": spec.eda},
+                        operation="runtime.job_status",
+                        payload={"mutating": False, "job_id": str(job_id)},
                         actor=actor,
                     )
                     response = transport.request(request)
@@ -616,7 +632,8 @@ class MCPRuntimeServer:
             "response": client_response,
             **(
                 {"wait_timed_out": True}
-                if name == "eda.job.wait" and not projected.get("terminal", False)
+                if (name == "eda.job.wait" or inline_wait is not None)
+                and not projected.get("terminal", False)
                 else {}
             ),
         }

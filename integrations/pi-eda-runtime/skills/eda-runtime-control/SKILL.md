@@ -28,8 +28,9 @@ Mutating calls require a stable `idempotency_key`. Never blindly repeat a mutati
 disconnect; inspect its durable job or Run state first. `eda_connection_reset` only refreshes the
 Runtime-owned transport and never closes EDA.
 
-After a submission returns a durable `job_id`, prefer one `eda_job_wait` call over repeated status
-polls. Use `eda_job_status` for a single observation after reconnecting and `eda_job_events` only
+For a new `eda_read` or `eda_submit`, request its bounded `wait` option when completion is needed,
+avoiding a second Agent turn. Use `eda_job_wait` to resume a job already returned to the Agent.
+Use `eda_job_status` only for a single observation after reconnecting and `eda_job_events` only
 when event detail is needed for diagnosis.
 
 Treat Runtime results and audit records as execution facts. Keep customer-specific object names,

@@ -135,7 +135,7 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
     "eda_read",
     "eda.read",
     "Run Read-Only EDA Operation",
-    "Run an operation already advertised as non-mutating; unknown or mutating operations are rejected.",
+    "Run an advertised non-mutating operation; add wait to return a durable terminal result in this call.",
     Type.Object({
       purpose: Type.String({ minLength: 3, maxLength: 240 }),
       operation: Type.String({
@@ -143,6 +143,10 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
       }),
       payload: Type.Record(Type.String(), Type.Unknown()),
       result_view: Type.Optional(ResultView),
+      wait: Type.Optional(Type.Object({
+        timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: 90000 })),
+        poll_interval_ms: Type.Optional(Type.Integer({ minimum: 100, maximum: 5000 })),
+      }, { additionalProperties: false })),
       ...TargetFields,
     }),
   );
@@ -150,7 +154,7 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
     "eda_submit",
     "eda.submit",
     "Submit EDA Operation",
-    "Submit one typed operation. Mutations require a stable idempotency key and are never blindly replayed.",
+    "Submit one typed operation; add wait to return a durable terminal result in this call.",
     Type.Object({
       purpose: Type.String({ minLength: 3, maxLength: 240 }),
       operation: Type.String({
@@ -162,6 +166,10 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
       ...TargetFields,
       expected_effect: Type.Optional(Type.String()),
       idempotency_key: Type.Optional(Type.String()),
+      wait: Type.Optional(Type.Object({
+        timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: 90000 })),
+        poll_interval_ms: Type.Optional(Type.Integer({ minimum: 100, maximum: 5000 })),
+      }, { additionalProperties: false })),
     }),
   );
   register(

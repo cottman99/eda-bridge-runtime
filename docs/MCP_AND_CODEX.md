@@ -69,6 +69,11 @@ When capability metadata is required to prove an operation is non-mutating, call
 that single discovery. This lets Agent clients authorize a statically read-only MCP tool while the
 Runtime still rejects unknown or mutating vendor operations before execution.
 
+A single `eda.read` or `eda.submit` can include a bounded `wait` policy. If the Bridge returns a
+durable job, Runtime polls that existing job internally and returns its terminal response in the
+same Agent call; it never resubmits the operation. Use `eda.job.wait` only when resuming a job that
+was already returned, and `eda.job.status` for one observation after reconnecting.
+
 For a known read response that is much larger than the facts needed by the task, `eda.read` accepts
 an optional `result_view`. Each selector uses an RFC 6901 JSON Pointer relative to the Bridge
 `result` and a deterministic `value`, `count`, or `exists` mode. Runtime receives the complete

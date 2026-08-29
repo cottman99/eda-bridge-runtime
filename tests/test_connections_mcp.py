@@ -354,6 +354,63 @@ class EventuallyTerminalTransport(FakeTransport):
         )
 
 
+class DurableReadTransport(CapabilityAwareTransport):
+    def request(self, request):
+        if request.operation == "project.inspect":
+            self.requests.append(request)
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status="accepted",
+                result={
+                    "job": {
+                        "job_id": "read-job",
+                        "request_id": request.request_id,
+                        "run_id": request.run_id,
+                        "state": "running",
+                    }
+                },
+            )
+        if request.operation == "project.create":
+            self.requests.append(request)
+            request.require_idempotency()
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status="accepted",
+                result={
+                    "job": {
+                        "job_id": "write-job",
+                        "request_id": request.request_id,
+                        "run_id": request.run_id,
+                        "state": "running",
+                    }
+                },
+            )
+        if request.operation == "runtime.job_status":
+            self.requests.append(request)
+            job_id = request.payload["job_id"]
+            return ResponseEnvelope(
+                request_id=request.request_id,
+                run_id=request.run_id,
+                status="passed",
+                result={
+                    "job": {
+                        "job_id": job_id,
+                        "request_id": "original-request",
+                        "run_id": "original-run",
+                        "state": "passed",
+                    },
+                    "data": {
+                        "bundle_complete": True,
+                        "created": job_id == "write-job",
+                        "objects": ["one", "two"],
+                    },
+                },
+            )
+        return super().request(request)
+
+
 def _rpc(request_id, method, params=None):
     value = {"jsonrpc": "2.0", "id": request_id, "method": method}
     if params is not None:
@@ -1352,6 +1409,104 @@ def test_mcp_job_wait_can_project_a_terminal_durable_result():
     assert value["run"]["state"] == "passed"
     assert value["response"]["result"] == {"job_field_count": 4}
     assert "job_id" not in value["response"]["result"]
+
+
+def test_mcp_read_can_wait_and_project_in_one_agent_call():
+    registry = FakeRegistry()
+    registry.transport = DurableReadTransport()
+    server = MCPRuntimeServer(registry)
+    server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Discover durable read metadata",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    response = server.handle(
+        _rpc(
+            2,
+            "tools/call",
+            {
+                "name": "eda.read",
+                "arguments": {
+                    "purpose": "Inspect and wait for required project facts",
+                    "connection_id": "ansys-one",
+                    "operation": "project.inspect",
+                    "payload": {},
+                    "wait": {"timeout_ms": 1000, "poll_interval_ms": 100},
+                    "result_view": {
+                        "fields": [
+                            {"name": "bundle_complete", "pointer": "/data/bundle_complete"},
+                            {"name": "object_count", "pointer": "/data/objects", "mode": "count"},
+                        ]
+                    },
+                },
+            },
+        )
+    )
+
+    value = response["result"]["structuredContent"]
+    assert response["result"]["isError"] is False
+    assert value["run"]["terminal"] is True
+    assert value["response"]["result"] == {"bundle_complete": True, "object_count": 2}
+    assert [request.operation for request in registry.transport.requests] == [
+        "runtime.capabilities",
+        "project.inspect",
+        "runtime.job_status",
+    ]
+    assert "wait" not in registry.transport.requests[1].payload
+
+
+def test_mcp_submit_can_wait_for_mutation_in_one_agent_call():
+    registry = FakeRegistry()
+    registry.transport = DurableReadTransport()
+    server = MCPRuntimeServer(registry)
+    server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Discover durable mutation metadata",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    response = server.handle(
+        _rpc(
+            2,
+            "tools/call",
+            {
+                "name": "eda.submit",
+                "arguments": {
+                    "purpose": "Create and wait for one disposable project",
+                    "connection_id": "ansys-one",
+                    "operation": "project.create",
+                    "payload": {},
+                    "idempotency_key": "create-one",
+                    "wait": {"timeout_ms": 1000, "poll_interval_ms": 100},
+                },
+            },
+        )
+    )
+
+    value = response["result"]["structuredContent"]
+    assert response["result"]["isError"] is False
+    assert value["run"]["state"] == "passed"
+    assert value["response"]["result"]["data"]["created"] is True
+    assert [request.operation for request in registry.transport.requests] == [
+        "runtime.capabilities",
+        "project.create",
+        "runtime.job_status",
+    ]
 
 
 def test_mcp_connection_reset_closes_only_runtime_owned_transport():

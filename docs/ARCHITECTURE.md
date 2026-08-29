@@ -8,7 +8,9 @@ binding, opens either a local or SSH transport, and submits the request to an
 EDA adapter. A v2 Context adds bounded origin, session, target, selection,
 capability, and freshness facts; v1 remains accepted. When the selected Skill
 already establishes a typed operation, `eda.submit` performs routing, freshness
-validation, and execution in one client call.
+validation, and execution in one client call. A bounded inline wait can carry one durable read or
+submission to terminal state without adding another Agent decision; persistence and polling remain
+Runtime job mechanics rather than a new orchestration layer.
 
 When the Agent has already decided a short deterministic sequence,
 `eda.run_plan` submits the typed steps through the same kernel and transport.
