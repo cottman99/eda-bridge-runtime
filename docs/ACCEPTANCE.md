@@ -3,6 +3,26 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Runtime alpha.11 evidence-safe comparison acceptance
+
+- The repository passed 80 tests, Ruff, formatting, package build, Twine checks, trusted PyPI
+  publication, and exact-version installation. Local Runtime and both isolated remote Bridge
+  environments reported `0.1.0a11`.
+- Fresh Codex capability cases passed with exactly one tool call each. ADS advertised seven
+  operations and AnsysEM fourteen. End-to-end Agent time was 20.2 and 18.8 seconds while the
+  corresponding Runtime/SSH/Bridge calls took about 0.8 and 1.1 seconds.
+- Matched `low` versus `medium` Codex runs did not show a latency benefit: minimal discovery took
+  17.9 versus 15.4 seconds, and a two-call ADS read took 22.5 versus 22.3 seconds. Both paths were
+  correct, so reasoning level is now recorded as a comparison control rather than advertised as a
+  speed switch.
+- Reanalysis of 150 historical calls with stable-session scoping retained eight directly proven
+  idempotent replays but withdrew thirty cross-task discovery repetitions previously labeled
+  potentially redundant. Fourteen same-session status polls remained, totaling about 0.8 seconds
+  of conservatively avoidable Runtime time.
+- Narrow Codex profile regeneration enabled five current EDA Skills and disabled 204 unrelated
+  Skills. Hidden managed backups were excluded and all four installed vendor Skill entrypoints
+  matched their repository sources.
+
 ## 2026-08-29 scoped unattended mutation evaluation
 
 - The ordinary Codex profile rejected `eda.submit` under non-interactive
