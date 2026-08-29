@@ -49,6 +49,11 @@ credentials, host address, or task-specific geometry is included here.
   18.548 seconds versus Codex's 30.135 seconds, while the measured Runtime/SSH/ADS boundary was
   effectively identical at 2.516 versus 2.515 seconds. All owned scratch was removed after process
   and exact-path verification.
+- A post-release repeated L3 matrix used independent ADS workspaces and AnsysEM Bundles for three
+  trials per Agent and vendor. Pi passed 6/6; Codex passed AnsysEM 3/3 and ADS 2/3. The Codex ADS
+  miss made zero tool attempts but claimed success and was classified as
+  `agent_reported_unverified_success`. Every actually executed replay returned the original Runtime
+  Run without repeating vendor mutation. All owned scratch was process-checked and removed.
 
 ## 2026-08-30 Runtime alpha.22 installed acceptance
 

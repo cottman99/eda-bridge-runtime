@@ -1,0 +1,13 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a23",
+  "environment": "sanitized authenticated dedicated-Pi and narrow-Codex remote display4 repeated ADS and AnsysEM idempotent-mutation acceptance",
+  "notes": "Three matrix-interleaved trials per Agent and vendor used independent disposable targets, trial-specific whole-request identities, explicit mutation approval, one real create, one exact replay, and no solve. Pi passed 6/6. Codex passed all three AnsysEM trials and two of three ADS trials; the ADS miss made zero tool attempts and claimed unsupported success, classified as agent_reported_unverified_success. Every executed replay reused the original Runtime Run and did not repeat vendor mutation. No customer data, final response, raw trace, private path, workspace, project, or generated EDA artifact was retained.",
+  "cases": [
+    {"case_id":"l3.ads-workspace-idempotency","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":0.6667,"semantic_pass_rate":0.6667,"wall_budget_pass_rate":1.0,"median_wall_ms":32108.535,"median_non_transport_wall_ms":30171.535,"median_input_tokens":82052.0},
+    {"case_id":"l3.ads-workspace-idempotency","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":16604.685,"median_non_transport_wall_ms":14824.685,"median_input_tokens":7522.0},
+    {"case_id":"l3.ansys-project-idempotency","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":66999.929,"median_non_transport_wall_ms":28971.104,"median_input_tokens":81378.0},
+    {"case_id":"l3.ansys-project-idempotency","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":56672.451,"median_non_transport_wall_ms":16515.451,"median_input_tokens":7214.0}
+  ]
+}
