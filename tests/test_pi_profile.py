@@ -52,6 +52,11 @@ def test_pi_profile_update_preserves_credentials_and_unmanaged_settings(tmp_path
     assert "--no-extensions --no-skills --no-tools --no-context-files" in login_launcher
     assert "eda-runtime-control" not in login_launcher
     assert result["login_launcher"].endswith("pi-eda-login.cmd")
+    status_launcher = (tmp_path / "pi-eda-status.cmd").read_text(encoding="utf-8")
+    assert "auth check --provider openai-codex --json" in status_launcher
+    assert "eda-runtime-control" not in status_launcher
+    assert result["status_launcher"].endswith("pi-eda-status.cmd")
+    assert result["auth_provider"] == "openai-codex"
 
 
 def test_pi_profile_does_not_create_an_auth_file(tmp_path):
@@ -123,3 +128,25 @@ def test_pi_profile_loads_selected_vendor_skills_without_exposing_shell(tmp_path
     assert "shell" not in text
     assert "write" not in text
     assert "edit" not in text
+
+
+def test_pi_profile_rejects_ambiguous_auth_provider(tmp_path):
+    installer = load_installer()
+    node = tmp_path / "node.exe"
+    cli = tmp_path / "cli.js"
+    node.write_bytes(b"node")
+    cli.write_bytes(b"pi")
+
+    try:
+        installer.install_profile(
+            profile_dir=tmp_path / "profile",
+            session_dir=tmp_path / "sessions",
+            launcher=tmp_path / "pi-eda.cmd",
+            node=node,
+            pi_cli=cli,
+            auth_provider="openai codex",
+        )
+    except ValueError as exc:
+        assert "provider" in str(exc)
+    else:
+        raise AssertionError("ambiguous provider should be rejected")

@@ -39,9 +39,9 @@ boundaries, not ADS versus AEDT product speed.
    dominates more than half of the wall time.
 4. Both cases completed without arbitrary code, GUI gestures, solve, customer
    data, blind replay, or retained disposable artifacts.
-5. A matching Pi row remains pending interactive `openai-codex` login. The
-   matrix classifies missing authentication once and skips repeats, so this
-   pending comparison does not contaminate Bridge or EDA failure rates.
+5. The dedicated Pi profile is now authenticated and has passed the L0-L2
+   read-only matrix. A matching L5 lifecycle row remains pending; the earlier
+   missing-authentication result is not treated as a Bridge or EDA failure.
 6. The validated plan reduced Agent calls by 85.7%, input tokens by 70.1%, Agent/client time by
    26.3%, and total wall time by 10.0%. Runtime/SSH/AEDT time changed by only +2.5%, confirming that
    the gain came from removing repeated model turns rather than weakening the EDA lifecycle.

@@ -58,6 +58,14 @@ def test_summary_separates_auth_from_system_failure():
     assert summary["rows"][0]["outcome"] == "agent_auth_unavailable"
 
 
+def test_summary_separates_agent_reported_tool_unavailability():
+    summary = load_summary().summarize(
+        [result("codex", passed=False, failures=["agent_reported_tool_unavailable"])]
+    )
+
+    assert summary["rows"][0]["outcome"] == "agent_reported_tool_unavailable"
+
+
 def test_summary_reports_repeated_trial_reliability_and_medians():
     summary = load_summary().summarize(
         [

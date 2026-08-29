@@ -66,8 +66,10 @@ def install_profile(
     session_dir: Path,
     launcher: Path,
     login_launcher: Path | None = None,
+    status_launcher: Path | None = None,
     node: Path,
     pi_cli: Path,
+    auth_provider: str = "openai-codex",
     vendor_skills: tuple[Path, ...] = (),
 ) -> dict[str, Any]:
     profile_dir = profile_dir.expanduser().resolve()
@@ -78,10 +80,17 @@ def install_profile(
         if login_launcher is not None
         else launcher.with_name(f"{launcher.stem}-login{launcher.suffix}")
     )
+    status_launcher = (
+        status_launcher.expanduser().resolve()
+        if status_launcher is not None
+        else launcher.with_name(f"{launcher.stem}-status{launcher.suffix}")
+    )
     node = node.expanduser().resolve()
     pi_cli = pi_cli.expanduser().resolve()
     if not node.is_file() or not pi_cli.is_file():
         raise ValueError("The selected Node executable and Pi CLI bundle must already exist.")
+    if not auth_provider or any(character.isspace() for character in auth_provider):
+        raise ValueError("Pi authentication provider must be one non-empty token.")
     package_root = Path(__file__).resolve().parent
     runtime_skill = package_root / "skills/eda-runtime-control/SKILL.md"
     selected_skills = (runtime_skill, *(path.expanduser().resolve() for path in vendor_skills))
@@ -165,6 +174,28 @@ def install_profile(
         ]
     )
     atomic_text(login_launcher, login_command)
+    status_arguments = [
+        str(node),
+        str(pi_cli),
+        "auth",
+        "check",
+        "--provider",
+        auth_provider,
+        "--json",
+    ]
+    status_command = "\n".join(
+        [
+            "@echo off",
+            "setlocal",
+            f'set "PI_CODING_AGENT_DIR={profile_dir}"',
+            f'set "PI_CODING_AGENT_SESSION_DIR={session_dir}"',
+            'set "PI_TELEMETRY=0"',
+            'set "PI_SKIP_VERSION_CHECK=1"',
+            subprocess.list2cmdline(status_arguments),
+            "",
+        ]
+    )
+    atomic_text(status_launcher, status_command)
     auth_after = file_hash(auth_path)
     if auth_before != auth_after:
         raise RuntimeError("Pi credential file changed during profile installation.")
@@ -174,6 +205,8 @@ def install_profile(
         "session_dir": str(session_dir),
         "launcher": str(launcher),
         "login_launcher": str(login_launcher),
+        "status_launcher": str(status_launcher),
+        "auth_provider": auth_provider,
         "auth_state": "configured" if auth_entries else "login_required",
         "auth_unchanged": True,
         "runtime_extension": str(package_root),
@@ -189,6 +222,8 @@ def main() -> int:
     parser.add_argument("--session-dir", type=Path, required=True)
     parser.add_argument("--launcher", type=Path, required=True)
     parser.add_argument("--login-launcher", type=Path)
+    parser.add_argument("--status-launcher", type=Path)
+    parser.add_argument("--auth-provider", default="openai-codex")
     parser.add_argument("--node", type=Path, required=True)
     parser.add_argument("--pi-cli", type=Path, required=True)
     parser.add_argument(
@@ -204,8 +239,10 @@ def main() -> int:
         session_dir=args.session_dir,
         launcher=args.launcher,
         login_launcher=args.login_launcher,
+        status_launcher=args.status_launcher,
         node=args.node,
         pi_cli=args.pi_cli,
+        auth_provider=args.auth_provider,
         vendor_skills=tuple(args.vendor_skill),
     )
     print(json.dumps(result, ensure_ascii=False, separators=(",", ":")))

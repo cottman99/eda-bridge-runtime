@@ -440,6 +440,15 @@ def launch_failure(output: str) -> str | None:
     return None
 
 
+def agent_reported_failure(final: Any, *, tool_attempts: int) -> str | None:
+    """Classify an explicit client-side boundary without reading a raw trace."""
+    if tool_attempts or not isinstance(final, dict):
+        return None
+    if any(value == "tool_unavailable" for value in final.values()):
+        return "agent_reported_tool_unavailable"
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", type=Path, required=True)
@@ -516,6 +525,12 @@ def main() -> int:
     classified_failure = launch_failure(output)
     if classified_failure and classified_failure not in scored["failures"]:
         scored["failures"].append(classified_failure)
+        scored["passed"] = False
+    reported_failure = agent_reported_failure(
+        scored["final"], tool_attempts=len(observation["attempts"])
+    )
+    if reported_failure and reported_failure not in scored["failures"]:
+        scored["failures"].append(reported_failure)
         scored["passed"] = False
     if wall_ms > int(case["budgets"]["max_wall_seconds"]) * 1000:
         scored["failures"].append("wall_budget_exceeded")
