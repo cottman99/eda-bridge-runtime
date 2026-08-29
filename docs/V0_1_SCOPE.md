@@ -1,5 +1,17 @@
 # Version 0.1 scope
 
+## 0.1.0a11 — clean Agent context and evidence-safe comparisons
+
+- Ignore hidden Skill backup and archive directories when generating a narrow
+  Codex profile, preventing historical copies from re-entering the prompt.
+- Apply the declared reasoning budget to both Codex and Pi evaluation clients
+  and retain it in normalized results.
+- Attribute repeated discovery, failure, and polling waste only within a
+  stable observed or declared Agent session; never infer one shared session
+  from repeated actions or an `unknown` identity.
+- Preserve global idempotent replay counts when reuse of the exact Runtime Run
+  supplies direct evidence across sessions.
+
 ## 0.1.0a10 — scoped unattended evaluation and audit analysis
 
 - Generate a separate Codex evaluation profile that pre-approves only typed
