@@ -3,9 +3,9 @@
 Date: 2026-08-30
 
 This page consolidates the sanitized comparison ladder. Repeated rows use three or five trials;
-engineering lifecycle rows are one-run functional acceptance and are not yet statistical
-performance claims. Both clients used the GPT-5.5 model family with low reasoning and the same
-Runtime/Bridge contracts.
+the remaining engineering lifecycle rows are one-run functional acceptance and are not yet
+statistical performance claims. Both clients used the GPT-5.5 model family with low reasoning and
+the same Runtime/Bridge contracts.
 
 | Level and case | Sample | Codex wall | Pi wall | Pi wall reduction | Dominant boundary |
 | --- | --- | ---: | ---: | ---: | --- |
@@ -19,7 +19,7 @@ Runtime/Bridge contracts.
 | L3 ADS create plus exact replay | 1 each | 32.090 s | 18.546 s | 42.2% | Agent/client |
 | L3 AnsysEM create plus exact replay | 1 each | 72.634 s | 55.065 s | 24.2% | AEDT lifecycle |
 | L5 ADS structured-design plan | 1 each | 34.957 s | 18.815 s | 46.2% | Agent/client |
-| L5 AnsysEM project-evidence plan | 1 each | 92.325 s | 86.025 s | 6.8% | AEDT lifecycle |
+| L5 AnsysEM project-evidence plan | 3 each, both 3/3 | 90.871 s | 84.140 s | 7.4% | AEDT lifecycle |
 | L6 generated-input Momentum solve (Codex 2/3; Pi 3/3) | 3 each | 38.814 s | 21.701 s | 44.1% | Mixed Agent and solver |
 | L6 one-turn ADS plus AnsysEM | 1 each | 101.906 s | 90.060 s | 11.6% | AEDT lifecycle |
 
@@ -50,8 +50,9 @@ Runtime/Bridge contracts.
 
 ## Remaining evidence gaps
 
-- Repeat L3, L5, and cross-EDA lifecycle cases before using their wall-time differences as
-  regression thresholds. The generated-input Momentum case now has three trials per Agent.
+- Repeat L3, ADS L5, and cross-EDA lifecycle cases before using their wall-time differences as
+  regression thresholds. The AnsysEM L5 and generated-input Momentum cases now have three trials
+  per Agent.
 - Add live ADS 2024 Update 2 and ADS 2023 Update 2 evidence only when those installations are
   available; version strings alone must not promote their support tier.
 - Continue product-specific capability growth inside each Bridge. Runtime should gain another

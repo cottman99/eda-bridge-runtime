@@ -1,0 +1,11 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a23",
+  "environment": "sanitized authenticated dedicated-Pi and narrow-Codex remote display4 repeated AnsysEM project-evidence acceptance",
+  "notes": "Three interleaved trials per Agent used independent disposable projects, separate idempotency keys, explicit mutation approval, one Runtime plan call, and no solve. Both Agents passed 3/3. No customer data, final response, raw trace, private path, image, or generated EDA artifact was retained. The measured transport boundary includes Bridge and AEDT lifecycle time and is not pure SSH latency. Token counters are provider-reported and are not a direct billing comparison.",
+  "cases": [
+    {"case_id":"l5.ansys-project-evidence-plan","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":90871.444,"median_non_transport_wall_ms":26886.444,"median_input_tokens":47822.0},
+    {"case_id":"l5.ansys-project-evidence-plan","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":84139.703,"median_non_transport_wall_ms":16983.703,"median_input_tokens":6394.0}
+  ]
+}
