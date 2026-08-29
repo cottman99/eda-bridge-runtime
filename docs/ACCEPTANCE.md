@@ -3,6 +3,24 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 Runtime alpha.21 correlated-audit acceptance
+
+- The complete Python suite passed 135 tests; Ruff check and format check passed across 56 files.
+- A clean wheel and source distribution passed Twine validation. A fresh isolated environment
+  installed the wheel without an index, reported `0.1.0a21`, and passed Runtime doctor.
+- A fresh MCP process with an empty connection registry executed the same discovery twice without
+  declared Agent metadata. Both calls received one stable anonymous inferred session, and audit
+  analysis identified exactly one same-lifecycle redundant discovery without a Codex Hook.
+- On 346 historical Runtime calls, the paired-timing analyzer retained 336 comparable samples and
+  isolated 10 legacy calls with missing transport measurements. It did not subtract unmatched
+  populations. Runtime-local measured processing was 157.253 ms across the paired calls; the
+  transport boundary intentionally remains Bridge/EDA-inclusive and is not called pure SSH latency.
+- The generated Codex EDA profile exposed five task-facing EDA Skills, explicitly disabled 210
+  unrelated or older Skills including the built-in system catalog, and removed the client warning
+  about shortened Skill descriptions. Three Runtime discovery trials passed 3/3 with 26.9% lower
+  median wall time than the earlier profile baseline; ADS and AnsysEM results remain separately
+  recorded below so the release does not claim a universal latency improvement.
+
 ## 2026-08-29 Codex profile system-Skill isolation
 
 - The dedicated EDA profile generator previously ignored every hidden directory, which correctly

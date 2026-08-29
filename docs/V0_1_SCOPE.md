@@ -1,5 +1,14 @@
 # Version 0.1 scope
 
+## 0.1.0a21 — correlated audit sessions and honest timing boundaries
+
+- Keep generated Codex EDA profiles narrow by explicitly disabling built-in system Skills as well
+  as unrelated installed and cached Skills; evaluation cases expose only their declared tools.
+- Infer one anonymous correlation ID per MCP client lifecycle when an Agent cannot declare its own
+  session, without spending another Agent turn or pretending to know the chat-session identity.
+- Report paired Runtime/Bridge timing samples, missing measurements, failure counts, medians, and
+  transport-boundary share without mislabeling Bridge/EDA wait time as pure SSH network latency.
+
 ## 0.1.0a20 — Agent-safe result projection and isolated evaluation
 
 - Describe `result_view` as an advanced optimization that must be omitted until every pointer has
