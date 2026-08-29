@@ -1,5 +1,14 @@
 # Version 0.1 scope
 
+## Next alpha candidate — bounded lifecycle and reproducible Agent evaluation
+
+- Close local and SSH JSON-lines workers through EOF first, then terminate only the isolated
+  process tree within a fixed bound so cancelled MCP work does not leave child processes behind.
+- Generate an optional narrow Codex EDA profile through native Codex profile and per-Skill
+  enablement settings; keep the ordinary Codex configuration unchanged.
+- Add deterministic public evaluation cases and a normalized scorer for Codex and Pi. Keep this
+  developer evaluation harness outside the Runtime kernel and never commit real-host raw traces.
+
 ## 0.1.0a8 — capability-aware submission and low-token durable waiting
 
 - Cache advertised operation mutability per Runtime connection so read-only operations do not

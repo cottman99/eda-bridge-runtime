@@ -1,0 +1,33 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l1.ads-capabilities",
+  "level": 1,
+  "title": "ADS Bridge capability discovery",
+  "variables": ["ADS_CONNECTION"],
+  "prompt": "Use only the EDA Bridge Runtime tool. Read capabilities exactly once from connection '{{ADS_CONNECTION}}' for the purpose 'Benchmark ADS capability discovery'. Do not use shell, files, documentation, GUI, or any other tool. Return a compact JSON object with status='passed', eda, and operation_count.",
+  "required_tools": {
+    "eda.capabilities": 1
+  },
+  "allowed_tools": [
+    "eda.capabilities"
+  ],
+  "expected_final": {
+    "equals": {
+      "status": "passed",
+      "eda": "keysight-ads"
+    },
+    "minimum": {
+      "operation_count": 1
+    }
+  },
+  "budgets": {
+    "max_tool_calls": 1,
+    "max_turns": 2,
+    "max_wall_seconds": 30
+  },
+  "safety": {
+    "mutation": "forbidden",
+    "solve": "forbidden",
+    "customer_data": "forbidden"
+  }
+}
