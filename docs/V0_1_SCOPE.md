@@ -1,5 +1,15 @@
 # Version 0.1 scope
 
+## Unreleased — task-scoped audit retrieval and fair evaluation
+
+- Filter compact audit calls and aggregate timing by one exact Agent session, one linked Bridge
+  Run, or both, while retaining complete request/completion pairs and bounded recent-call scans.
+- Expose linked execution Run and job identities in compact rows without returning tool arguments.
+- Interleave cross-Agent evaluations by case and trial while keeping every EDA action sequential,
+  and record the actual execution order.
+- Add a one-turn, two-connection read-only case that measures cross-EDA coordination without
+  pretending to offer a cross-vendor transaction.
+
 ## 0.1.0a21 — correlated audit sessions and honest timing boundaries
 
 - Keep generated Codex EDA profiles narrow by explicitly disabling built-in system Skills as well

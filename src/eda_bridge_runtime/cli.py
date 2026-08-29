@@ -61,6 +61,8 @@ def _parser() -> argparse.ArgumentParser:
     audit_list = audit_sub.add_parser("list")
     audit_list.add_argument("--database", type=Path)
     audit_list.add_argument("--limit", type=int, default=20)
+    audit_list.add_argument("--session-id")
+    audit_list.add_argument("--execution-run-id")
     audit_list.add_argument(
         "--full",
         action="store_true",
@@ -69,6 +71,8 @@ def _parser() -> argparse.ArgumentParser:
     audit_analyze = audit_sub.add_parser("analyze")
     audit_analyze.add_argument("--database", type=Path)
     audit_analyze.add_argument("--limit", type=int, default=1000)
+    audit_analyze.add_argument("--session-id")
+    audit_analyze.add_argument("--execution-run-id")
     return parser
 
 
@@ -146,15 +150,27 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         return 0
     if args.command == "audit" and args.audit_command == "list":
-        from .agent_audit import audit_events, compact_audit_calls_from_database
+        from .agent_audit import compact_audit_calls_from_database, recent_audit_run_events
 
         if args.full:
-            result = {"events": audit_events(args.database, limit=args.limit)}
+            result = {
+                "events": recent_audit_run_events(
+                    args.database,
+                    limit=args.limit,
+                    session_id=args.session_id,
+                    execution_run_id=args.execution_run_id,
+                )
+            }
         else:
             result = {
                 "schema_version": "eda-runtime.audit-calls/v1",
                 "source_policy": "mcp-runtime-preferred",
-                "calls": compact_audit_calls_from_database(args.database, limit=args.limit),
+                "calls": compact_audit_calls_from_database(
+                    args.database,
+                    limit=args.limit,
+                    session_id=args.session_id,
+                    execution_run_id=args.execution_run_id,
+                ),
             }
         print(json.dumps(result, indent=2))
         return 0
@@ -162,7 +178,12 @@ def main(argv: list[str] | None = None) -> int:
         from .agent_audit import recent_audit_run_events
         from .audit_analysis import analyze_events
 
-        events = recent_audit_run_events(args.database, limit=args.limit)
+        events = recent_audit_run_events(
+            args.database,
+            limit=args.limit,
+            session_id=args.session_id,
+            execution_run_id=args.execution_run_id,
+        )
         print(json.dumps(analyze_events(events), indent=2))
         return 0
     if args.command == "ledger":

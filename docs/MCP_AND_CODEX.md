@@ -35,6 +35,10 @@ returning raw arguments, Context tokens, paths, or execution identifiers.
 Per-tool totals and medians split Bridge/transport time from measured Runtime-local processing only
 for paired timing samples. Calls from older or incomplete records without a transport measurement
 remain explicitly `unpaired`; they are never subtracted from a different sample population.
+Use `--session-id <id>` to isolate one observed or declared Agent lifecycle, or
+`--execution-run-id <id>` to isolate the Runtime call linked to one Bridge Run. The same exact
+filters work with `audit list`; compact rows expose linked execution Run and job identities without
+returning tool arguments. Filtered lookup scans at most the most recent 1,000 complete call groups.
 The transport share is calculated only from paired samples, making local and SSH routing costs
 comparable without treating missing measurements as zero.
 `client_transport_ms` is a boundary measurement: it includes time waiting for the local or remote

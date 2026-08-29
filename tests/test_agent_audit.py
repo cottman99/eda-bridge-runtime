@@ -107,10 +107,10 @@ def test_compact_audit_calls_preserve_motive_and_identity_without_forensic_noise
                 "session_id": "session-one",
             },
             "terminal": True,
+            "execution_run_id": "run-compact",
         }
     ]
     assert "input_sha256" not in json.dumps(calls)
-    assert "run-compact" not in json.dumps(calls)
 
 
 def test_audit_list_cli_is_compact_by_default_and_full_only_when_requested(tmp_path, capsys):
@@ -205,6 +205,54 @@ def test_compact_database_read_keeps_interleaved_request_and_completion_together
 
     assert [call["purpose"] for call in calls] == ["First call", "Second call"]
     assert all(call["status"] == "passed" for call in calls)
+
+
+def test_compact_database_read_filters_complete_calls_by_session_and_execution_run(tmp_path):
+    database = tmp_path / "filtered.sqlite3"
+    with ExecutionLedger(database) as ledger:
+        for suffix in ("one", "two"):
+            ledger.append(
+                run_id=f"audit-{suffix}",
+                request_id=f"request-{suffix}",
+                event_type="agent.tool.requested",
+                source="mcp-runtime",
+                payload={
+                    "tool": "eda.read",
+                    "purpose": f"Call {suffix}",
+                    "actor": {
+                        "session_id": {
+                            "value": f"session-{suffix}",
+                            "provenance": "declared",
+                        }
+                    },
+                },
+            )
+            ledger.append(
+                run_id=f"audit-{suffix}",
+                request_id=f"request-{suffix}",
+                event_type="agent.tool.completed",
+                source="mcp-runtime",
+                payload={
+                    "execution": {
+                        "state": "passed",
+                        "terminal": True,
+                        "run_id": f"execution-{suffix}",
+                        "job_id": f"job-{suffix}",
+                    },
+                    "timing": {"mcp_server_ms": 1.0},
+                },
+            )
+            ledger.finalize(f"audit-{suffix}")
+
+    by_session = compact_audit_calls_from_database(database, limit=20, session_id="session-one")
+    by_execution = compact_audit_calls_from_database(
+        database, limit=20, execution_run_id="execution-two"
+    )
+
+    assert [call["purpose"] for call in by_session] == ["Call one"]
+    assert by_session[0]["execution_run_id"] == "execution-one"
+    assert by_session[0]["job_id"] == "job-one"
+    assert [call["purpose"] for call in by_execution] == ["Call two"]
 
 
 def test_codex_hook_ignores_unrelated_tools(tmp_path):

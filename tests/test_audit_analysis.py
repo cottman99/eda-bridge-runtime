@@ -193,3 +193,22 @@ def test_audit_analyze_reads_complete_interleaved_runtime_calls(tmp_path, capsys
     assert result["tool_calls"] == 2
     assert result["completed_calls"] == 2
     assert result["failed_calls"] == 0
+
+    assert (
+        main(
+            [
+                "audit",
+                "analyze",
+                "--database",
+                str(database),
+                "--session-id",
+                "session",
+                "--execution-run-id",
+                "run-two",
+            ]
+        )
+        == 0
+    )
+    filtered = json.loads(capsys.readouterr().out)
+    assert filtered["tool_calls"] == 1
+    assert filtered["completed_calls"] == 1

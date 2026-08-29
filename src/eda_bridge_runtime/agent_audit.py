@@ -121,22 +121,95 @@ def audit_events(database: str | Path | None = None, *, limit: int = 20) -> list
 
 
 def compact_audit_calls_from_database(
-    database: str | Path | None = None, *, limit: int = 20
+    database: str | Path | None = None,
+    *,
+    limit: int = 20,
+    session_id: str | None = None,
+    execution_run_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """Read complete recent Runtime calls without assuming adjacent event writes."""
-    events = recent_audit_run_events(database, limit=limit)
+    events = recent_audit_run_events(
+        database,
+        limit=limit,
+        session_id=session_id,
+        execution_run_id=execution_run_id,
+    )
     return compact_audit_calls(events)[-max(1, min(limit, 1000)) :]
 
 
 def recent_audit_run_events(
-    database: str | Path | None = None, *, limit: int = 20
+    database: str | Path | None = None,
+    *,
+    limit: int = 20,
+    session_id: str | None = None,
+    execution_run_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """Read complete recent call groups from the authoritative observation source."""
+    scan_limit = 1000 if session_id or execution_run_id else limit
     with ExecutionLedger(database or default_agent_audit_path()) as ledger:
-        events = ledger.recent_run_events(limit=limit, source="mcp-runtime")
+        events = ledger.recent_run_events(limit=scan_limit, source="mcp-runtime")
         if not events:
-            events = ledger.recent_run_events(limit=limit)
-    return events
+            events = ledger.recent_run_events(limit=scan_limit)
+    selected = select_audit_run_events(
+        events,
+        session_id=session_id,
+        execution_run_id=execution_run_id,
+    )
+    return _last_run_groups(selected, limit=limit)
+
+
+def select_audit_run_events(
+    events: list[dict[str, Any]],
+    *,
+    session_id: str | None = None,
+    execution_run_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Select complete audit call groups using stable Runtime-observed identities."""
+    if not session_id and not execution_run_id:
+        return events
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    order: list[str] = []
+    for event in events:
+        audit_run_id = str(event.get("run_id") or "")
+        if not audit_run_id:
+            continue
+        if audit_run_id not in grouped:
+            grouped[audit_run_id] = []
+            order.append(audit_run_id)
+        grouped[audit_run_id].append(event)
+    selected: list[dict[str, Any]] = []
+    for audit_run_id in order:
+        call_events = grouped[audit_run_id]
+        sessions: set[str] = set()
+        execution_runs: set[str] = set()
+        for event in call_events:
+            payload = event.get("payload") if isinstance(event.get("payload"), Mapping) else {}
+            actor = payload.get("actor") if isinstance(payload.get("actor"), Mapping) else {}
+            actor_session = _actor_value(actor, "session_id")
+            if actor_session:
+                sessions.add(actor_session)
+            execution = (
+                payload.get("execution") if isinstance(payload.get("execution"), Mapping) else {}
+            )
+            execution_run = str(execution.get("run_id") or "")
+            if execution_run:
+                execution_runs.add(execution_run)
+            for step in execution.get("steps") or []:
+                if isinstance(step, Mapping) and step.get("run_id"):
+                    execution_runs.add(str(step["run_id"]))
+        if session_id and session_id not in sessions:
+            continue
+        if execution_run_id and execution_run_id not in execution_runs:
+            continue
+        selected.extend(call_events)
+    return selected
+
+
+def _last_run_groups(events: list[dict[str, Any]], *, limit: int) -> list[dict[str, Any]]:
+    bounded = max(1, min(int(limit), 1000))
+    order = list(dict.fromkeys(str(event.get("run_id") or "") for event in events))
+    selected = set(run_id for run_id in order[-bounded:] if run_id)
+    return [event for event in events if str(event.get("run_id") or "") in selected]
 
 
 def compact_audit_calls(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -184,9 +257,20 @@ def compact_audit_calls(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
             execution = execution if isinstance(execution, Mapping) else {}
             row["status"] = execution.get("state") or "completed"
             row["terminal"] = bool(execution.get("terminal", False))
+            if execution.get("run_id"):
+                row["execution_run_id"] = execution["run_id"]
+            if execution.get("job_id"):
+                row["job_id"] = execution["job_id"]
             steps = execution.get("steps")
             if isinstance(steps, list):
                 row["completed_step_count"] = len(steps)
+                execution_run_ids = [
+                    str(step["run_id"])
+                    for step in steps
+                    if isinstance(step, Mapping) and step.get("run_id")
+                ]
+                if execution_run_ids:
+                    row["execution_run_ids"] = execution_run_ids
             timing = payload.get("timing")
             timing = timing if isinstance(timing, Mapping) else {}
             if timing.get("mcp_server_ms") is not None:
@@ -217,6 +301,14 @@ def _compact_actor(value: Any) -> dict[str, Any]:
         if item not in {None, "", "unknown"}:
             actor[key] = item
     return actor
+
+
+def _actor_value(actor: Mapping[str, Any], name: str) -> str | None:
+    field = actor.get(name)
+    if not isinstance(field, Mapping):
+        return None
+    value = str(field.get("value") or "").strip()
+    return value if value and value != "unknown" else None
 
 
 def _audit_run_id(tool_call_id: str) -> str:

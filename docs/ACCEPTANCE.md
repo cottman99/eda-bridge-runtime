@@ -3,6 +3,16 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 task-scoped audit and balanced evaluation candidate
+
+- The complete suite passed 137 tests with Ruff check and format check clean.
+- A real recent AnsysEM capability call was selected by both its inferred MCP lifecycle session and
+  linked Bridge Run. Analysis returned exactly one complete request/completion pair, one successful
+  tool call, 1,016 ms measured transport, and no waste finding; unrelated audit history was absent.
+- A two-trial Codex/Pi scheduling acceptance alternated the planned first client. Codex passed 2/2;
+  Pi's missing interactive login was classified once in 468 ms and its later trial was skipped.
+  The matrix did not label authentication as a Runtime, Bridge, SSH, or EDA failure.
+
 ## 2026-08-30 Runtime a21 repeated read-only baseline
 
 - Fifteen independent Codex trials passed across Runtime discovery, ADS and AnsysEM capability
