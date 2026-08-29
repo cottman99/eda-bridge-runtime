@@ -35,6 +35,11 @@ returning raw arguments, Context tokens, paths, or execution identifiers.
 Per-tool totals and medians split Bridge/transport time from measured Runtime-local processing only
 for paired timing samples. Calls from older or incomplete records without a transport measurement
 remain explicitly `unpaired`; they are never subtracted from a different sample population.
+The transport share is calculated only from paired samples, making local and SSH routing costs
+comparable without treating missing measurements as zero.
+`client_transport_ms` is a boundary measurement: it includes time waiting for the local or remote
+Bridge and vendor EDA service, not just network packet transit. It can show that Runtime-local
+orchestration is small, but it cannot by itself claim that SSH network latency is large or small.
 Failed-call counts remain separate so a fast rejection is not mistaken for healthy performance.
 The limit is measured in complete recent calls rather than raw event rows. Runtime
 observations are authoritative when present, so enabling an Agent Hook does not

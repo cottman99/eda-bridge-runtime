@@ -116,6 +116,7 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
     timing_by_tool: dict[str, dict[str, float | int]] = {}
     all_server: list[float] = []
     all_transport: list[float] = []
+    all_paired_server: list[float] = []
     all_nontransport: list[float] = []
     all_unpaired_server: list[float] = []
     for tool in sorted({call["tool"] for call in calls}):
@@ -136,9 +137,11 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
             else:
                 unpaired_server.append(server_ms)
         transport = [item[1] for item in paired]
+        paired_server = [item[0] for item in paired]
         nontransport = [max(0.0, item[0] - item[1]) for item in paired]
         all_server.extend(server)
         all_transport.extend(transport)
+        all_paired_server.extend(paired_server)
         all_nontransport.extend(nontransport)
         all_unpaired_server.extend(unpaired_server)
         timing_by_tool[tool] = {
@@ -149,6 +152,7 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
             "unpaired_timing_calls": len(unpaired_server),
             "mcp_server_ms_total": round(sum(server), 3),
             "mcp_server_ms_median": round(median(server), 3) if server else 0,
+            "paired_mcp_server_ms_total": round(sum(paired_server), 3),
             "client_transport_ms_total": round(sum(transport), 3),
             "client_transport_ms_median": round(median(transport), 3) if transport else 0,
             "runtime_nontransport_ms_total": round(sum(nontransport), 3),
@@ -156,6 +160,9 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
                 round(median(nontransport), 3) if nontransport else 0
             ),
             "unpaired_mcp_server_ms_total": round(sum(unpaired_server), 3),
+            "transport_share_percent": (
+                round(100 * sum(transport) / sum(paired_server), 3) if sum(paired_server) else 0
+            ),
         }
 
     findings = []
@@ -176,6 +183,7 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
         "idempotent_replays": idempotent_replays,
         "timing_totals": {
             "mcp_server_ms": round(sum(all_server), 3),
+            "paired_mcp_server_ms": round(sum(all_paired_server), 3),
             "client_transport_ms": round(sum(all_transport), 3),
             "runtime_nontransport_ms": round(sum(all_nontransport), 3),
             "unpaired_mcp_server_ms": round(sum(all_unpaired_server), 3),
@@ -184,6 +192,11 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
             ),
             "unpaired_calls": sum(
                 int(item["unpaired_timing_calls"]) for item in timing_by_tool.values()
+            ),
+            "transport_share_percent": (
+                round(100 * sum(all_transport) / sum(all_paired_server), 3)
+                if sum(all_paired_server)
+                else 0
             ),
         },
         "potential_avoidable_mcp_ms": round(

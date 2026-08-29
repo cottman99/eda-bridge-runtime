@@ -58,11 +58,13 @@ def test_analysis_separates_idempotent_replay_from_waste():
     assert result["potential_avoidable_mcp_ms"] == 10
     assert result["timing_totals"] == {
         "mcp_server_ms": 40.0,
+        "paired_mcp_server_ms": 40.0,
         "client_transport_ms": 36.0,
         "runtime_nontransport_ms": 4.0,
         "unpaired_mcp_server_ms": 0,
         "paired_calls": 4,
         "unpaired_calls": 0,
+        "transport_share_percent": 90.0,
     }
     assert result["timing_by_tool"]["eda.capabilities"] == {
         "calls": 2,
@@ -72,11 +74,13 @@ def test_analysis_separates_idempotent_replay_from_waste():
         "unpaired_timing_calls": 0,
         "mcp_server_ms_total": 20.0,
         "mcp_server_ms_median": 10.0,
+        "paired_mcp_server_ms_total": 20.0,
         "client_transport_ms_total": 18.0,
         "client_transport_ms_median": 9.0,
         "runtime_nontransport_ms_total": 2.0,
         "runtime_nontransport_ms_median": 1.0,
         "unpaired_mcp_server_ms_total": 0,
+        "transport_share_percent": 90.0,
     }
 
 
