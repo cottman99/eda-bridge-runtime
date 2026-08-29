@@ -445,12 +445,16 @@ def launch_failure(output: str) -> str | None:
     return None
 
 
-def agent_reported_failure(final: Any, *, tool_attempts: int) -> str | None:
+def agent_reported_failure(
+    final: Any, *, tool_attempts: int, required_tool_calls: int = 0
+) -> str | None:
     """Classify an explicit client-side boundary without reading a raw trace."""
     if tool_attempts or not isinstance(final, dict):
         return None
     if any(value == "tool_unavailable" for value in final.values()):
         return "agent_reported_tool_unavailable"
+    if required_tool_calls > 0 and final.get("status") == "passed":
+        return "agent_reported_unverified_success"
     return None
 
 
@@ -540,7 +544,9 @@ def main() -> int:
         scored["failures"].append(classified_failure)
         scored["passed"] = False
     reported_failure = agent_reported_failure(
-        scored["final"], tool_attempts=len(observation["attempts"])
+        scored["final"],
+        tool_attempts=len(observation["attempts"]),
+        required_tool_calls=sum(int(value) for value in case["required_tools"].values()),
     )
     if reported_failure and reported_failure not in scored["failures"]:
         scored["failures"].append(reported_failure)

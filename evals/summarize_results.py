@@ -27,6 +27,8 @@ def outcome(result: dict[str, Any]) -> str:
         return "runtime_unavailable"
     if "agent_reported_tool_unavailable" in failures:
         return "agent_reported_tool_unavailable"
+    if "agent_reported_unverified_success" in failures:
+        return "agent_reported_unverified_success"
     return "failed"
 
 

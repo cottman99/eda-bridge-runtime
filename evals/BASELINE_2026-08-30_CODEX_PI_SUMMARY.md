@@ -20,15 +20,16 @@ Runtime/Bridge contracts.
 | L3 AnsysEM create plus exact replay | 1 each | 72.634 s | 55.065 s | 24.2% | AEDT lifecycle |
 | L5 ADS structured-design plan | 1 each | 34.957 s | 18.815 s | 46.2% | Agent/client |
 | L5 AnsysEM project-evidence plan | 1 each | 92.325 s | 86.025 s | 6.8% | AEDT lifecycle |
-| L6 generated-input Momentum solve | 1 each | 37.363 s | 21.477 s | 42.5% | Mixed Agent and solver |
+| L6 generated-input Momentum solve (Codex 2/3; Pi 3/3) | 3 each | 38.814 s | 21.701 s | 44.1% | Mixed Agent and solver |
 | L6 one-turn ADS plus AnsysEM | 1 each | 101.906 s | 90.060 s | 11.6% | AEDT lifecycle |
 
 ## Evidence-backed decisions
 
-1. **Keep both Agents.** Pi autonomously passed mutation, fresh-reopen validation, a real solver
-   run, and cross-EDA coordination. It is a strong default for frequent bounded execution, not just
-   a read-only helper. Codex remains useful for ambiguous engineering interpretation and broader
-   development work; both use the same Runtime facts and vendor Bridges.
+1. **Keep both Agents, with Pi as the bounded-execution default.** Pi autonomously passed mutation,
+   fresh-reopen validation, all three repeated real solver runs, and cross-EDA coordination. Codex
+   remains useful for ambiguous engineering interpretation and broader development work, but one
+   zero-call claimed-success Momentum trial reduced its repeated reliability to 2/3. Both use the
+   same Runtime facts and vendor Bridges, so the operator can switch without changing EDA control.
 2. **Do not optimize SSH first.** Small read cases spend roughly one second at the remote vendor
    boundary, while Agent startup and context dominate. In the AnsysEM lifecycle, 63-69 seconds is
    real AEDT create/save/reopen/image work. Runtime-local processing in the matched cross-EDA audit
@@ -49,7 +50,8 @@ Runtime/Bridge contracts.
 
 ## Remaining evidence gaps
 
-- Repeat L3-L6 cases before using their wall-time differences as regression thresholds.
+- Repeat L3, L5, and cross-EDA lifecycle cases before using their wall-time differences as
+  regression thresholds. The generated-input Momentum case now has three trials per Agent.
 - Add live ADS 2024 Update 2 and ADS 2023 Update 2 evidence only when those installations are
   available; version strings alone must not promote their support tier.
 - Continue product-specific capability growth inside each Bridge. Runtime should gain another

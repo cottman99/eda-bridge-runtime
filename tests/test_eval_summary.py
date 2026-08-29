@@ -66,6 +66,14 @@ def test_summary_separates_agent_reported_tool_unavailability():
     assert summary["rows"][0]["outcome"] == "agent_reported_tool_unavailable"
 
 
+def test_summary_separates_unverified_agent_success_claim():
+    summary = load_summary().summarize(
+        [result("codex", passed=False, failures=["agent_reported_unverified_success"])]
+    )
+
+    assert summary["rows"][0]["outcome"] == "agent_reported_unverified_success"
+
+
 def test_summary_reports_repeated_trial_reliability_and_medians():
     summary = load_summary().summarize(
         [
