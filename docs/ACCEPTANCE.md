@@ -5,6 +5,14 @@ credentials, host address, or task-specific geometry is included here.
 
 ## 2026-08-30 Runtime alpha.26 source-free Pi acceptance
 
+- A hot Codex plugin refresh replaced the stale local alpha.23 registration with exact
+  `0.1.0-alpha.26` without restarting Codex Desktop. The plugin list, sole cache directory,
+  installed manifest, and `eda-runtime --version` now agree on alpha.26; running EDA applications
+  and other Codex tasks were not touched.
+- The standalone Runtime on the remote Agent host was also upgraded from alpha.25 to the public
+  alpha.26 wheel. Source-free daily and Runtime-only evaluation profiles were regenerated there;
+  vendor-Bridge environments remain independently pinned because their tested Runtime dependency
+  is an adapter implementation detail, not an Agent-host consistency requirement.
 - Trusted Publishing built, tested, published, and reinstalled exact public `0.1.0a26`. The suite
   passed 155 Python tests on Python 3.10 and 3.13 plus three native Pi adapter tests; Ruff, lock,
   wheel/sdist build, Twine, and clean PyPI reinstall checks passed.
