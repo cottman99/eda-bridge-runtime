@@ -1,0 +1,26 @@
+{
+  "name": "@eda-bridge-runtime/pi-eda-runtime",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "description": "Thin Pi Agent client adapter for EDA Bridge Runtime",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "eda"
+  ],
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "^0.73.1",
+    "typebox": "^1.1.24"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}

@@ -1,5 +1,15 @@
 # Version 0.1 scope
 
+## 0.1.0a7 — thin Agent adapters without another execution stack
+
+- Add a native Pi package that maps exactly seven Pi tools to the seven Runtime MCP tools through
+  one persistent child process.
+- Accept bounded Agent-declared provider/model/reasoning/session/tool-call metadata while keeping
+  MCP client identity independently observed.
+- Keep Pi free of SSH routing, EDA API knowledge, retries, job state, and a second audit database.
+- Provide a Runtime-only Pi profile that disables built-in tools and automatic global Skill
+  discovery, then explicitly loads only Runtime, ADS, and AnsysEM operation Skills.
+
 ## 0.1.0a6 — agent-neutral facts and transport lifecycle
 
 - Record MCP client identity, concise purpose, input fingerprint, timing, and Run linkage inside

@@ -10,6 +10,11 @@ The MCP Runtime itself writes the Agent-host append-only audit for every support
 records observed MCP client identity, concise purpose, a hash of the arguments, timings, and the
 returned Runtime Run. This is the stable cross-Agent fact path.
 
+An Agent adapter can attach `io.eda-runtime/actor` metadata to a tool call. Runtime accepts only a
+bounded allowlist (agent family/version, provider, model, reasoning, Skill, session/turn/tool-call
+identity, and permission mode) and labels it `declared`. MCP client name/version are taken from the
+MCP handshake or call metadata and remain `observed`, so an adapter cannot overwrite that fact.
+
 The plugin additionally installs `PreToolUse` and `PostToolUse` hooks scoped only to its own MCP
 tools. Where the Codex surface supports them, they enrich the same audit database with session,
 turn, active model, permission mode, and tool-call identity. Hooks are optional: they do not define

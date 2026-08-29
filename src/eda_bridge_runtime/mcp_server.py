@@ -365,12 +365,36 @@ class MCPRuntimeServer:
 
     def _actor(self, message: dict[str, Any]) -> ActorIdentity:
         client_name, client_version = self._client_info(message)
+        meta = (message.get("params") or {}).get("_meta") or {}
+        raw_declared = meta.get("io.eda-runtime/actor") or {}
+        allowed = {
+            "agent_family",
+            "agent_version",
+            "model",
+            "provider",
+            "reasoning",
+            "skill",
+            "session_id",
+            "turn_id",
+            "tool_call_id",
+            "permission_mode",
+        }
+        declared = (
+            {
+                key: str(value)[:240]
+                for key, value in raw_declared.items()
+                if key in allowed and value is not None and str(value).strip()
+            }
+            if isinstance(raw_declared, dict)
+            else {}
+        )
         return ActorIdentity.detect(
+            declared=declared,
             observed={
                 "client": client_name,
                 "client_version": client_version,
                 "harness": "mcp",
-            }
+            },
         )
 
     def _audit_start(

@@ -400,6 +400,63 @@ def test_mcp_runtime_records_agent_fact_without_codex_hook(tmp_path):
     server.close()
 
 
+def test_mcp_accepts_bounded_declared_actor_metadata_but_observes_client(tmp_path):
+    database = tmp_path / "agent-audit.sqlite3"
+    registry = FakeRegistry()
+    server = MCPRuntimeServer(registry, audit_database=database)
+    server.handle(
+        _rpc(
+            1,
+            "initialize",
+            {
+                "protocolVersion": "2025-11-25",
+                "capabilities": {},
+                "clientInfo": {"name": "pi-agent", "version": "0.73.1"},
+            },
+        )
+    )
+    call = _rpc(
+        2,
+        "tools/call",
+        {
+            "name": "eda.capabilities",
+            "arguments": {
+                "purpose": "Inspect one selected EDA target",
+                "connection_id": "ansys-one",
+            },
+            "_meta": {
+                "io.modelcontextprotocol/clientInfo": {
+                    "name": "pi-agent",
+                    "version": "0.73.1",
+                },
+                "io.eda-runtime/actor": {
+                    "agent_family": "pi-agent",
+                    "agent_version": "0.73.1",
+                    "provider": "openai",
+                    "model": "gpt-test",
+                    "reasoning": "medium",
+                    "skill": "eda-runtime-control",
+                    "session_id": "session-one",
+                    "tool_call_id": "tool-one",
+                    "client": "spoofed-client",
+                    "unrecognized": "discard-me",
+                },
+            },
+        },
+    )
+    server.handle(call)
+    actor = audit_events(database)[0]["payload"]["actor"]
+    assert actor["client"] == {"value": "pi-agent", "provenance": "observed"}
+    assert actor["client_version"] == {"value": "0.73.1", "provenance": "observed"}
+    assert actor["agent_family"] == {"value": "pi-agent", "provenance": "declared"}
+    assert actor["provider"] == {"value": "openai", "provenance": "declared"}
+    assert actor["model"] == {"value": "gpt-test", "provenance": "declared"}
+    assert actor["reasoning"] == {"value": "medium", "provenance": "declared"}
+    assert actor["session_id"] == {"value": "session-one", "provenance": "declared"}
+    assert actor["tool_call_id"] == {"value": "tool-one", "provenance": "declared"}
+    server.close()
+
+
 def test_mcp_discards_failed_connection_without_replaying_request():
     registry = FakeRegistry()
     transport = FailingTransport()

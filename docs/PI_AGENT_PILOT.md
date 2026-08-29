@@ -18,6 +18,29 @@ The Pi extension is an Agent-client adapter, analogous to the Codex plugin. It i
 architecture layer. It must not implement SSH routing, EDA APIs, retries, idempotency, job state,
 or a second audit database.
 
+## Implemented pilot
+
+The Agent host currently uses Node `24.20.0`, npm `11.19.0`, and pinned Pi
+`@mariozechner/pi-coding-agent@0.73.1`. The dedicated profile lives outside the repository and
+contains no credentials. Its launcher disables all built-in tools and automatic global Skill
+discovery, then explicitly loads only three Skills: Runtime control, ADS operation, and AnsysEM
+operation. The engineer still starts one command and uses natural language; Pi selects the Skill.
+
+The checked-in package is `integrations/pi-eda-runtime`. It registers exactly seven `eda_*` tools,
+maintains one persistent `eda-runtime mcp serve` child, and adds `/eda-runtime-status`. It does not
+contain SSH or vendor logic. Pi supplies provider, model, reasoning, session, and tool-call identity
+directly from its extension context; Runtime stores these as declared facts and stores MCP client
+identity as observed fact.
+
+Measured acceptance on the Agent host:
+
+- package client test: seven tools plus a registry read passed;
+- real Pi RPC load: exactly seven Runtime tools and the three intended Skills were visible after
+  global discovery was disabled;
+- cold `/eda-runtime-status refresh`: 1013.4 ms;
+- second call in the same Pi session: 12.8 ms;
+- two registered EDA connections were found without opening EDA or SSH.
+
 ## Stage 1: isolated local installation
 
 - Install a pinned current Pi package on the Agent host.
@@ -27,19 +50,15 @@ or a second audit database.
   settings, scripts, repositories, or Runtime connection records.
 - Choose the startup model from Pi's live model catalog after login; do not hard-code a model name
   before the installed catalog is inspected.
-- Keep project trust at `never` globally. Trust only an explicit EDA controller workspace.
-- Disable install telemetry and analytics for the pilot.
+- Disable install telemetry for the pilot.
 
 Example profile settings (paths are intentionally generic):
 
 ```json
 {
   "defaultThinkingLevel": "medium",
-  "defaultProjectTrust": "never",
   "enableInstallTelemetry": false,
-  "enableAnalytics": false,
   "quietStartup": true,
-  "defaultTools": ["read", "grep", "find", "ls"],
   "sessionDir": "D:/EDA/pi-eda-data/sessions",
   "compaction": {
     "enabled": true,
@@ -58,20 +77,21 @@ Example profile settings (paths are intentionally generic):
 }
 ```
 
-The normal EDA profile deliberately excludes shell, edit, and write tools. A separate maintenance
-launcher may enable them when developing the Runtime or adapters; ordinary model operations must
-not receive an alternate shell route around Runtime.
+The normal EDA profile deliberately excludes all built-in tools through the launcher because Pi
+0.73.1 does not expose a `defaultTools` settings key. A separate maintenance launch may enable
+them when developing adapters; ordinary model operations do not receive an alternate shell route
+around Runtime.
 
 ## Stage 2: one thin Pi package
 
-Add one reviewed Pi package to this repository. It should contain:
+The reviewed Pi package in this repository contains:
 
 - a native Pi extension that exposes only the seven Runtime tools;
 - the Runtime control Skill and references to selected vendor Skills;
 - optional Pi lifecycle enrichment; the Runtime already records the mandatory base facts;
 - a small status view for active connection, Run state, and elapsed time.
 
-The extension should launch or connect to `eda-runtime mcp serve` internally. Engineers should not
+The extension launches `eda-runtime mcp serve` internally. Engineers do not
 install a generic third-party MCP bundle or maintain MCP JSON by hand merely for this pilot.
 
 Pi exposes session, provider, model, and reasoning metadata to child commands. The extension may
@@ -79,7 +99,7 @@ enrich the Runtime actor contract with those observed values, while the Runtime 
 Agent's concise `purpose`, MCP client identity, timing, and linked Run. Missing fields remain
 `unknown`; the extension must not parse the transcript to reconstruct them.
 
-## Stage 3: acceptance before broader use
+## Stage 3: pending A/B acceptance before broader use
 
 Run the same bounded task through Codex and Pi using one unchanged Context and connection:
 

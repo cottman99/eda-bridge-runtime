@@ -3,6 +3,21 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Pi adapter and actor-metadata acceptance
+
+- The Python suite passed 58 tests, including bounded Agent-declared actor metadata whose
+  provenance remains distinct from observed MCP client identity.
+- The Pi package client exposed exactly seven Runtime tools and completed a registry read.
+- A real Pi 0.73.1 RPC session reported exactly seven `eda_*` tools and loaded only Runtime, ADS,
+  and AnsysEM operation Skills after the launcher disabled automatic global Skill discovery.
+- `/eda-runtime-status refresh` found two registered connections without opening EDA or SSH. Cold
+  startup took 1013.4 ms; the second call through the same persistent process took 12.8 ms.
+- A clean `0.1.0a7` wheel in an isolated Python environment was then called through the real Pi
+  extension. Runtime recorded Pi family/version, reasoning, session, Skill, permission mode, and
+  tool-call identity as declared facts; MCP client name/version and harness were independently
+  observed. The hash-linked request/completion pair retained the concise purpose and completed in
+  370 ms including cold process startup.
+
 ## 2026-08-29 agent-neutral audit and transport-reset acceptance
 
 - A clean wheel installation of `0.1.0a6` exposed seven Runtime tools. The added
