@@ -62,3 +62,15 @@ def test_matrix_result_paths_preserve_single_run_names_and_separate_trials(tmp_p
         ).name
         == "l0_connections__codex__trial_02.json"
     )
+
+
+def test_matrix_preflights_required_variables_without_starting_agents():
+    matrix = load_matrix()
+    cases = [
+        {"variables": ["ADS_CONNECTION"]},
+        {"variables": ["ANSYS_CONNECTION", "ADS_CONNECTION"]},
+    ]
+
+    supplied = matrix.supplied_variable_names(["ADS_CONNECTION=ads-display4"])
+
+    assert matrix.missing_case_variables(cases, supplied) == ["ANSYS_CONNECTION"]
