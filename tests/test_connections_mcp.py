@@ -12,7 +12,15 @@ from eda_bridge_runtime.connections import (
     ConnectionSpec,
     discover_connection_origin,
 )
-from eda_bridge_runtime.mcp_server import MCPRuntimeServer, serve_mcp
+from eda_bridge_runtime.mcp_server import TOOLS, MCPRuntimeServer, serve_mcp
+
+
+def test_run_plan_schema_separates_vendor_payload_from_runtime_wait_policy():
+    plan = next(tool for tool in TOOLS if tool["name"] == "eda.run_plan")
+    step = plan["inputSchema"]["properties"]["steps"]["items"]["properties"]
+
+    assert "Vendor Bridge operation payload only" in step["payload"]["description"]
+    assert "sibling of payload" in step["wait"]["description"]
 
 
 def test_connection_registry_round_trip_and_deterministic_resolution(tmp_path):

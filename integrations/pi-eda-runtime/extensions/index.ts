@@ -193,13 +193,17 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
         step_id: Type.String({ minLength: 1, maxLength: 64 }),
         purpose: Type.String({ minLength: 3, maxLength: 240 }),
         operation: Type.String(),
-        payload: JsonObject,
+        payload: Type.Record(Type.String(), Type.Unknown(), {
+          description: "Vendor Bridge operation payload only. Do not place Runtime step controls such as wait, idempotency_key, purpose, or result_view inside payload.",
+        }),
         target: Type.Optional(JsonObject),
         expected_effect: Type.Optional(Type.String()),
         idempotency_key: Type.Optional(Type.String()),
         wait: Type.Optional(Type.Object({
           timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: 90000 })),
           poll_interval_ms: Type.Optional(Type.Integer({ minimum: 100, maximum: 5000 })),
+        }, {
+          description: "Runtime durable-job wait policy for this plan step. This is a sibling of payload and must never be nested inside payload.",
         })),
         result_view: Type.Optional(ResultView),
       }, { additionalProperties: false }), { minItems: 2, maxItems: 16 }),
