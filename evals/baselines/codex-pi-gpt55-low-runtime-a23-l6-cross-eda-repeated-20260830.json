@@ -1,0 +1,11 @@
+{
+  "schema_version": "eda-runtime.eval-baseline/v1",
+  "captured_at": "2026-08-30",
+  "runtime_version": "0.1.0a23",
+  "environment": "sanitized authenticated dedicated-Pi and narrow-Codex remote display4 repeated cross-EDA greenfield acceptance",
+  "notes": "Three interleaved trials per Agent used one ADS plan and one AnsysEM plan in the same Agent turn, independent disposable paths, separate vendor idempotency keys, explicit mutation approval, and no solve. Both Agents passed 3/3 with exactly two Runtime calls. No cross-vendor transaction, customer data, final response, raw trace, private path, image, workspace, or generated EDA artifact was retained. Token counters are provider-reported and are not a direct billing comparison.",
+  "cases": [
+    {"case_id":"l6.cross-eda-greenfield-evidence","agent":"codex","model":"gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":103690.579,"median_non_transport_wall_ms":36112.579,"median_input_tokens":70205.0},
+    {"case_id":"l6.cross-eda-greenfield-evidence","agent":"pi","model":"openai-codex/gpt-5.5","reasoning":"low","trials":3,"pass_rate":1.0,"semantic_pass_rate":1.0,"wall_budget_pass_rate":1.0,"median_wall_ms":92718.469,"median_non_transport_wall_ms":26879.624,"median_input_tokens":8419.0}
+  ]
+}

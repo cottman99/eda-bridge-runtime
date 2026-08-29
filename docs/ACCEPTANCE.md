@@ -37,6 +37,12 @@ credentials, host address, or task-specific geometry is included here.
   Pi's median wall time was 84.140 seconds versus Codex's 90.871 seconds; median time outside the
   Bridge/AEDT boundary was 16.984 versus 26.886 seconds. Provider-reported median input counts were
   6,394 versus 47,822. Owned scratch was removed after exact-path and process verification.
+- A post-release repeated cross-EDA sample used three interleaved independent trials per Agent.
+  Both passed 3/3 with exactly two plan calls, five projected runs, and separate vendor failure
+  boundaries per trial. Pi's median wall time was 92.718 seconds versus Codex's 103.691 seconds;
+  median time outside the Bridge/EDA boundary was 26.880 versus 36.113 seconds. The dedicated Pi
+  OAuth profile remained ready throughout the long-running sample. No solver ran, and all owned
+  ADS and AnsysEM scratch was removed after process and exact-path verification.
 
 ## 2026-08-30 Runtime alpha.22 installed acceptance
 

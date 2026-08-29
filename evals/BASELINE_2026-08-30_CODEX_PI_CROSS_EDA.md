@@ -2,23 +2,25 @@
 
 Date: 2026-08-30
 
-This sanitized single-run comparison asks one Agent turn to coordinate two exact vendor
-connections. It uses one ADS plan and one AnsysEM plan; Runtime does not pretend they form one
-cross-vendor transaction.
+This sanitized three-trial-per-Agent comparison asks one Agent turn to coordinate two exact vendor
+connections. Trials were interleaved. Each uses one ADS plan and one AnsysEM plan; Runtime does not
+pretend they form one cross-vendor transaction.
 
 | Agent | Result | Runtime calls | Projected runs | Jobs | Wall | Runtime + transport + EDA | Outside transport | Input tokens |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Codex | passed | 2 | 5 | 3 | 101.906 s | 66.233 s | 35.673 s | 71,422 |
-| Pi | passed | 2 | 5 | 3 | 90.060 s | 65.047 s | 25.013 s | 8,240 |
+| Codex | 3/3 passed | 2 each | 5 each | 3 each | 103.691 s median | 66.765 s median | 36.113 s median | 70,205 median |
+| Pi | 3/3 passed | 2 each | 5 each | 3 each | 92.718 s median | 64.954 s median | 26.880 s median | 8,419 median |
 
-Both clients preserved and freshly reopened the three-instance ADS design with seven assertions,
-then created, freshly inspected, and exported verified evidence for one AnsysEM Bundle. Neither
-ran a solver.
+All six trials preserved and freshly reopened the three-instance ADS design with seven assertions,
+then created, freshly inspected, and exported verified evidence for one AnsysEM Bundle. None ran a
+solver.
 
-Compared with the sum of the matching independent L5 plan trials, one-turn coordination reduced
-total wall time by about 19.9% for Codex and 14.1% for Pi. The useful pattern is therefore simple:
-batch already-known independent engineering work into one Agent turn, but retain one native plan
-and one failure boundary per EDA product. A new cross-vendor Runtime transaction is unnecessary.
+Compared with the current independent ADS L5 trial plus the repeated AnsysEM L5 median, one-turn
+coordination reduced total wall time by about 17.6% for Codex and 9.9% for Pi. Because ADS L5 is
+still a single trial, these savings remain directional rather than a regression threshold. The
+useful pattern is simple: batch already-known independent engineering work into one Agent turn,
+but retain one native plan and one failure boundary per EDA product. A new cross-vendor Runtime
+transaction is unnecessary.
 
 The first Codex trial stopped after AnsysEM project submission because the case text ambiguously
 placed `wait` next to vendor payload fields. Runtime correctly returned `waiting`; Codex did not
@@ -26,3 +28,6 @@ claim success. Pi inferred the intended step-level field, but that is not a reli
 case was corrected to state that `wait` is a plan-step field and is forbidden inside vendor
 payload. Both fresh independent reruns then passed. This is retained as evidence that structural
 field semantics are more reliable than relying on Agent interpretation.
+
+The repeated aggregate-only baseline is stored in
+`evals/baselines/codex-pi-gpt55-low-runtime-a23-l6-cross-eda-repeated-20260830.json`.

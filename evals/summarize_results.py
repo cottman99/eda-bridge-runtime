@@ -49,7 +49,7 @@ def row(result: dict[str, Any]) -> dict[str, Any]:
         "agent": str(result.get("agent") or "unknown"),
         "model": str(result.get("model") or "unknown"),
         "reasoning": str(result.get("reasoning") or "unknown"),
-        "trial": int(result.get("trial") or 1),
+        "trial": int(result["trial"]) if isinstance(result.get("trial"), int) else None,
         "outcome": outcome(result),
         "semantic_passed": semantic_passed(result),
         "wall_ms": metrics.get("wall_ms"),
@@ -69,9 +69,30 @@ def row(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def assign_missing_trials(rows: list[dict[str, Any]]) -> None:
+    """Number direct run_case results without overriding matrix-supplied trial identities."""
+    groups: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
+    for item in rows:
+        key = (item["case_id"], item["agent"], item["model"], item["reasoning"])
+        groups.setdefault(key, []).append(item)
+    for grouped_rows in groups.values():
+        used = {item["trial"] for item in grouped_rows if isinstance(item["trial"], int)}
+        candidate = 1
+        for item in grouped_rows:
+            if isinstance(item["trial"], int):
+                continue
+            while candidate in used:
+                candidate += 1
+            item["trial"] = candidate
+            used.add(candidate)
+            candidate += 1
+
+
 def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
+    rows = [row(result) for result in results]
+    assign_missing_trials(rows)
     rows = sorted(
-        (row(result) for result in results),
+        rows,
         key=lambda item: (
             item["level"] if isinstance(item["level"], int) else 99,
             item["case_id"],
