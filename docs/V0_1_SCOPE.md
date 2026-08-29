@@ -1,5 +1,16 @@
 # Version 0.1 scope
 
+## 0.1.0a23 — explicit plan structure and complete cross-Agent ladder
+
+- Describe vendor payload and Runtime step controls as separate machine-visible fields in both MCP
+  and Pi schemas, so durable `wait` policy cannot be mistaken for a vendor operation parameter.
+- Require explicit bounded-solver approval independently from disposable-mutation approval in the
+  evaluation runner and matrix.
+- Retain authenticated Codex/Pi evidence for exact idempotent replay, complete ADS and AnsysEM
+  lifecycles, one real generated-input Momentum solve, and one-turn cross-EDA coordination.
+- Keep one plan and failure boundary per vendor during cross-EDA work; do not introduce a false
+  cross-vendor transaction or rollback guarantee.
+
 ## 0.1.0a22 — precise Agent targeting and authenticated comparison
 
 - Filter compact audit calls and aggregate timing by one exact Agent session, one linked Bridge

@@ -3,6 +3,26 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 Runtime alpha.23 candidate acceptance
+
+- The complete suite passed 143 Python tests and three Pi adapter tests; Ruff, format, lock,
+  wheel/sdist build, Twine, and an isolated wheel-install doctor check passed.
+- Authenticated Codex and Pi both passed independent disposable idempotency, complete ADS and
+  AnsysEM one-call lifecycles, one real generated-input Momentum solve, and one-turn cross-EDA
+  coordination. Every EDA action remained sequential on the permitted display.
+- The real Momentum runs used independent copies and produced finite complete two-port data at 17
+  frequencies plus three non-empty result artifacts. Sources were preserved, no solver process
+  remained, and owned scratch was removed.
+- A first cross-EDA Codex trial exposed ambiguous case wording that placed durable `wait` next to
+  vendor payload fields. Runtime safely returned `waiting` after the durable submission, and the
+  Agent did not claim completion. Making the field boundary explicit in the shared MCP and Pi
+  schemas let both fresh reruns pass without a product-specific workaround.
+- Evaluation now requires solver approval independently from disposable mutation approval. A
+  selected solve case with mutation approval alone is skipped before any Agent or EDA starts.
+- Sanitized baselines retain only normalized outcomes, timing partitions, call counts, and
+  provider-reported token counters. Raw traces, payload paths, generated projects, and customer
+  data were not retained.
+
 ## 2026-08-30 Runtime alpha.22 installed acceptance
 
 - The release candidate passed 140 Python tests, three Pi adapter tests, Ruff check and format
