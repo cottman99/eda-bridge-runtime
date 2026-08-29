@@ -9,14 +9,20 @@ const JsonObject = Type.Record(Type.String(), Type.Unknown());
 const ResultView = Type.Object({
   fields: Type.Array(Type.Object({
     name: Type.String({ minLength: 1, maxLength: 64 }),
-    pointer: Type.String({ maxLength: 256 }),
+    pointer: Type.String({
+      maxLength: 256,
+      description: "Verified RFC 6901 path inside Bridge response.result; never infer it from final-answer keys.",
+    }),
     mode: Type.Optional(Type.Union([
       Type.Literal("value"),
       Type.Literal("count"),
       Type.Literal("exists"),
     ])),
   }, { additionalProperties: false }), { minItems: 1, maxItems: 16 }),
-}, { additionalProperties: false });
+}, {
+  additionalProperties: false,
+  description: "Advanced response-size optimization. Omit unless every pointer was verified from an earlier successful full response for the same operation and version; guessed value/count pointers fail the otherwise successful read.",
+});
 const TargetFields = {
   target: Type.Optional(JsonObject),
   context: Type.Optional(Type.String()),

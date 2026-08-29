@@ -1,5 +1,14 @@
 # Version 0.1 scope
 
+## 0.1.0a20 — Agent-safe result projection and isolated evaluation
+
+- Describe `result_view` as an advanced optimization that must be omitted until every pointer has
+  been verified from an earlier full response for the same operation and version.
+- Make evaluation runs expose only the Runtime tools declared by the selected case and require a
+  typed JSON final response without forcing the expected values.
+- Keep a failed no-tool Agent trial visible as an Agent reliability result rather than classifying
+  it as Runtime, SSH, Bridge, or EDA failure.
+
 ## 0.1.0a19 — mechanical read safety preflight
 
 - Let an intended typed `eda.read` directly trigger missing capability metadata discovery inside

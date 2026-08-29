@@ -444,6 +444,11 @@ def test_mcp_supports_legacy_and_modern_discovery():
         "eda.job.wait",
         "eda.job.events",
     ]
+    read_tool = next(item for item in tools if item["name"] == "eda.read")
+    result_view = read_tool["inputSchema"]["properties"]["result_view"]
+    assert "Omit this field unless every JSON Pointer was verified" in result_view["description"]
+    pointer = result_view["properties"]["fields"]["items"]["properties"]["pointer"]
+    assert "never infer it from final-answer keys" in pointer["description"]
 
 
 def test_mcp_requires_purpose_even_for_connection_discovery():

@@ -1,6 +1,6 @@
 {
   "name": "eda-bridge-runtime",
-  "version": "0.1.0-alpha.19",
+  "version": "0.1.0-alpha.20",
   "description": "Stable local and SSH execution path for EDA agent bridges",
   "author": {
     "name": "Pengfei Li",

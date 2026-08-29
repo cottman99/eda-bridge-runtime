@@ -3,6 +3,31 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Runtime alpha.20 Agent-contract acceptance
+
+- The Codex evaluator now exposes only each case's declared Runtime tools and generates a strict
+  final-response shape from the case contract. It does not put expected values into the Schema;
+  the deterministic scorer still decides correctness. This removed accidental `eda.run_plan`
+  selection and prose-only JSON failures from the measurement boundary.
+- With the prior Runtime tool description, all three isolated AnsysEM read trials guessed
+  unverified `result_view` pointers and were correctly rejected after the EDA read. The revised
+  public Schema states that projection is an advanced optimization whose pointers must come from
+  an earlier successful full response, not from desired final-answer keys.
+- Against the source candidate, two of three repeated AnsysEM inspections then passed in one
+  `eda.read` each, with no guessed projection. Median wall time was 22.994 s, median input was
+  37,488 tokens, and measured Runtime/SSH/Bridge transport was about 1.94--2.03 s in the passed
+  trials. The remaining trial made no tool call and returned failed fields; it remains recorded as
+  a Codex selection failure rather than being hidden or attributed to Runtime/AnsysEM.
+- No execution semantics, mutation permissions, SSH routing, or vendor payloads changed. The
+  candidate adds interface guidance plus evaluation isolation, and preserves full responses as
+  the default exploratory behavior.
+- All 133 Python tests, Ruff checks, formatting checks, three Pi adapter tests, wheel/sdist builds,
+  Twine metadata checks, and the packaged private-identifier scan passed.
+- The built wheel was installed into the local Runtime and the remote combined Runtime, ADS, and
+  AnsysEM environments; all reported `0.1.0a20`. A final installed-profile AnsysEM read on
+  `DISPLAY=:4.0` passed in one call with a 2.063-second measured transport, after which the exact
+  disposable Bundle and uploaded wheel were verified removed.
+
 ## 2026-08-29 Runtime alpha.19 mechanical read-preflight acceptance
 
 - Three real ADS session-status trials each used exactly one `eda.read`. Runtime mechanically

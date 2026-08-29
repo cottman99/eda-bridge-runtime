@@ -288,7 +288,8 @@ def score(case: dict[str, Any], observation: dict[str, Any], exit_code: int) -> 
     return {"passed": not failures, "failures": failures, "final": final}
 
 
-def codex_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
+def codex_command(args: argparse.Namespace, case: dict[str, Any], output_schema: Path) -> list[str]:
+    enabled_tools = sorted(set(case.get("allowed_tools", [])))
     command = [
         args.codex_command,
         "exec",
@@ -301,16 +302,46 @@ def codex_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
         [
             "--ephemeral",
             "--json",
+            "--output-schema",
+            str(output_schema),
             "--model",
             args.model,
             "--config",
             f'model_reasoning_effort="{args.thinking}"',
+            "--config",
+            "mcp_servers.eda-bridge-runtime.enabled_tools="
+            + json.dumps(enabled_tools, separators=(",", ":")),
             "-C",
             str(args.cwd),
             case["prompt"],
         ]
     )
     return command
+
+
+def final_output_schema(case: dict[str, Any]) -> dict[str, Any]:
+    """Constrain only the response shape; scoring still decides whether values are correct."""
+    expected = case["expected_final"]
+    examples = {**expected.get("minimum", {}), **expected.get("equals", {})}
+    properties: dict[str, dict[str, str]] = {}
+    for name, value in examples.items():
+        value_type = (
+            "boolean"
+            if isinstance(value, bool)
+            else "integer"
+            if isinstance(value, int)
+            else "number"
+            if isinstance(value, float)
+            else "string"
+        )
+        properties[name] = {"type": value_type}
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": properties,
+        "required": sorted(properties),
+        "additionalProperties": False,
+    }
 
 
 def pi_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
@@ -443,11 +474,19 @@ def main() -> int:
         parser.error("mutation case requires explicit --approve-mutations")
     validate_case(case)
     case["prompt"] = render_prompt(case, variables(args.var))
-    command = (
-        native_command(codex_command(args, case))
-        if args.agent == "codex"
-        else pi_command(args, case)
-    )
+    schema_path: Path | None = None
+    if args.agent == "codex":
+        schema_path = (args.output or args.cwd / ".codex_tmp" / case["case_id"]).with_suffix(
+            ".output-schema.json"
+        )
+        schema_path.parent.mkdir(parents=True, exist_ok=True)
+        schema_path.write_text(
+            json.dumps(final_output_schema(case), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        command = native_command(codex_command(args, case, schema_path))
+    else:
+        command = pi_command(args, case)
     timeout = int(case["budgets"]["max_wall_seconds"]) + 15
     started = time.monotonic()
     try:
@@ -467,6 +506,9 @@ def main() -> int:
     except subprocess.TimeoutExpired as exc:
         output = str(exc.stdout or "")
         exit_code = 124
+    finally:
+        if schema_path is not None:
+            schema_path.unlink(missing_ok=True)
     wall_ms = round((time.monotonic() - started) * 1000, 3)
     events = json_lines(output)
     observation = parse_codex(events) if args.agent == "codex" else parse_pi(events)

@@ -39,7 +39,12 @@ Agent context. Full responses remain the default for exploration.
 
 ## Current alpha
 
-`0.1.0a19` makes missing read-only safety discovery a mechanical Runtime preflight, so an Agent can
+`0.1.0a20` keeps missing read-only safety discovery mechanical and makes optional result projection
+explicitly opt-in only after its response paths are known, so Agents do not turn a successful EDA
+read into a failed guessed projection. The evaluation client also constrains each case to its
+declared Runtime tools and machine-readable final shape.
+
+`0.1.0a19` made missing read-only safety discovery a mechanical Runtime preflight, so an Agent can
 perform a safe typed read in one call without a separate capability turn. `0.1.0a18` lets one typed read or submission optionally wait for its durable terminal result in
 the same Agent call, removing a second status-versus-wait decision without changing Bridge job
 semantics. `0.1.0a17` carries the same bounded result views through durable waits and read-only plan steps,
@@ -75,7 +80,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a19"
+python -m pip install "eda-bridge-runtime==0.1.0a20"
 eda-runtime doctor
 ```
 

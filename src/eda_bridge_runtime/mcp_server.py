@@ -50,6 +50,15 @@ _RESULT_VIEW_SCHEMA = _object_schema(
     },
     ["fields"],
 )
+_RESULT_VIEW_SCHEMA["description"] = (
+    "Advanced response-size optimization. Omit this field unless every JSON Pointer was "
+    "verified from an earlier successful full response for the same operation and version. "
+    "Pointers are relative to Bridge response.result, not names desired in the Agent's final "
+    "answer; guessed value/count pointers fail the otherwise successful read."
+)
+_RESULT_VIEW_SCHEMA["properties"]["fields"]["items"]["properties"]["pointer"]["description"] = (
+    "Verified RFC 6901 path inside Bridge response.result; never infer it from final-answer keys."
+)
 
 _WAIT_SCHEMA = _object_schema(
     {

@@ -147,7 +147,7 @@ def test_codex_mutation_approval_uses_review_not_unrestricted_bypass():
         approve_mutations=True,
         cwd=Path.cwd(),
     )
-    command = runner.codex_command(args, {"prompt": "bounded mutation"})
+    command = runner.codex_command(args, {"prompt": "bounded mutation"}, Path("schema.json"))
 
     assert "--approve-for-me" in command
     assert "--dangerously-bypass-approvals-and-sandbox" not in command
@@ -277,9 +277,17 @@ def test_codex_command_applies_shared_thinking_budget():
         cwd=Path("workspace"),
     )
 
-    command = runner.codex_command(args, {"prompt": "inspect"})
+    command = runner.codex_command(
+        args,
+        {"prompt": "inspect", "allowed_tools": ["eda.read"]},
+        Path("schema.json"),
+    )
 
     assert 'model_reasoning_effort="low"' in command
+    assert command[command.index("--output-schema") + 1] == "schema.json"
+    assert any(
+        value == 'mcp_servers.eda-bridge-runtime.enabled_tools=["eda.read"]' for value in command
+    )
 
 
 def test_pi_command_exposes_only_case_allowed_runtime_tools():
@@ -312,9 +320,29 @@ def test_codex_command_can_measure_the_unscoped_global_profile():
         cwd=Path("workspace"),
     )
 
-    command = runner.codex_command(args, {"prompt": "inspect"})
+    command = runner.codex_command(args, {"prompt": "inspect"}, Path("schema.json"))
 
     assert "--profile" not in command
+
+
+def test_final_output_schema_constrains_shape_without_forcing_expected_values():
+    runner = load_runner()
+    schema = runner.final_output_schema(
+        {
+            "expected_final": {
+                "equals": {"status": "passed", "complete": True},
+                "minimum": {"count": 1},
+            }
+        }
+    )
+
+    assert schema["required"] == ["complete", "count", "status"]
+    assert schema["properties"] == {
+        "count": {"type": "integer"},
+        "status": {"type": "string"},
+        "complete": {"type": "boolean"},
+    }
+    assert schema["additionalProperties"] is False
 
 
 def test_all_public_eval_cases_have_a_valid_contract():

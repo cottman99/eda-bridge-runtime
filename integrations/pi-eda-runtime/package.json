@@ -1,6 +1,6 @@
 {
   "name": "@eda-bridge-runtime/pi-eda-runtime",
-  "version": "0.1.0-alpha.9",
+  "version": "0.1.0-alpha.10",
   "private": true,
   "description": "Thin Pi Agent client adapter for EDA Bridge Runtime",
   "type": "module",
