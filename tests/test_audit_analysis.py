@@ -1,4 +1,8 @@
+import json
+
 from eda_bridge_runtime.audit_analysis import analyze_events
+from eda_bridge_runtime.cli import main
+from eda_bridge_runtime.ledger import ExecutionLedger
 
 
 def pair(
@@ -10,11 +14,13 @@ def pair(
     job_id=None,
     ms=10,
     session="session-one",
+    source="mcp-runtime",
 ):
     return [
         {
             "run_id": run_id,
             "event_type": "agent.tool.requested",
+            "source": source,
             "payload": {
                 "tool": tool,
                 "action_sha256": action,
@@ -24,6 +30,7 @@ def pair(
         {
             "run_id": run_id,
             "event_type": "agent.tool.completed",
+            "source": source,
             "payload": {
                 "execution": {
                     "state": state,
@@ -95,3 +102,53 @@ def test_analysis_treats_unknown_actor_session_as_unscoped():
     result = analyze_events(events)
 
     assert result["findings"] == []
+
+
+def test_analysis_prefers_runtime_observation_over_duplicate_hook_observation():
+    events = [
+        *pair("hook", "eda.read", "same", source="codex-hook"),
+        *pair("runtime", "eda.read", "same", source="mcp-runtime"),
+    ]
+
+    result = analyze_events(events)
+
+    assert result["source_policy"] == "mcp-runtime-preferred"
+    assert result["tool_calls"] == 1
+    assert result["completed_calls"] == 1
+    assert result["event_count"] == 2
+
+
+def test_audit_analyze_reads_complete_interleaved_runtime_calls(tmp_path, capsys):
+    database = tmp_path / "interleaved.sqlite3"
+    with ExecutionLedger(database) as ledger:
+        for run_id in ("run-one", "run-two"):
+            ledger.append(
+                run_id=run_id,
+                request_id=f"request-{run_id}",
+                event_type="agent.tool.requested",
+                source="mcp-runtime",
+                payload={
+                    "tool": "eda.read",
+                    "action_sha256": run_id,
+                    "actor": {"session_id": {"value": "session", "provenance": "declared"}},
+                },
+            )
+        for run_id in ("run-one", "run-two"):
+            ledger.append(
+                run_id=run_id,
+                request_id=f"request-{run_id}",
+                event_type="agent.tool.completed",
+                source="mcp-runtime",
+                payload={
+                    "execution": {"state": "passed", "run_id": run_id},
+                    "timing": {"mcp_server_ms": 1.0},
+                },
+            )
+            ledger.finalize(run_id)
+
+    assert main(["audit", "analyze", "--database", str(database), "--limit", "2"]) == 0
+    result = json.loads(capsys.readouterr().out)
+
+    assert result["tool_calls"] == 2
+    assert result["completed_calls"] == 2
+    assert result["failed_calls"] == 0

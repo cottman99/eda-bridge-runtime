@@ -124,11 +124,19 @@ def compact_audit_calls_from_database(
     database: str | Path | None = None, *, limit: int = 20
 ) -> list[dict[str, Any]]:
     """Read complete recent Runtime calls without assuming adjacent event writes."""
+    events = recent_audit_run_events(database, limit=limit)
+    return compact_audit_calls(events)[-max(1, min(limit, 1000)) :]
+
+
+def recent_audit_run_events(
+    database: str | Path | None = None, *, limit: int = 20
+) -> list[dict[str, Any]]:
+    """Read complete recent call groups from the authoritative observation source."""
     with ExecutionLedger(database or default_agent_audit_path()) as ledger:
         events = ledger.recent_run_events(limit=limit, source="mcp-runtime")
         if not events:
             events = ledger.recent_run_events(limit=limit)
-    return compact_audit_calls(events)[-max(1, min(limit, 1000)) :]
+    return events
 
 
 def compact_audit_calls(events: list[dict[str, Any]]) -> list[dict[str, Any]]:

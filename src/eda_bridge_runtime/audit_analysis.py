@@ -61,6 +61,9 @@ def _calls(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
     """Return aggregate facts and conservative findings without raw inputs or identifiers."""
+    runtime_events = [event for event in events if event.get("source") == "mcp-runtime"]
+    if runtime_events:
+        events = runtime_events
     calls = _calls(events)
     replay_groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     scoped_groups: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
@@ -131,6 +134,7 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
             findings.append({"code": code, "count": count})
     return {
         "schema_version": "eda-runtime.audit-analysis/v1",
+        "source_policy": "mcp-runtime-preferred",
         "event_count": len(events),
         "tool_calls": len(calls),
         "completed_calls": sum(call["completed"] for call in calls),

@@ -159,10 +159,10 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, indent=2))
         return 0
     if args.command == "audit" and args.audit_command == "analyze":
-        from .agent_audit import audit_events
+        from .agent_audit import recent_audit_run_events
         from .audit_analysis import analyze_events
 
-        events = audit_events(args.database, limit=args.limit)
+        events = recent_audit_run_events(args.database, limit=args.limit)
         print(json.dumps(analyze_events(events), indent=2))
         return 0
     if args.command == "ledger":
