@@ -1,0 +1,42 @@
+# Codex L5 EDA lifecycle baseline
+
+Date: 2026-08-29
+
+This is a sanitized, single-run baseline for the first complete disposable
+engineering lifecycles. It records normalized measurements only. No raw Agent
+trace, private path, customer artifact, or documentation passage is retained.
+
+## Configuration
+
+- Agent: Codex, `gpt-5.5`, medium reasoning, narrow `eda-runtime` profile
+- Runtime: `0.1.0a12` plus evaluation changes through commit `6f9c032`
+- ADS Bridge: `0.1.0a36`, ADS 2026 Update 2.1, `DISPLAY=:4.0`
+- AnsysEM Bridge: `0.2.0a4`, AEDT 2026.1, `DISPLAY=:4.0`
+- Solve: forbidden in both cases
+
+## Normalized results
+
+| Case | Result | Calls | Jobs | Wall | Runtime + SSH + Bridge/EDA | Outside transport | Transport share | Input tokens |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| ADS blank workspace -> structured copied schematic -> fresh reopen | passed | 3 | 0 | 49.435 s | 2.593 s | 46.842 s | 5.245% | 91,219 |
+| AnsysEM project create -> fresh Bundle inspect -> verified AEDT image | passed | 7 | 3 | 117.376 s | 66.297 s | 51.079 s | 56.483% | 165,016 |
+
+The cases deliberately follow each product's native execution model and are
+not identical workloads. They compare orchestration quality and measurement
+boundaries, not ADS versus AEDT product speed.
+
+## Findings
+
+1. The Agent/client portion was similar in absolute time: about 47-51 seconds.
+   This is the next common optimization target.
+2. ADS Bridge work was already small relative to the Agent. More SSH tuning
+   cannot materially improve this case.
+3. The AnsysEM lifecycle contains real AEDT process, save, fresh-reopen, durable
+   job, inspection, and image-export cost. Its measured EDA path therefore
+   dominates more than half of the wall time.
+4. Both cases completed without arbitrary code, GUI gestures, solve, customer
+   data, blind replay, or retained disposable artifacts.
+5. A matching Pi row remains pending interactive `openai-codex` login. The
+   matrix classifies missing authentication once and skips repeats, so this
+   pending comparison does not contaminate Bridge or EDA failure rates.
+
