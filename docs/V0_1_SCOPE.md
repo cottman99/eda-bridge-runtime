@@ -1,6 +1,6 @@
 # Version 0.1 scope
 
-## Next alpha candidate — bounded lifecycle and reproducible Agent evaluation
+## 0.1.0a9 — safe read lane, bounded lifecycle, and reproducible Agent evaluation
 
 - Close local and SSH JSON-lines workers through EOF first, then terminate only the isolated
   process tree within a fixed bound so cancelled MCP work does not leave child processes behind.
@@ -8,6 +8,10 @@
   enablement settings; keep the ordinary Codex configuration unchanged.
 - Add deterministic public evaluation cases and a normalized scorer for Codex and Pi. Keep this
   developer evaluation harness outside the Runtime kernel and never commit real-host raw traces.
+- Expose a statically read-only `eda.read` MCP tool that admits only operations proven non-mutating
+  by cached Bridge capabilities; keep unknown and mutating work on `eda.submit`.
+- Prefer an exact registered connection id over a redundant Agent-guessed EDA label while keeping
+  captured Context identity strict.
 
 ## 0.1.0a8 — capability-aware submission and low-token durable waiting
 

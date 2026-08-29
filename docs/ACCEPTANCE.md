@@ -3,6 +3,21 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Runtime alpha.9 safe-read and evaluation acceptance
+
+- The Python suite passed 71 tests, Ruff and formatting checks; the Pi adapter passed all three
+  Node tests against the candidate Runtime and exposed exactly nine MCP tools.
+- Codex completed the ADS L2 case with exactly two successful calls: capability discovery followed
+  by `eda.read`. It reported 13 live sessions without shell, GUI, mutation, retry, or permission
+  rejection.
+- Codex completed the AnsysEM L2 case with exactly three successful calls: capability discovery,
+  `eda.read`, and one durable `eda.job.wait`. Fresh inspection confirmed a sanitized scratch Bundle
+  and `edb.def`; no solve or customer project was used.
+- The same scorer classified Pi startup as `agent_auth_unavailable` in 656 ms with zero tool calls,
+  instead of misreporting it as a Runtime, SSH, or EDA failure.
+- Real ADS and AnsysEM SSH capability calls completed in about 0.9 seconds; bounded close completed
+  in 39-53 ms and left no new SSH descendant processes.
+
 ## 2026-08-29 Pi autonomous Runtime alpha.8 acceptance
 
 - Pi `0.84.4` with `openai-codex/gpt-5.5` received one complete task file, read the selected
