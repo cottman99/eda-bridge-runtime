@@ -61,6 +61,11 @@ def _parser() -> argparse.ArgumentParser:
     audit_list = audit_sub.add_parser("list")
     audit_list.add_argument("--database", type=Path)
     audit_list.add_argument("--limit", type=int, default=20)
+    audit_list.add_argument(
+        "--full",
+        action="store_true",
+        help="Return complete hash-chained events instead of compact call rows.",
+    )
     audit_analyze = audit_sub.add_parser("analyze")
     audit_analyze.add_argument("--database", type=Path)
     audit_analyze.add_argument("--limit", type=int, default=1000)
@@ -141,9 +146,17 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         return 0
     if args.command == "audit" and args.audit_command == "list":
-        from .agent_audit import audit_events
+        from .agent_audit import audit_events, compact_audit_calls_from_database
 
-        print(json.dumps({"events": audit_events(args.database, limit=args.limit)}, indent=2))
+        if args.full:
+            result = {"events": audit_events(args.database, limit=args.limit)}
+        else:
+            result = {
+                "schema_version": "eda-runtime.audit-calls/v1",
+                "source_policy": "mcp-runtime-preferred",
+                "calls": compact_audit_calls_from_database(args.database, limit=args.limit),
+            }
+        print(json.dumps(result, indent=2))
         return 0
     if args.command == "audit" and args.audit_command == "analyze":
         from .agent_audit import audit_events

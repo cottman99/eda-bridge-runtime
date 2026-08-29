@@ -120,6 +120,97 @@ def audit_events(database: str | Path | None = None, *, limit: int = 20) -> list
     return events[-max(1, min(limit, 1000)) :]
 
 
+def compact_audit_calls_from_database(
+    database: str | Path | None = None, *, limit: int = 20
+) -> list[dict[str, Any]]:
+    """Read complete recent Runtime calls without assuming adjacent event writes."""
+    with ExecutionLedger(database or default_agent_audit_path()) as ledger:
+        events = ledger.recent_run_events(limit=limit, source="mcp-runtime")
+        if not events:
+            events = ledger.recent_run_events(limit=limit)
+    return compact_audit_calls(events)[-max(1, min(limit, 1000)) :]
+
+
+def compact_audit_calls(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Project full events into authoritative, context-light Runtime calls.
+
+    Codex hooks and MCP can both observe one invocation without exposing a shared
+    correlation id. Runtime observations are therefore canonical when present;
+    hook-only rows are a fallback for databases that contain no Runtime records.
+    """
+    calls: dict[str, dict[str, Any]] = {}
+    order: list[str] = []
+    for event in events:
+        run_id = str(event.get("run_id") or "")
+        if not run_id:
+            continue
+        event_type = str(event.get("event_type") or "")
+        payload = event.get("payload")
+        payload = payload if isinstance(payload, Mapping) else {}
+        if run_id not in calls:
+            calls[run_id] = {
+                "timestamp": event.get("timestamp"),
+                "source": event.get("source"),
+                "status": "observed",
+            }
+            order.append(run_id)
+        row = calls[run_id]
+        if event_type == "agent.tool.requested":
+            row.update(
+                {
+                    "timestamp": event.get("timestamp"),
+                    "source": event.get("source"),
+                    "tool": payload.get("tool"),
+                    "purpose": payload.get("purpose"),
+                    "status": "requested",
+                }
+            )
+            actor = _compact_actor(payload.get("actor"))
+            if actor:
+                row["actor"] = actor
+            plan_steps = payload.get("plan_steps")
+            if isinstance(plan_steps, list):
+                row["plan_step_count"] = len(plan_steps)
+        elif event_type == "agent.tool.completed":
+            execution = payload.get("execution")
+            execution = execution if isinstance(execution, Mapping) else {}
+            row["status"] = execution.get("state") or "completed"
+            row["terminal"] = bool(execution.get("terminal", False))
+            steps = execution.get("steps")
+            if isinstance(steps, list):
+                row["completed_step_count"] = len(steps)
+            timing = payload.get("timing")
+            timing = timing if isinstance(timing, Mapping) else {}
+            if timing.get("mcp_server_ms") is not None:
+                row["elapsed_ms"] = timing["mcp_server_ms"]
+    rows = [calls[run_id] for run_id in order]
+    runtime_rows = [row for row in rows if row.get("source") == "mcp-runtime"]
+    return runtime_rows or rows
+
+
+def _compact_actor(value: Any) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        return {}
+    actor: dict[str, Any] = {}
+    for key in (
+        "agent_family",
+        "agent_version",
+        "client",
+        "client_version",
+        "model",
+        "reasoning",
+        "skill",
+        "session_id",
+    ):
+        field = value.get(key)
+        if not isinstance(field, Mapping):
+            continue
+        item = field.get("value")
+        if item not in {None, "", "unknown"}:
+            actor[key] = item
+    return actor
+
+
 def _audit_run_id(tool_call_id: str) -> str:
     digest = hashlib.sha256(tool_call_id.encode("utf-8")).hexdigest()[:32]
     return f"agent_{digest}"

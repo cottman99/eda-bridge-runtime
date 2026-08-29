@@ -19,7 +19,10 @@ The plugin additionally installs `PreToolUse` and `PostToolUse` hooks scoped onl
 tools. Where the Codex surface supports them, they enrich the same audit database with session,
 turn, active model, permission mode, and tool-call identity. Hooks are optional: they do not define
 whether the base Runtime record exists. Neither path parses the chat transcript or stores raw
-operation payloads. Inspect the bounded recent view with `eda-runtime audit list`.
+operation payloads. Inspect the bounded recent view with `eda-runtime audit list`; it returns one
+compact Runtime-observed row per executed call by default and does not double-count matching Hook
+observations. Use `--full` only for explicit forensic inspection of the complete hash-chained events,
+including Hook-only attempts and identity enrichment.
 Use `eda-runtime audit analyze` for a privacy-preserving efficiency summary. It
 separates intentional idempotent replay from repeated discovery, repeated
 failure, and avoidable status polling, and reports bounded timing totals without

@@ -3,6 +3,19 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Runtime alpha.15 compact-audit and shutdown acceptance
+
+- On 24 real recent calls, compact audit output retained tool, motive, observed client, state,
+  timing, and plan-step counts while shrinking from 40,734 to 8,980 characters, a 78.0% reduction.
+  The full hash-chained events remain available only through explicit `audit list --full`.
+- Review-found duplicate Hook/MCP observations and interleaved request/completion windows are
+  covered by regression tests. Compact reads select authoritative Runtime executions and query
+  complete recent run groups rather than guessing a fixed event window.
+- The Windows descendant-close regression was reproduced twice under independent-review load.
+  After the failed-`taskkill` fallback and direct descendant termination were added, 64 concurrent
+  stress runs, 50 focused review tests, and the complete 110-test suite passed in the same restricted
+  review environment. Normal EOF shutdown and non-Windows behavior remain unchanged.
+
 ## 2026-08-29 Runtime alpha.14 canonical-Skill acceptance
 
 - A real Codex-home discovery selected exactly five intended EDA Skills. Runtime resolved to the

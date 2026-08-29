@@ -18,9 +18,11 @@ codex exec --profile eda-runtime "Inspect the selected EDA target"
 
 Regenerate the profile after installing or removing Skills. Engineers do not maintain the generated
 path list by hand. Hidden backup and archive directories are ignored so historical
-Skill copies cannot re-enter the Agent prompt.
+Skill copies cannot re-enter the Agent prompt. If several visible plugin releases expose the same
+Skill name, exactly one canonical source is enabled: a direct installation wins, otherwise the
+highest semantic plugin version is selected and older cache entries remain disabled.
 
 For a separately authorized unattended evaluation, generate a different
 profile with `--approve-mutations`. It pre-approves only the typed Runtime
-`eda.submit` tool; it does not disable the sandbox, approve shell commands, or
+`eda.submit` and `eda.run_plan` tools; it does not disable the sandbox, approve shell commands, or
 change the ordinary `eda-runtime` profile.

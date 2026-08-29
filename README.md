@@ -36,7 +36,9 @@ disconnect, and returns the result with its linked timing and evidence.
 
 ## Current alpha
 
-`0.1.0a14` keeps generated Codex profiles narrow when several cached releases expose the same
+`0.1.0a15` makes routine audit retrieval compact while retaining explicit forensic expansion, and
+hardens bounded Windows transport shutdown when `taskkill` cannot finish the descendant tree.
+`0.1.0a14` kept generated Codex profiles narrow when several cached releases expose the same
 Skill: one canonical source is enabled and retained older copies are explicitly disabled.
 `0.1.0a13` added one-call validated execution plans for short deterministic EDA sequences. Runtime
 prevalidates target-specific capabilities and unique mutation identities before the first change,
@@ -53,6 +55,8 @@ Runtime-owned transport after an upgrade; it never closes or modifies the EDA ap
 
 `0.1.0a5` added optional Codex lifecycle enrichment for session, turn, model, permission mode, and
 tool-call identity. The append-only audit stores neither raw operation payloads nor chat transcripts.
+Audit retrieval is context-bounded: `audit analyze` returns aggregate waste signals, `audit list`
+returns compact call rows, and only explicit `audit list --full` expands forensic events.
 
 `0.1.0a4` adds rich bounded Context snapshots, stable origin routing, direct
 one-submit execution, and automatic origin binding during connection setup.
@@ -60,7 +64,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a14"
+python -m pip install "eda-bridge-runtime==0.1.0a15"
 eda-runtime doctor
 ```
 

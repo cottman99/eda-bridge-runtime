@@ -3,7 +3,12 @@ import json
 
 import pytest
 
-from eda_bridge_runtime.agent_audit import audit_events, record_codex_hook
+from eda_bridge_runtime.agent_audit import (
+    audit_events,
+    compact_audit_calls,
+    compact_audit_calls_from_database,
+    record_codex_hook,
+)
 from eda_bridge_runtime.ledger import ExecutionLedger
 from eda_bridge_runtime.protocol import RUN_VIEW_PROTOCOL
 
@@ -62,6 +67,144 @@ def test_codex_hook_records_hash_chained_identity_without_raw_payload(tmp_path):
     run_id = "agent_" + hashlib.sha256(b"tool-one").hexdigest()[:32]
     with ExecutionLedger(database) as ledger:
         assert ledger.verify(run_id) is True
+
+
+def test_compact_audit_calls_preserve_motive_and_identity_without_forensic_noise(tmp_path):
+    database = tmp_path / "agent-audit.sqlite3"
+    pre = _event("tool-compact")
+    record_codex_hook(pre, phase="pre", database=database)
+    record_codex_hook(
+        {
+            **pre,
+            "tool_response": {
+                "structuredContent": {
+                    "run": {
+                        "protocol": RUN_VIEW_PROTOCOL,
+                        "run_id": "run-compact",
+                        "request_id": "request-compact",
+                        "state": "passed",
+                        "terminal": True,
+                    }
+                }
+            },
+        },
+        phase="post",
+        database=database,
+    )
+
+    calls = compact_audit_calls(audit_events(database))
+
+    assert calls == [
+        {
+            "timestamp": calls[0]["timestamp"],
+            "source": "codex-hook",
+            "status": "passed",
+            "tool": "eda.submit",
+            "purpose": "Inspect one synthetic design",
+            "actor": {
+                "agent_family": "codex",
+                "model": "gpt-test",
+                "session_id": "session-one",
+            },
+            "terminal": True,
+        }
+    ]
+    assert "input_sha256" not in json.dumps(calls)
+    assert "run-compact" not in json.dumps(calls)
+
+
+def test_audit_list_cli_is_compact_by_default_and_full_only_when_requested(tmp_path, capsys):
+    from eda_bridge_runtime.cli import main
+
+    database = tmp_path / "agent-audit.sqlite3"
+    record_codex_hook(_event("tool-cli"), phase="pre", database=database)
+
+    assert main(["audit", "list", "--database", str(database), "--limit", "1"]) == 0
+    compact = json.loads(capsys.readouterr().out)
+    assert compact["schema_version"] == "eda-runtime.audit-calls/v1"
+    assert compact["source_policy"] == "mcp-runtime-preferred"
+    assert compact["calls"][0]["purpose"] == "Inspect one synthetic design"
+    assert "input_sha256" not in json.dumps(compact)
+
+    assert main(["audit", "list", "--database", str(database), "--limit", "1", "--full"]) == 0
+    full = json.loads(capsys.readouterr().out)
+    assert full["events"][0]["payload"]["input_sha256"]
+
+
+def test_compact_audit_calls_prefer_runtime_facts_over_duplicate_hook_observation():
+    actor = {
+        "client": {"value": "codex", "provenance": "observed"},
+    }
+    events = [
+        {
+            "run_id": "hook-one",
+            "timestamp": "2026-01-01T00:00:00Z",
+            "event_type": "agent.tool.requested",
+            "source": "codex-hook",
+            "payload": {
+                "tool": "eda.read",
+                "purpose": "Inspect design",
+                "actor": actor,
+            },
+        },
+        {
+            "run_id": "runtime-one",
+            "timestamp": "2026-01-01T00:00:01Z",
+            "event_type": "agent.tool.requested",
+            "source": "mcp-runtime",
+            "payload": {
+                "tool": "eda.read",
+                "purpose": "Inspect design",
+                "actor": actor,
+            },
+        },
+        {
+            "run_id": "runtime-one",
+            "timestamp": "2026-01-01T00:00:02Z",
+            "event_type": "agent.tool.completed",
+            "source": "mcp-runtime",
+            "payload": {
+                "execution": {"state": "passed", "terminal": True},
+                "timing": {"mcp_server_ms": 12.0},
+            },
+        },
+    ]
+
+    calls = compact_audit_calls(events)
+
+    assert len(calls) == 1
+    assert calls[0]["source"] == "mcp-runtime"
+    assert calls[0]["status"] == "passed"
+
+
+def test_compact_database_read_keeps_interleaved_request_and_completion_together(tmp_path):
+    database = tmp_path / "interleaved.sqlite3"
+    with ExecutionLedger(database) as ledger:
+        for run_id, purpose in (("run-one", "First call"), ("run-two", "Second call")):
+            ledger.append(
+                run_id=run_id,
+                request_id=f"request-{run_id}",
+                event_type="agent.tool.requested",
+                source="mcp-runtime",
+                payload={"tool": "eda.read", "purpose": purpose},
+            )
+        for run_id in ("run-one", "run-two"):
+            ledger.append(
+                run_id=run_id,
+                request_id=f"request-{run_id}",
+                event_type="agent.tool.completed",
+                source="mcp-runtime",
+                payload={
+                    "execution": {"state": "passed", "terminal": True},
+                    "timing": {"mcp_server_ms": 1.0},
+                },
+            )
+            ledger.finalize(run_id)
+
+    calls = compact_audit_calls_from_database(database, limit=2)
+
+    assert [call["purpose"] for call in calls] == ["First call", "Second call"]
+    assert all(call["status"] == "passed" for call in calls)
 
 
 def test_codex_hook_ignores_unrelated_tools(tmp_path):

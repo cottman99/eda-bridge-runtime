@@ -1,5 +1,14 @@
 # Version 0.1 scope
 
+## 0.1.0a15 — context-light audit retrieval and bounded Windows cleanup
+
+- Keep full append-only audit events unchanged while making recent-call retrieval a compact,
+  Runtime-observed projection; explicit `--full` remains available for forensic inspection.
+- Query complete recent run groups from SQLite so concurrent event writes cannot split a call, and
+  avoid double-counting optional Codex Hook observations as additional EDA executions.
+- On forced Windows transport shutdown, snapshot descendants, detect a failed `taskkill`, terminate
+  still-live captured processes directly, and wait within the existing bounded close budget.
+
 ## 0.1.0a14 — canonical Skill selection
 
 - Keep historical plugin caches intact while enabling exactly one canonical path for each requested

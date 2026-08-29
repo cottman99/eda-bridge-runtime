@@ -10,6 +10,7 @@ import shlex
 import signal
 import subprocess
 import threading
+import time
 from abc import ABC, abstractmethod
 from collections import deque
 from collections.abc import Callable, Sequence
@@ -153,8 +154,9 @@ class PersistentStdioTransport(Transport):
         if process.poll() is not None:
             return
         if os.name == "nt":
+            descendants = _windows_descendant_pids(process.pid)
             try:
-                subprocess.run(  # noqa: S603
+                completed = subprocess.run(  # noqa: S603
                     ["taskkill", "/PID", str(process.pid), "/T", "/F"],
                     stdin=subprocess.DEVNULL,
                     stdout=subprocess.DEVNULL,
@@ -163,9 +165,14 @@ class PersistentStdioTransport(Transport):
                     check=False,
                     creationflags=subprocess.CREATE_NO_WINDOW,
                 )
+                if completed.returncode != 0:
+                    process.kill()
             except (OSError, subprocess.TimeoutExpired):
-                process.kill()
-            cls._wait(process, timeout=0.75)
+                with contextlib.suppress(OSError):
+                    process.kill()
+            deadline = time.monotonic() + 0.9
+            cls._wait(process, timeout=min(0.25, max(0.0, deadline - time.monotonic())))
+            _terminate_and_wait_for_windows_processes(descendants, deadline=deadline)
             return
 
         try:
@@ -179,6 +186,96 @@ class PersistentStdioTransport(Transport):
         except ProcessLookupError:
             return
         cls._wait(process, timeout=0.75)
+
+
+def _windows_descendant_pids(root_pid: int) -> set[int]:
+    """Snapshot descendants before taskkill can orphan them from their parent."""
+    if os.name != "nt":
+        return set()
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        class ProcessEntry(ctypes.Structure):
+            _fields_ = [
+                ("dwSize", wintypes.DWORD),
+                ("cntUsage", wintypes.DWORD),
+                ("th32ProcessID", wintypes.DWORD),
+                ("th32DefaultHeapID", ctypes.c_size_t),
+                ("th32ModuleID", wintypes.DWORD),
+                ("cntThreads", wintypes.DWORD),
+                ("th32ParentProcessID", wintypes.DWORD),
+                ("pcPriClassBase", wintypes.LONG),
+                ("dwFlags", wintypes.DWORD),
+                ("szExeFile", wintypes.WCHAR * 260),
+            ]
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+        kernel32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+        kernel32.Process32FirstW.argtypes = [wintypes.HANDLE, ctypes.POINTER(ProcessEntry)]
+        kernel32.Process32FirstW.restype = wintypes.BOOL
+        kernel32.Process32NextW.argtypes = [wintypes.HANDLE, ctypes.POINTER(ProcessEntry)]
+        kernel32.Process32NextW.restype = wintypes.BOOL
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        snapshot = kernel32.CreateToolhelp32Snapshot(0x00000002, 0)
+        if snapshot == wintypes.HANDLE(-1).value:
+            return set()
+        parents: dict[int, int] = {}
+        try:
+            entry = ProcessEntry()
+            entry.dwSize = ctypes.sizeof(entry)
+            available = bool(kernel32.Process32FirstW(snapshot, ctypes.byref(entry)))
+            while available:
+                parents[int(entry.th32ProcessID)] = int(entry.th32ParentProcessID)
+                available = bool(kernel32.Process32NextW(snapshot, ctypes.byref(entry)))
+        finally:
+            kernel32.CloseHandle(snapshot)
+    except (AttributeError, OSError):
+        return set()
+
+    descendants: set[int] = set()
+    frontier = {root_pid}
+    while frontier:
+        children = {pid for pid, parent in parents.items() if parent in frontier}
+        children -= descendants
+        descendants.update(children)
+        frontier = children
+    return descendants
+
+
+def _terminate_and_wait_for_windows_processes(process_ids: set[int], *, deadline: float) -> None:
+    if os.name != "nt" or not process_ids:
+        return
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+        kernel32.OpenProcess.restype = wintypes.HANDLE
+        kernel32.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
+        kernel32.TerminateProcess.restype = wintypes.BOOL
+        kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        kernel32.WaitForSingleObject.restype = wintypes.DWORD
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        while process_ids and time.monotonic() < deadline:
+            running: set[int] = set()
+            for process_id in process_ids:
+                handle = kernel32.OpenProcess(0x00100001, False, process_id)
+                if not handle:
+                    continue
+                try:
+                    if kernel32.WaitForSingleObject(handle, 0) == 0x00000102:
+                        kernel32.TerminateProcess(handle, 1)
+                        running.add(process_id)
+                finally:
+                    kernel32.CloseHandle(handle)
+            process_ids = running
+            if process_ids:
+                time.sleep(min(0.02, max(0.0, deadline - time.monotonic())))
+    except (AttributeError, OSError):
+        return
 
 
 class SSHStdioTransport(PersistentStdioTransport):

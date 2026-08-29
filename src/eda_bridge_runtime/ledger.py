@@ -217,6 +217,31 @@ class ExecutionLedger:
         ).fetchall()
         return [self._row_to_event(row) for row in rows]
 
+    def recent_run_events(
+        self, *, limit: int = 20, source: str | None = None
+    ) -> list[dict[str, Any]]:
+        """Return complete event groups for the most recently active runs."""
+        bounded = max(1, min(int(limit), 1000))
+        where = "WHERE source = ?" if source else ""
+        params: list[Any] = [source] if source else []
+        rows = self._connection.execute(
+            f"""SELECT run_id, MAX(event_id) AS last_event_id
+            FROM events {where}
+            GROUP BY run_id
+            ORDER BY last_event_id DESC
+            LIMIT ?""",  # noqa: S608
+            [*params, bounded],
+        ).fetchall()
+        run_ids = [str(row["run_id"]) for row in rows]
+        if not run_ids:
+            return []
+        placeholders = ",".join("?" for _ in run_ids)
+        events = self._connection.execute(
+            f"SELECT * FROM events WHERE run_id IN ({placeholders}) ORDER BY event_id",  # noqa: S608
+            run_ids,
+        ).fetchall()
+        return [self._row_to_event(row) for row in events]
+
     @staticmethod
     def _row_to_event(row: sqlite3.Row) -> dict[str, Any]:
         return {
