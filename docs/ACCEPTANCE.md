@@ -5,15 +5,19 @@ credentials, host address, or task-specific geometry is included here.
 
 ## 2026-08-30 Runtime a21 repeated read-only baseline
 
-- Twelve independent Codex trials passed across Runtime discovery, ADS and AnsysEM capability
-  discovery, and one typed ADS session read. Every case used exactly one allowed Runtime call; no
-  mutation, solve, GUI action, customer data, or raw Agent trace was retained.
+- Fifteen independent Codex trials passed across Runtime discovery, ADS and AnsysEM capability
+  discovery, one typed ADS session read, and one durable AnsysEM Bundle read. Every case used
+  exactly one allowed Runtime call; no solve, GUI action, customer data, or raw Agent trace was
+  retained.
 - Each case had three trials with a 100% strict, semantic, and wall-budget pass rate. Median wall
-  times were 17.219 s, 16.703 s, 17.656 s, and 19.657 s respectively.
+  times were 17.219 s, 16.703 s, 17.656 s, 19.657 s, and 19.562 s respectively.
 - Against the same Codex `gpt-5.5` low-reasoning a20 baseline, those medians improved by 4.615 s,
-  9.706 s, 4.629 s, and 6.382 s (about 21%, 37%, 21%, and 25%) without changing the correctness
-  gates. The measured Bridge/SSH/EDA boundary remained about 0-6% of wall time, so this evidence
-  does not justify additional SSH command-layer complexity.
+  9.706 s, 4.629 s, 6.382 s, and 6.963 s (about 21%, 37%, 21%, 25%, and 26%) without changing the
+  correctness gates. The measured Bridge/SSH/EDA boundary remained about 0-12% of read-task wall
+  time, so this evidence does not justify additional SSH command-layer complexity.
+- The AnsysEM read fixture was created once through a disposable-only idempotency case, then all
+  three owned remote Bundle artifacts were removed after the read trials. Fixture setup evidence is
+  not mixed into the read-latency baseline.
 - The sanitized three-trial reference is checked in as
   `evals/baselines/codex-gpt55-low-runtime-a21-20260830.json`; transient per-trial files remain
   untracked.
