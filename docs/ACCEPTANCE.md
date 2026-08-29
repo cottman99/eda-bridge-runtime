@@ -21,6 +21,11 @@ credentials, host address, or task-specific geometry is included here.
   failure made no tool attempt and entered neither Runtime nor SSH. That remaining Codex selection
   limitation is preserved in the baseline rather than hidden by an evaluator retry or misassigned
   to the EDA stack.
+- ADS remained stable after the same profile change: three `session.status` reads passed 3/3 with
+  a 26.039-second median and 36,853 median input tokens. Three bounded `docs.query` → `docs.get`
+  workflows also passed 3/3 using only the private ADS documentation lane. Their median input fell
+  from the earlier single sample's 74,064 to 52,162; the 34.283-second median wall time was slower
+  than that sample, so only context reduction and routing reliability are claimed.
 
 ## 2026-08-29 Runtime alpha.20 Agent-contract acceptance
 
