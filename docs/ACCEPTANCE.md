@@ -3,6 +3,20 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 Runtime alpha.12 matrix acceptance
+
+- The published package, local Codex plugin, Agent-host Runtime, and both isolated remote Bridge
+  environments reported alpha.12 after exact-version installation. The repository passed 86 tests,
+  Ruff, formatting, build, Twine, trusted publication, and published-wheel verification.
+- One matrix command sequentially ran L0 connection discovery plus ADS and AnsysEM L1 capability
+  cases. All three passed with exactly one allowed tool call each and no target crossover.
+- The three independent Codex sessions took 19.0, 18.2, and 16.0 seconds, about 53.3 seconds total.
+  Their Runtime calls totaled about 1.8 seconds, again locating most elapsed time in fixed Agent
+  startup and context rather than SSH or either Bridge.
+- The same matrix classified the Pi startup boundary as `agent_auth_unavailable` in about 0.5
+  seconds with zero tool calls. The Pi profile installer preserved the credential-file hash and
+  correctly reported `login_required`; it did not copy or synthesize another Agent's credentials.
+
 ## 2026-08-29 Runtime alpha.11 evidence-safe comparison acceptance
 
 - The repository passed 80 tests, Ruff, formatting, package build, Twine checks, trusted PyPI
