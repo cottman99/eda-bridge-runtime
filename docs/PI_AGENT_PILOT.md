@@ -66,18 +66,18 @@ not receive an alternate shell route around Runtime.
 
 Add one reviewed Pi package to this repository. It should contain:
 
-- a native Pi extension that exposes only the six Runtime tools;
+- a native Pi extension that exposes only the seven Runtime tools;
 - the Runtime control Skill and references to selected vendor Skills;
-- pre/post lifecycle capture using Pi's tool events;
+- optional Pi lifecycle enrichment; the Runtime already records the mandatory base facts;
 - a small status view for active connection, Run state, and elapsed time.
 
 The extension should launch or connect to `eda-runtime mcp serve` internally. Engineers should not
 install a generic third-party MCP bundle or maintain MCP JSON by hand merely for this pilot.
 
-Pi exposes session, provider, model, and reasoning metadata to child commands. The extension should
-pass these observed values into the existing Runtime actor contract, retain the Agent's concise
-`purpose`, and link completion to the same Runtime Run. Missing fields remain `unknown`; the
-extension must not parse the transcript to reconstruct them.
+Pi exposes session, provider, model, and reasoning metadata to child commands. The extension may
+enrich the Runtime actor contract with those observed values, while the Runtime always retains the
+Agent's concise `purpose`, MCP client identity, timing, and linked Run. Missing fields remain
+`unknown`; the extension must not parse the transcript to reconstruct them.
 
 ## Stage 3: acceptance before broader use
 

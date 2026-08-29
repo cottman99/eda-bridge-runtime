@@ -118,9 +118,13 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"status": "ready", "connection": spec.to_dict()}, indent=2))
         return 0
     if args.command == "mcp" and args.mcp_command == "serve":
+        from .agent_audit import default_agent_audit_path
         from .mcp_server import serve_mcp
 
-        serve_mcp(registry=ConnectionRegistry(args.registry))
+        serve_mcp(
+            registry=ConnectionRegistry(args.registry),
+            audit_database=default_agent_audit_path(),
+        )
         return 0
     if args.command == "hook":
         from .agent_audit import record_codex_hook

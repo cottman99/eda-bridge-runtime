@@ -6,22 +6,26 @@ The plugin and Skill belong on the Agent host. A remote EDA host needs only the
 shared Runtime protocol plus its vendor bridge and adapter service unless an
 Agent also runs there.
 
-The plugin also installs `PreToolUse` and `PostToolUse` hooks scoped only to its own MCP tools.
-They write an Agent-host append-only audit that records the Codex session, turn, active model,
-permission mode, tool-call identity, concise purpose, and a hash of the arguments. Completion links
-that identity to the returned Runtime Run. Hooks do not rewrite inputs, approve tools, parse the
-chat transcript, or store raw operation payloads. Inspect the bounded recent view with
-`eda-runtime audit list`.
+The MCP Runtime itself writes the Agent-host append-only audit for every supported client. It
+records observed MCP client identity, concise purpose, a hash of the arguments, timings, and the
+returned Runtime Run. This is the stable cross-Agent fact path.
+
+The plugin additionally installs `PreToolUse` and `PostToolUse` hooks scoped only to its own MCP
+tools. Where the Codex surface supports them, they enrich the same audit database with session,
+turn, active model, permission mode, and tool-call identity. Hooks are optional: they do not define
+whether the base Runtime record exists. Neither path parses the chat transcript or stores raw
+operation payloads. Inspect the bounded recent view with `eda-runtime audit list`.
 
 Codex asks for one-time trust when a new or changed plugin Hook is first used. Review and approve
 the two bundled audit commands; routine calls need no extra Agent prompt after that. Automated
 acceptance may use Codex's explicit hook-trust bypass only after validating the installed Hook file.
 
 The stdio server supports both the legacy MCP initialization era through `2025-11-25` and the
-stateless `2026-07-28` discovery era. It exposes six tools:
+stateless `2026-07-28` discovery era. It exposes seven tools:
 
 - `eda.context.resolve`
 - `eda.connections.list`
+- `eda.connection.reset`
 - `eda.capabilities`
 - `eda.submit`
 - `eda.job.status`
@@ -43,6 +47,10 @@ preflight. The adapter still validates the Context generation and target before 
 The tools never accept a raw local or SSH launch command. They select a previously registered
 connection by `connection_id`, by a stable `origin_id` in `EDA_CONTEXT`, or by an unambiguous EDA
 match. Each Agent host may map the same origin to a different local or SSH route.
+
+After an administrator upgrades a Bridge or its Runtime dependency, call `eda.connection.reset`
+once for that registered connection. It closes only the Runtime-owned stdio/SSH process; the next
+explicit tool call loads the upgraded environment while the engineer's EDA process remains open.
 
 ## One-time connection registration
 

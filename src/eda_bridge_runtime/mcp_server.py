@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import time
 from dataclasses import asdict
+from pathlib import Path
 from typing import Any, TextIO
 
 from ._version import __version__
+from .agent_audit import AGENT_AUDIT_PROTOCOL
 from .connections import ConnectionRegistry
 from .context import EDAContext
-from .protocol import ActorIdentity, RequestEnvelope, project_run
+from .ledger import ExecutionLedger
+from .protocol import ActorIdentity, RequestEnvelope, new_id, project_run
 
 MODERN_PROTOCOL = "2026-07-28"
 LEGACY_PROTOCOL = "2025-11-25"
@@ -38,10 +42,11 @@ TOOLS = [
         ),
         "inputSchema": _object_schema(
             {
+                "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
                 "context": {"type": "string"},
                 "connection_id": {"type": "string"},
             },
-            ["context"],
+            ["purpose", "context"],
         ),
         "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
     },
@@ -49,8 +54,27 @@ TOOLS = [
         "name": "eda.connections.list",
         "title": "List EDA Connections",
         "description": "List configured connection identifiers and EDA types without opening them.",
-        "inputSchema": _object_schema({}),
+        "inputSchema": _object_schema(
+            {"purpose": {"type": "string", "minLength": 3, "maxLength": 240}},
+            ["purpose"],
+        ),
         "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
+    },
+    {
+        "name": "eda.connection.reset",
+        "title": "Reset One EDA Transport",
+        "description": (
+            "Close one Runtime-owned local or SSH transport so the next explicit call starts a "
+            "fresh Bridge process. Does not close or modify the EDA application."
+        ),
+        "inputSchema": _object_schema(
+            {
+                "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
+                "connection_id": {"type": "string"},
+            },
+            ["purpose", "connection_id"],
+        ),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False, "openWorldHint": False},
     },
     {
         "name": "eda.capabilities",
@@ -134,16 +158,25 @@ TOOLS = [
 
 
 class MCPRuntimeServer:
-    def __init__(self, registry: ConnectionRegistry | None = None):
+    def __init__(
+        self,
+        registry: ConnectionRegistry | None = None,
+        *,
+        audit_database: str | Path | None = None,
+    ):
         self.registry = registry or ConnectionRegistry()
         self._transports: dict[str, Any] = {}
         self._client = "mcp-client"
         self._client_version = "unknown"
+        self._audit = ExecutionLedger(audit_database) if audit_database else None
 
     def close(self) -> None:
         for transport in self._transports.values():
             transport.close()
         self._transports.clear()
+        if self._audit is not None:
+            self._audit.close()
+            self._audit = None
 
     def handle(self, message: dict[str, Any]) -> dict[str, Any] | None:
         if message.get("jsonrpc") != "2.0":
@@ -196,19 +229,26 @@ class MCPRuntimeServer:
         arguments = params.get("arguments") or {}
         if name not in {item["name"] for item in TOOLS} or not isinstance(arguments, dict):
             return self._error(message["id"], -32602, f"Unknown or malformed tool: {name}")
+        audit = self._audit_start(str(name), arguments, message)
+        started = time.monotonic()
         try:
             value = self._call(str(name), arguments, message)
             result = self._tool_result(value)
         except Exception as exc:
+            value = {"status": "error", "error": {"code": type(exc).__name__, "message": str(exc)}}
             result = self._tool_result(
-                {"status": "error", "error": {"code": type(exc).__name__, "message": str(exc)}},
+                value,
                 is_error=True,
             )
+        self._audit_finish(audit, value, round((time.monotonic() - started) * 1000, 3))
         return self._result(message["id"], result, modern=self._modern(message))
 
     def _call(
         self, name: str, arguments: dict[str, Any], message: dict[str, Any]
     ) -> dict[str, Any]:
+        purpose = str(arguments.get("purpose") or "").strip()
+        if len(purpose) < 3 or len(purpose) > 240:
+            raise ValueError("purpose must contain 3..240 non-whitespace characters")
         if name == "eda.connections.list":
             return {
                 "status": "ready",
@@ -216,6 +256,17 @@ class MCPRuntimeServer:
                     {"connection_id": item.connection_id, "eda": item.eda, "kind": item.kind}
                     for item in self.registry.list()
                 ],
+            }
+        if name == "eda.connection.reset":
+            spec = self.registry.resolve(connection_id=str(arguments["connection_id"]))
+            transport = self._transports.pop(spec.connection_id, None)
+            if transport is not None:
+                transport.close()
+            return {
+                "status": "reset" if transport is not None else "idle",
+                "connection_id": spec.connection_id,
+                "eda": spec.eda,
+                "next_call": "fresh_transport",
             }
         if name == "eda.context.resolve":
             context = EDAContext.decode(str(arguments["context"]))
@@ -273,14 +324,7 @@ class MCPRuntimeServer:
             if name == "eda.job.events":
                 payload["after_cursor"] = int(arguments.get("after_cursor", 0))
             target = {"eda": spec.eda}
-        client_name, client_version = self._client_info(message)
-        actor = ActorIdentity.detect(
-            observed={
-                "client": client_name,
-                "client_version": client_version,
-                "harness": "mcp",
-            }
-        )
+        actor = self._actor(message)
         request = RequestEnvelope(
             purpose=str(arguments["purpose"]),
             target=target,
@@ -318,6 +362,77 @@ class MCPRuntimeServer:
             str(info.get("name") or self._client),
             str(info.get("version") or self._client_version),
         )
+
+    def _actor(self, message: dict[str, Any]) -> ActorIdentity:
+        client_name, client_version = self._client_info(message)
+        return ActorIdentity.detect(
+            observed={
+                "client": client_name,
+                "client_version": client_version,
+                "harness": "mcp",
+            }
+        )
+
+    def _audit_start(
+        self, name: str, arguments: dict[str, Any], message: dict[str, Any]
+    ) -> tuple[str, str] | None:
+        if self._audit is None:
+            return None
+        run_id = new_id("agent")
+        request_id = new_id("req")
+        canonical = json.dumps(
+            {"tool": name, "arguments": arguments},
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        )
+        self._audit.append(
+            run_id=run_id,
+            request_id=request_id,
+            event_type="agent.tool.requested",
+            source="mcp-runtime",
+            payload={
+                "protocol": AGENT_AUDIT_PROTOCOL,
+                "actor": self._actor(message).to_dict(),
+                "tool": name,
+                "purpose": str(arguments.get("purpose") or "unspecified EDA operation")[:240],
+                "input_sha256": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+            },
+        )
+        return run_id, request_id
+
+    def _audit_finish(
+        self,
+        audit: tuple[str, str] | None,
+        value: dict[str, Any],
+        elapsed_ms: float,
+    ) -> None:
+        if self._audit is None or audit is None:
+            return
+        run_id, request_id = audit
+        run = value.get("run") if isinstance(value.get("run"), dict) else None
+        self._audit.append(
+            run_id=run_id,
+            request_id=request_id,
+            event_type="agent.tool.completed",
+            source="mcp-runtime",
+            payload={
+                "protocol": AGENT_AUDIT_PROTOCOL,
+                "timing": {
+                    "mcp_server_ms": elapsed_ms,
+                    "client_transport_ms": value.get("client_transport_ms"),
+                },
+                "execution": {
+                    "linked": run is not None,
+                    "run_id": run.get("run_id") if run else None,
+                    "request_id": run.get("request_id") if run else None,
+                    "job_id": run.get("job_id") if run else None,
+                    "state": run.get("state") if run else value.get("status"),
+                    "terminal": bool(run.get("terminal")) if run else True,
+                },
+            },
+        )
+        self._audit.finalize(run_id)
 
     @staticmethod
     def _modern(message: dict[str, Any]) -> bool:
@@ -371,8 +486,9 @@ def serve_mcp(
     output_stream: TextIO = sys.stdout,
     *,
     registry: ConnectionRegistry | None = None,
+    audit_database: str | Path | None = None,
 ) -> None:
-    server = MCPRuntimeServer(registry)
+    server = MCPRuntimeServer(registry, audit_database=audit_database)
     try:
         for line in input_stream:
             try:

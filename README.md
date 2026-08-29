@@ -36,10 +36,14 @@ disconnect, and returns the result with its linked timing and evidence.
 
 ## Current alpha
 
-`0.1.0a5` adds agent-host lifecycle auditing without changing tool permissions. Codex hooks record
-session, turn, model, permission mode, tool-call identity, concise purpose, and a content hash before
-an EDA Runtime call, then link the completed call to its actual Run. The audit is append-only,
-hash-chained, and stores neither raw operation payloads nor chat transcripts.
+`0.1.0a6` makes the Runtime itself the stable fact recorder. Every MCP client contributes its
+observed client identity, concise purpose, argument fingerprint, timings, and linked Run without
+depending on a Codex- or Pi-specific hook. Agent hooks may add richer model/session metadata, but
+they are optional enrichment. A bounded `eda.connection.reset` action closes only a stale
+Runtime-owned transport after an upgrade; it never closes or modifies the EDA application.
+
+`0.1.0a5` added optional Codex lifecycle enrichment for session, turn, model, permission mode, and
+tool-call identity. The append-only audit stores neither raw operation payloads nor chat transcripts.
 
 `0.1.0a4` adds rich bounded Context snapshots, stable origin routing, direct
 one-submit execution, and automatic origin binding during connection setup.
@@ -47,7 +51,7 @@ Vendor Skills can declare the Runtime MCP directly, so users select one
 task-facing Skill rather than manually composing infrastructure Skills.
 
 ```powershell
-python -m pip install "eda-bridge-runtime==0.1.0a5"
+python -m pip install "eda-bridge-runtime==0.1.0a6"
 eda-runtime doctor
 ```
 

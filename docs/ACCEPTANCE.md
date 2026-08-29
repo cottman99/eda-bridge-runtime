@@ -3,6 +3,24 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-29 agent-neutral audit and transport-reset acceptance
+
+- A clean wheel installation of `0.1.0a6` exposed seven Runtime tools. The added
+  `eda.connection.reset` closed one Runtime-owned ADS SSH child in 13 ms and returned
+  `next_call=fresh_transport`; the next capability call opened a new process and passed. No EDA
+  application was opened, closed, or modified.
+- Fresh SSH capability reads passed for ADS and AnsysEM in 947 ms and 903 ms. ADS passed again in
+  862 ms after the bounded reset. Earlier warm-process measurements were 125 ms for ADS and 16 ms
+  for AnsysEM, confirming that normal calls retain persistent-transport latency benefits.
+- Runtime wrote ten requested/completed audit events directly from the MCP server without a Codex
+  Hook. The hash-chained records retained all five concise purposes, observed client identity,
+  per-call timing, and three linked Runs while storing only an argument fingerprint.
+- Acceptance first detected both remote Bridge environments on Runtime `0.1.0a4` even though the
+  installed Bridge packages required `>=0.1.0a5`. Aligning only that dependency fixed protocol
+  parsing; the reset acceptance covers loading an upgraded environment without restarting EDA.
+- The repository passed 57 tests, Ruff checks, format checks, and wheel installation from a clean
+  environment.
+
 ## 2026-08-29 Codex lifecycle-audit acceptance
 
 - A freshly installed `0.1.0-alpha.5` plugin loaded its bundled

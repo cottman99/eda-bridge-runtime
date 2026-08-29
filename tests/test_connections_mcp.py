@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from eda_bridge_runtime import EDAContext, ResponseEnvelope
+from eda_bridge_runtime.agent_audit import audit_events
 from eda_bridge_runtime.connections import (
     ConnectionRegistry,
     ConnectionSpec,
@@ -66,6 +67,7 @@ def test_connection_registry_resolves_same_eda_by_origin(tmp_path):
 class FakeTransport:
     def __init__(self):
         self.requests = []
+        self.closed = False
 
     def request(self, request):
         self.requests.append(request)
@@ -77,7 +79,7 @@ class FakeTransport:
         )
 
     def close(self):
-        return None
+        self.closed = True
 
 
 class OriginTransport(FakeTransport):
@@ -180,11 +182,21 @@ def test_mcp_supports_legacy_and_modern_discovery():
     assert [item["name"] for item in tools] == [
         "eda.context.resolve",
         "eda.connections.list",
+        "eda.connection.reset",
         "eda.capabilities",
         "eda.submit",
         "eda.job.status",
         "eda.job.events",
     ]
+
+
+def test_mcp_requires_purpose_even_for_connection_discovery():
+    server = MCPRuntimeServer(FakeRegistry())
+    response = server.handle(
+        _rpc(1, "tools/call", {"name": "eda.connections.list", "arguments": {}})
+    )
+    assert response["result"]["isError"] is True
+    assert response["result"]["structuredContent"]["error"]["code"] == "ValueError"
 
 
 def test_mcp_context_resolution_and_submit_preserve_purpose():
@@ -197,7 +209,14 @@ def test_mcp_context_resolution_and_submit_preserve_purpose():
         origin={"origin_id": "origin-ansys"},
     ).encode()
     resolved = server.handle(
-        _rpc(1, "tools/call", {"name": "eda.context.resolve", "arguments": {"context": token}})
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.context.resolve",
+                "arguments": {"purpose": "Resolve the selected design", "context": token},
+            },
+        )
     )
     assert resolved["result"]["structuredContent"]["connection"]["connection_id"] == "ansys-one"
     response = server.handle(
@@ -295,7 +314,90 @@ def test_mcp_stdio_bad_frame_does_not_kill_server():
     serve_mcp(source, destination, registry=FakeRegistry())
     responses = [json.loads(line) for line in destination.getvalue().splitlines()]
     assert responses[0]["error"]["code"] == -32700
-    assert len(responses[1]["result"]["tools"]) == 6
+    assert len(responses[1]["result"]["tools"]) == 7
+
+
+def test_mcp_connection_reset_closes_only_runtime_owned_transport():
+    registry = FakeRegistry()
+    server = MCPRuntimeServer(registry)
+    server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Open one disposable transport",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    assert server._transports
+    response = server.handle(
+        _rpc(
+            2,
+            "tools/call",
+            {
+                "name": "eda.connection.reset",
+                "arguments": {
+                    "purpose": "Reload an upgraded remote Runtime",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    assert response["result"]["structuredContent"]["status"] == "reset"
+    assert registry.transport.closed is True
+    assert server._transports == {}
+
+
+def test_mcp_runtime_records_agent_fact_without_codex_hook(tmp_path):
+    database = tmp_path / "agent-audit.sqlite3"
+    registry = FakeRegistry()
+    server = MCPRuntimeServer(registry, audit_database=database)
+    server.handle(
+        _rpc(
+            1,
+            "initialize",
+            {
+                "protocolVersion": "2025-11-25",
+                "capabilities": {},
+                "clientInfo": {"name": "pi-agent", "version": "0.50"},
+            },
+        )
+    )
+    server.handle(
+        _rpc(
+            2,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Inspect one selected EDA target",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    events = audit_events(database)
+    assert [item["event_type"] for item in events] == [
+        "agent.tool.requested",
+        "agent.tool.completed",
+    ]
+    requested = events[0]["payload"]
+    completed = events[1]["payload"]
+    assert requested["purpose"] == "Inspect one selected EDA target"
+    assert requested["actor"]["client"] == {"value": "pi-agent", "provenance": "observed"}
+    assert requested["actor"]["client_version"] == {
+        "value": "0.50",
+        "provenance": "observed",
+    }
+    assert completed["execution"]["linked"] is True
+    assert completed["execution"]["state"] == "passed"
+    assert completed["timing"]["client_transport_ms"] is not None
+    assert completed["timing"]["mcp_server_ms"] >= 0
+    server.close()
 
 
 def test_mcp_discards_failed_connection_without_replaying_request():

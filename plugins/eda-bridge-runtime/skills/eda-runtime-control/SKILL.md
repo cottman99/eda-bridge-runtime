@@ -19,9 +19,9 @@ Runtime merely because SSH is absent.
 - Treat a copied `EDA_CONTEXT` as a bounded execution snapshot, not merely an opaque locator. When
   it and the selected vendor Skill establish one typed operation, call `eda.submit` directly; the
   Runtime resolves the origin and the adapter validates freshness inside that request.
-- Use `eda.context.resolve` only to inspect a Context without executing, diagnose an invalid or
+- Use `eda.context.resolve` with one concise `purpose` only to inspect a Context without executing, diagnose an invalid or
   ambiguous binding, or expose its bounded snapshot to the user.
-- Without context, call `eda.connections.list`. If exactly one connection matches the requested
+- Without context, call `eda.connections.list` with one concise `purpose`. If exactly one connection matches the requested
   EDA, use it. Ask one short question only when multiple connections remain genuinely ambiguous.
 - Call `eda.capabilities` only when the operation is not established by the selected Skill or
   Context, its capability digest is stale, or a prior response reports an unsupported operation.
@@ -47,6 +47,9 @@ Runtime merely because SSH is absent.
   explicit promotion or delivery gate.
 - Use a verified native API or bounded script only when the adapter advertises that lane. Treat GUI
   automation as a bounded fallback and record why the typed path was unavailable.
+- After a Bridge or Runtime upgrade, use `eda.connection.reset` once to close only the
+  Runtime-owned transport. The next explicit operation starts a fresh local or SSH Bridge process;
+  the EDA application is not closed or modified.
 
 Do not place credentials, customer paths, raw shell commands, or task-specific geometry into the
 public Runtime configuration, plugin, or Skill.

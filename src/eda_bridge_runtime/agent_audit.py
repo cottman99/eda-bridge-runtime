@@ -21,12 +21,14 @@ _TOOL_NAMES = {
     "eda_job_status": "eda.job.status",
     "eda_job_events": "eda.job.events",
     "eda_connections_list": "eda.connections.list",
+    "eda_connection_reset": "eda.connection.reset",
     "eda_context_resolve": "eda.context.resolve",
     "eda.capabilities": "eda.capabilities",
     "eda.submit": "eda.submit",
     "eda.job.status": "eda.job.status",
     "eda.job.events": "eda.job.events",
     "eda.connections.list": "eda.connections.list",
+    "eda.connection.reset": "eda.connection.reset",
     "eda.context.resolve": "eda.context.resolve",
 }
 

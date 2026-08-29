@@ -1,5 +1,13 @@
 # Version 0.1 scope
 
+## 0.1.0a6 — agent-neutral facts and transport lifecycle
+
+- Record MCP client identity, concise purpose, input fingerprint, timing, and Run linkage inside
+  Runtime itself; Agent hooks are optional metadata enrichment rather than the primary fact path.
+- Add one bounded connection reset that closes only the Runtime-owned transport and leaves EDA
+  state untouched.
+- Require a concise purpose for connection listing and Context resolution as well as execution.
+
 ## 0.1.0a5 — agent lifecycle audit
 
 - Capture Codex lifecycle identity outside model context with plugin-scoped hooks.
