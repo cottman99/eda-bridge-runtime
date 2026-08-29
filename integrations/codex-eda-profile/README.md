@@ -9,10 +9,11 @@ disables unrelated discovered Skills—including bundled `.system` Skills—only
 plugin discovery, declares the single Runtime MCP directly, and preserves the Runtime's two Codex
 audit hooks inline. The user's ordinary Codex configuration remains unchanged. Browser, Apps,
 Computer Use, memory injection, multi-agent, and shell snapshotting are disabled in this profile
-because normal EDA work uses the Runtime MCP. The Codex `shell_tool`, `code_mode`, and
-`code_mode_host` features are also disabled, so a prompt cannot probe local or remote EDA through
-commands or the JavaScript execution host when the Runtime tool set is empty or the task should stop for
-clarification. The ordinary Codex profile keeps its normal execution tools.
+because normal EDA work uses the Runtime MCP. The Codex `shell_tool` and Agent-visible `code_mode`
+features are also disabled, while the internal `code_mode_host` remains enabled because Codex 0.151
+uses it for direct MCP transport. A prompt therefore cannot probe EDA through commands or JavaScript
+when the Runtime tool set is empty or the task should stop for clarification. The ordinary Codex
+profile keeps its normal execution tools.
 The installer also discovers MCP servers inherited from the user's global Codex config and disables
 all of them inside this profile except `eda-bridge-runtime`. This is generated isolation, not a
 hard-coded list: adding another general-purpose MCP globally cannot silently expand the EDA profile.
@@ -30,6 +31,18 @@ path list by hand. Hidden backup and archive directories are ignored so historic
 Skill copies cannot re-enter the Agent prompt. If several visible plugin releases expose the same
 Skill name, exactly one canonical source is enabled: a direct installation wins, otherwise the
 highest semantic plugin version is selected and older cache entries remain disabled.
+
+For a self-contained typed execution or evaluation whose complete operation plan is already known,
+generate a second Runtime-only profile rather than loading interpretation-oriented vendor Skills:
+
+```powershell
+eda-runtime agent-profile codex install `
+  --profile-name eda-runtime-eval `
+  --keep-name eda-runtime-control
+```
+
+This is an administrator/evaluator profile, not another engineer-facing workflow. Keep the normal
+five-Skill `eda-runtime` profile for natural-language target interpretation and documentation work.
 
 For a separately authorized unattended evaluation, generate a different
 profile with `--approve-mutations`. It pre-approves only the typed Runtime

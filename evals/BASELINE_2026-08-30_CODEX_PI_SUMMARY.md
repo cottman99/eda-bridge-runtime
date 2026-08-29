@@ -52,6 +52,14 @@ completed in 29.906 seconds for Codex and 16.438 seconds for Pi; AnsysEM complet
 AnsysEM vendor boundary occupied 38-41 seconds, again shrinking the relative Agent advantage as
 real AEDT lifecycle work becomes dominant. All owned scratch was verified idle and removed.
 
+One L5 ADS plan also demonstrated why interpretation and execution profiles should not be confused.
+The normal five-Skill Codex profile performed the correct plan but first attempted an unnecessary
+resource read, so strict evaluation failed it. A Runtime-only evaluation profile reran an independent
+copy with exactly one allowed call, reducing wall time from 40.938 to 26.938 seconds and reported
+input from 59,591 to 41,909. Pi passed in 19.313 seconds and 5,215 input tokens. This narrower Codex
+profile is reserved for already-resolved typed plans; normal natural-language work keeps vendor
+Skills and does not expose this distinction to the engineer.
+
 ## Evidence-backed decisions
 
 1. **Keep both Agents, with Pi as the bounded-execution default.** Pi autonomously passed mutation,
