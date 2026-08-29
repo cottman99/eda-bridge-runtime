@@ -43,6 +43,12 @@ failure, and only calls a case cross-Agent comparable when more than one Agent
 actually passed that same case.
 
 `run_matrix.py` runs selected cases sequentially so two Agents never contend for one EDA target.
+Use `--repetitions 2` through `--repetitions 10` when a bounded repeated sample is needed.
+The default remains one run and preserves the original result filenames. Repeated runs receive
+explicit trial numbers, while the compact summary reports pass rate and medians by case, Agent,
+model, and reasoning level. It reports strict contract pass rate, semantic pass rate, and wall-budget
+pass rate separately, so a correct but slow trial is not mislabeled as a functional defect.
+Repetitions stay sequential so they do not create EDA contention.
 Mutation cases are skipped unless `--approve-mutations` is explicit. If one Agent lacks
 authentication, its remaining cases are skipped immediately rather than repeating the same costly
 startup failure; the other Agent continues. Only per-case normalized JSON and one compact matrix

@@ -29,3 +29,20 @@ def test_matrix_selects_by_level_and_requires_explicit_mutation_approval(tmp_pat
 
     assert [case["case_id"] for case in selected] == ["l0.safe"]
     assert skipped == [{"case_id": "l3.mutation", "reason": "mutation_not_approved"}]
+
+
+def test_matrix_result_paths_preserve_single_run_names_and_separate_trials(tmp_path):
+    matrix = load_matrix()
+
+    assert (
+        matrix.result_path(
+            tmp_path, case_id="l0.connections", agent="codex", trial=1, repetitions=1
+        ).name
+        == "l0_connections__codex.json"
+    )
+    assert (
+        matrix.result_path(
+            tmp_path, case_id="l0.connections", agent="codex", trial=2, repetitions=3
+        ).name
+        == "l0_connections__codex__trial_02.json"
+    )

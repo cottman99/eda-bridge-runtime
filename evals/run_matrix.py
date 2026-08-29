@@ -39,6 +39,13 @@ def load_summarizer(root: Path):
     return module
 
 
+def result_path(
+    output_dir: Path, *, case_id: str, agent: str, trial: int, repetitions: int
+) -> Path:
+    suffix = f"__trial_{trial:02d}" if repetitions > 1 else ""
+    return output_dir / f"{case_id.replace('.', '_')}__{agent}{suffix}.json"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--agents", nargs="+", choices=("codex", "pi"), default=["codex", "pi"])
@@ -49,10 +56,13 @@ def main() -> int:
     parser.add_argument("--codex-model", default="gpt-5.5")
     parser.add_argument("--pi-model", default="openai-codex/gpt-5.5")
     parser.add_argument("--thinking", choices=("low", "medium", "high"), default="medium")
+    parser.add_argument("--repetitions", type=int, default=1)
     parser.add_argument("--cwd", type=Path, default=Path.cwd())
     parser.add_argument("--codex-profile", default="eda-runtime")
     parser.add_argument("--pi-command", default="pi-eda.cmd")
     args = parser.parse_args()
+    if not 1 <= args.repetitions <= 10:
+        parser.error("--repetitions must be between 1 and 10")
 
     eval_root = Path(__file__).resolve().parent
     cases, skipped = load_cases(
@@ -65,62 +75,75 @@ def main() -> int:
     unavailable_agents: set[str] = set()
     for agent in args.agents:
         for case in cases:
-            if agent in unavailable_agents:
-                skipped.append(
-                    {
-                        "case_id": case["case_id"],
-                        "agent": agent,
-                        "reason": "agent_auth_unavailable",
-                    }
+            for trial in range(1, args.repetitions + 1):
+                if agent in unavailable_agents:
+                    skipped.append(
+                        {
+                            "case_id": case["case_id"],
+                            "agent": agent,
+                            "trial": trial,
+                            "reason": "agent_auth_unavailable",
+                        }
+                    )
+                    continue
+                output = result_path(
+                    args.output_dir,
+                    case_id=str(case["case_id"]),
+                    agent=agent,
+                    trial=trial,
+                    repetitions=args.repetitions,
                 )
-                continue
-            output = args.output_dir / f"{str(case['case_id']).replace('.', '_')}__{agent}.json"
-            model = args.codex_model if agent == "codex" else args.pi_model
-            command = [
-                sys.executable,
-                str(eval_root / "run_case.py"),
-                "--case",
-                str(case["_path"]),
-                "--agent",
-                agent,
-                "--model",
-                model,
-                "--thinking",
-                args.thinking,
-                "--cwd",
-                str(args.cwd),
-                "--output",
-                str(output),
-                "--codex-profile",
-                args.codex_profile,
-                "--pi-command",
-                args.pi_command,
-            ]
-            for value in args.var:
-                command.extend(["--var", value])
-            mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
-            if args.approve_mutations and mutation != "forbidden":
-                command.append("--approve-mutations")
-            subprocess.run(
-                command, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )  # noqa: S603
-            if not output.is_file():
-                results.append(
-                    {
-                        "case_id": case["case_id"],
-                        "agent": agent,
-                        "model": model,
-                        "reasoning": args.thinking,
-                        "passed": False,
-                        "failures": ["runner_did_not_write_result"],
-                        "metrics": {},
-                    }
+                model = args.codex_model if agent == "codex" else args.pi_model
+                command = [
+                    sys.executable,
+                    str(eval_root / "run_case.py"),
+                    "--case",
+                    str(case["_path"]),
+                    "--agent",
+                    agent,
+                    "--model",
+                    model,
+                    "--thinking",
+                    args.thinking,
+                    "--cwd",
+                    str(args.cwd),
+                    "--output",
+                    str(output),
+                    "--codex-profile",
+                    args.codex_profile,
+                    "--pi-command",
+                    args.pi_command,
+                ]
+                for value in args.var:
+                    command.extend(["--var", value])
+                mutation = str((case.get("safety") or {}).get("mutation") or "forbidden")
+                if args.approve_mutations and mutation != "forbidden":
+                    command.append("--approve-mutations")
+                subprocess.run(
+                    command, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )  # noqa: S603
+                if not output.is_file():
+                    results.append(
+                        {
+                            "case_id": case["case_id"],
+                            "agent": agent,
+                            "model": model,
+                            "reasoning": args.thinking,
+                            "trial": trial,
+                            "passed": False,
+                            "failures": ["runner_did_not_write_result"],
+                            "metrics": {},
+                        }
+                    )
+                    continue
+                result = json.loads(output.read_text(encoding="utf-8"))
+                result["trial"] = trial
+                output.write_text(
+                    json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
                 )
-                continue
-            result = json.loads(output.read_text(encoding="utf-8"))
-            results.append(result)
-            if "agent_auth_unavailable" in result.get("failures", []):
-                unavailable_agents.add(agent)
+                results.append(result)
+                if "agent_auth_unavailable" in result.get("failures", []):
+                    unavailable_agents.add(agent)
 
     summary = load_summarizer(eval_root).summarize(results)
     report = {
