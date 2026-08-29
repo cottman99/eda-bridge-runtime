@@ -15,12 +15,10 @@ All six trials preserved and freshly reopened the three-instance ADS design with
 then created, freshly inspected, and exported verified evidence for one AnsysEM Bundle. None ran a
 solver.
 
-Compared with the current independent ADS L5 trial plus the repeated AnsysEM L5 median, one-turn
-coordination reduced total wall time by about 17.6% for Codex and 9.9% for Pi. Because ADS L5 is
-still a single trial, these savings remain directional rather than a regression threshold. The
-useful pattern is simple: batch already-known independent engineering work into one Agent turn,
-but retain one native plan and one failure boundary per EDA product. A new cross-vendor Runtime
-transaction is unnecessary.
+Compared with the independent repeated ADS and AnsysEM L5 medians, one-turn coordination reduced
+total wall time by about 14.3% for Codex and 9.7% for Pi. The useful pattern is simple: batch
+already-known independent engineering work into one Agent turn, but retain one native plan and one
+failure boundary per EDA product. A new cross-vendor Runtime transaction is unnecessary.
 
 The first Codex trial stopped after AnsysEM project submission because the case text ambiguously
 placed `wait` next to vendor payload fields. Runtime correctly returned `waiting`; Codex did not

@@ -81,6 +81,9 @@ The default remains one run and preserves the original result filenames. Repeate
 explicit trial numbers, while the compact summary reports pass rate and medians by case, Agent,
 model, and reasoning level. It reports strict contract pass rate, semantic pass rate, and wall-budget
 pass rate separately, so a correct but slow trial is not mislabeled as a functional defect.
+Values passed through `--var` may contain `{agent}`, `{trial}`, and `{sequence}`. The matrix expands
+only those exact placeholders for each child run, allowing disposable paths and idempotency keys to
+remain independent without hand-written command duplication; unrelated braces remain literal.
 Repetitions stay sequential so they do not create EDA contention.
 Mutation cases are skipped unless `--approve-mutations` is explicit. If one Agent lacks
 authentication, its remaining cases are skipped immediately rather than repeating the same costly
