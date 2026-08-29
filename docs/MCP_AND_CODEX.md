@@ -15,6 +15,11 @@ bounded allowlist (agent family/version, provider, model, reasoning, Skill, sess
 identity, and permission mode) and labels it `declared`. MCP client name/version are taken from the
 MCP handshake or call metadata and remain `observed`, so an adapter cannot overwrite that fact.
 
+When a client does not declare an Agent session, Runtime assigns one random, non-identifying
+correlation ID for that MCP server lifecycle and labels it `inferred`. This costs no Agent turn or
+token, does not claim to know the chat-session identity, and still lets audit analysis compare calls
+that demonstrably came through the same client connection.
+
 The plugin additionally installs `PreToolUse` and `PostToolUse` hooks scoped only to its own MCP
 tools. Where the Codex surface supports them, they enrich the same audit database with session,
 turn, active model, permission mode, and tool-call identity. Hooks are optional: they do not define
@@ -27,12 +32,16 @@ Use `eda-runtime audit analyze` for a privacy-preserving efficiency summary. It
 separates intentional idempotent replay from repeated discovery, repeated
 failure, and avoidable status polling, and reports bounded timing totals without
 returning raw arguments, Context tokens, paths, or execution identifiers.
+Per-tool totals and medians split Bridge/transport time from measured Runtime-local processing only
+for paired timing samples. Calls from older or incomplete records without a transport measurement
+remain explicitly `unpaired`; they are never subtracted from a different sample population.
+Failed-call counts remain separate so a fast rejection is not mistaken for healthy performance.
 The limit is measured in complete recent calls rather than raw event rows. Runtime
 observations are authoritative when present, so enabling an Agent Hook does not
 double-count the same MCP invocation; Hook-only observations remain a fallback.
-Waste attribution is limited to repetitions inside one observed or declared Agent session. Global
-idempotent replay remains measurable because a reused Runtime Run proves it, but calls in separate
-sessions and calls with unknown session identity are never guessed to be redundant.
+Waste attribution is limited to repetitions inside one declared Agent session or one inferred MCP
+client lifecycle. Global idempotent replay remains measurable because a reused Runtime Run proves
+it, but calls in separate lifecycles are never guessed to be redundant.
 
 Codex asks for one-time trust when a new or changed plugin Hook is first used. Review and approve
 the two bundled audit commands; routine calls need no extra Agent prompt after that. Automated

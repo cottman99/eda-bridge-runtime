@@ -6,6 +6,7 @@ import pytest
 
 from eda_bridge_runtime import EDAContext, ResponseEnvelope
 from eda_bridge_runtime.agent_audit import audit_events
+from eda_bridge_runtime.audit_analysis import analyze_events
 from eda_bridge_runtime.connections import (
     ConnectionRegistry,
     ConnectionSpec,
@@ -539,6 +540,8 @@ def test_mcp_initialize_supplies_client_identity_and_compact_run_projection():
     assert request.actor.client.provenance == "observed"
     assert request.actor.client_version.value == "1"
     assert request.actor.client_version.provenance == "observed"
+    assert request.actor.session_id.value.startswith("mcp_")
+    assert request.actor.session_id.provenance == "inferred"
     assert value["run"]["state"] == "running"
     assert value["run"]["run_id"] == "original-run"
     assert value["run"]["job_id"] == "job-one"
@@ -1596,8 +1599,23 @@ def test_mcp_runtime_records_agent_fact_without_codex_hook(tmp_path):
             },
         )
     )
+    server.handle(
+        _rpc(
+            3,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Inspect one selected EDA target",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
     events = audit_events(database)
     assert [item["event_type"] for item in events] == [
+        "agent.tool.requested",
+        "agent.tool.completed",
         "agent.tool.requested",
         "agent.tool.completed",
     ]
@@ -1609,10 +1627,16 @@ def test_mcp_runtime_records_agent_fact_without_codex_hook(tmp_path):
         "value": "0.50",
         "provenance": "observed",
     }
+    assert requested["actor"]["session_id"]["value"].startswith("mcp_")
+    assert requested["actor"]["session_id"]["provenance"] == "inferred"
     assert completed["execution"]["linked"] is True
     assert completed["execution"]["state"] == "passed"
     assert completed["timing"]["client_transport_ms"] is not None
     assert completed["timing"]["mcp_server_ms"] >= 0
+    assert events[2]["payload"]["actor"]["session_id"] == requested["actor"]["session_id"]
+    assert analyze_events(events)["findings"] == [
+        {"code": "potential_redundant_discovery", "count": 1}
+    ]
     server.close()
 
 

@@ -390,6 +390,10 @@ class MCPRuntimeServer:
         self._transports: dict[str, Any] = {}
         self._client = "mcp-client"
         self._client_version = "unknown"
+        # One server instance belongs to one MCP client lifecycle.  Preserve a
+        # cheap, non-identifying correlation key even when the client cannot
+        # declare its own Agent session identifier.
+        self._mcp_session_id = new_id("mcp")
         self._audit = ExecutionLedger(audit_database) if audit_database else None
         self._operation_metadata: dict[str, dict[str, dict[str, Any]]] = {}
 
@@ -989,6 +993,7 @@ class MCPRuntimeServer:
                 "client_version": client_version,
                 "harness": "mcp",
             },
+            inferred={"session_id": self._mcp_session_id},
         )
 
     def _audit_start(

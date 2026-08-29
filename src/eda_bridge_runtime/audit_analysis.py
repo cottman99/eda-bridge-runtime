@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from statistics import median
 from typing import Any
 
 _DISCOVERY_TOOLS = {
     "eda.capabilities",
+    "eda.connections.list",
+    "eda.context.resolve",
+}
+_RUNTIME_LOCAL_TOOLS = {
+    "eda.connection.reset",
     "eda.connections.list",
     "eda.context.resolve",
 }
@@ -108,20 +114,48 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
     )
 
     timing_by_tool: dict[str, dict[str, float | int]] = {}
+    all_server: list[float] = []
+    all_transport: list[float] = []
+    all_nontransport: list[float] = []
+    all_unpaired_server: list[float] = []
     for tool in sorted({call["tool"] for call in calls}):
         selected = [call for call in calls if call["tool"] == tool]
         server = [
             float(call["mcp_server_ms"]) for call in selected if call["mcp_server_ms"] is not None
         ]
-        transport = [
-            float(call["client_transport_ms"])
-            for call in selected
-            if call["client_transport_ms"] is not None
-        ]
+        paired: list[tuple[float, float]] = []
+        unpaired_server: list[float] = []
+        for call in selected:
+            if call["mcp_server_ms"] is None:
+                continue
+            server_ms = float(call["mcp_server_ms"])
+            if call["client_transport_ms"] is not None:
+                paired.append((server_ms, float(call["client_transport_ms"])))
+            elif tool in _RUNTIME_LOCAL_TOOLS:
+                paired.append((server_ms, 0.0))
+            else:
+                unpaired_server.append(server_ms)
+        transport = [item[1] for item in paired]
+        nontransport = [max(0.0, item[0] - item[1]) for item in paired]
+        all_server.extend(server)
+        all_transport.extend(transport)
+        all_nontransport.extend(nontransport)
+        all_unpaired_server.extend(unpaired_server)
         timing_by_tool[tool] = {
             "calls": len(selected),
+            "completed_calls": sum(call["completed"] for call in selected),
+            "failed_calls": sum(call["state"] == "failed" for call in selected),
+            "paired_timing_calls": len(paired),
+            "unpaired_timing_calls": len(unpaired_server),
             "mcp_server_ms_total": round(sum(server), 3),
+            "mcp_server_ms_median": round(median(server), 3) if server else 0,
             "client_transport_ms_total": round(sum(transport), 3),
+            "client_transport_ms_median": round(median(transport), 3) if transport else 0,
+            "runtime_nontransport_ms_total": round(sum(nontransport), 3),
+            "runtime_nontransport_ms_median": (
+                round(median(nontransport), 3) if nontransport else 0
+            ),
+            "unpaired_mcp_server_ms_total": round(sum(unpaired_server), 3),
         }
 
     findings = []
@@ -140,6 +174,18 @@ def analyze_events(events: list[dict[str, Any]]) -> dict[str, Any]:
         "completed_calls": sum(call["completed"] for call in calls),
         "failed_calls": sum(call["state"] == "failed" for call in calls),
         "idempotent_replays": idempotent_replays,
+        "timing_totals": {
+            "mcp_server_ms": round(sum(all_server), 3),
+            "client_transport_ms": round(sum(all_transport), 3),
+            "runtime_nontransport_ms": round(sum(all_nontransport), 3),
+            "unpaired_mcp_server_ms": round(sum(all_unpaired_server), 3),
+            "paired_calls": sum(
+                int(item["paired_timing_calls"]) for item in timing_by_tool.values()
+            ),
+            "unpaired_calls": sum(
+                int(item["unpaired_timing_calls"]) for item in timing_by_tool.values()
+            ),
+        },
         "potential_avoidable_mcp_ms": round(
             redundant_discovery_ms + repeated_failure_ms + avoidable_status_poll_ms,
             3,

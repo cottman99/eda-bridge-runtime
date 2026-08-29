@@ -56,6 +56,28 @@ def test_analysis_separates_idempotent_replay_from_waste():
     assert result["idempotent_replays"] == 1
     assert result["findings"] == [{"code": "potential_redundant_discovery", "count": 1}]
     assert result["potential_avoidable_mcp_ms"] == 10
+    assert result["timing_totals"] == {
+        "mcp_server_ms": 40.0,
+        "client_transport_ms": 36.0,
+        "runtime_nontransport_ms": 4.0,
+        "unpaired_mcp_server_ms": 0,
+        "paired_calls": 4,
+        "unpaired_calls": 0,
+    }
+    assert result["timing_by_tool"]["eda.capabilities"] == {
+        "calls": 2,
+        "completed_calls": 2,
+        "failed_calls": 0,
+        "paired_timing_calls": 2,
+        "unpaired_timing_calls": 0,
+        "mcp_server_ms_total": 20.0,
+        "mcp_server_ms_median": 10.0,
+        "client_transport_ms_total": 18.0,
+        "client_transport_ms_median": 9.0,
+        "runtime_nontransport_ms_total": 2.0,
+        "runtime_nontransport_ms_median": 1.0,
+        "unpaired_mcp_server_ms_total": 0,
+    }
 
 
 def test_analysis_finds_repeated_failure_and_status_polling_without_ids():
@@ -102,6 +124,21 @@ def test_analysis_treats_unknown_actor_session_as_unscoped():
     result = analyze_events(events)
 
     assert result["findings"] == []
+
+
+def test_analysis_scopes_repetition_to_inferred_mcp_lifecycle():
+    events = [
+        *pair("a", "eda.capabilities", "caps", session="mcp-one"),
+        *pair("b", "eda.capabilities", "caps", session="mcp-one"),
+    ]
+    for event in events:
+        if event["event_type"] == "agent.tool.requested":
+            event["payload"]["actor"]["session_id"]["provenance"] = "inferred"
+
+    result = analyze_events(events)
+
+    assert result["findings"] == [{"code": "potential_redundant_discovery", "count": 1}]
+    assert result["potential_avoidable_mcp_ms"] == 10
 
 
 def test_analysis_prefers_runtime_observation_over_duplicate_hook_observation():

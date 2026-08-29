@@ -66,7 +66,9 @@ observed client identity, concise purpose, argument fingerprint, timings, and li
 depending on a Codex- or Pi-specific hook. Agent hooks may add richer model/session metadata, but
 they are optional enrichment. Agent adapters may attach bounded provider, model, reasoning,
 session, and tool-call metadata; Runtime labels these values `declared`, while MCP client identity
-remains independently `observed`. A bounded `eda.connection.reset` action closes only a stale
+remains independently `observed`. If no Agent session is declared, Runtime adds a non-identifying
+`inferred` correlation ID for the current MCP client lifecycle without another Agent action. A
+bounded `eda.connection.reset` action closes only a stale
 Runtime-owned transport after an upgrade; it never closes or modifies the EDA application.
 
 `0.1.0a5` added optional Codex lifecycle enrichment for session, turn, model, permission mode, and
