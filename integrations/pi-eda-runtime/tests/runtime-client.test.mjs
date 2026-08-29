@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import { RuntimeClient } from "../lib/runtime-client.mjs";
 
-test("persistent client lists the eight installed Runtime tools", async () => {
+test("persistent client lists the nine installed Runtime tools", async () => {
   const client = new RuntimeClient({
     command: process.env.EDA_RUNTIME_COMMAND ?? "eda-runtime",
     timeoutMs: 10_000,
@@ -11,7 +11,7 @@ test("persistent client lists the eight installed Runtime tools", async () => {
   });
   try {
     const result = await client.listTools();
-    assert.equal(result.tools.length, 8);
+    assert.equal(result.tools.length, 9);
     assert.deepEqual(
       result.tools.map((tool) => tool.name),
       [
@@ -19,6 +19,7 @@ test("persistent client lists the eight installed Runtime tools", async () => {
         "eda.connections.list",
         "eda.connection.reset",
         "eda.capabilities",
+        "eda.read",
         "eda.submit",
         "eda.job.status",
         "eda.job.wait",

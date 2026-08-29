@@ -96,6 +96,28 @@ TOOLS = [
         "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
     },
     {
+        "name": "eda.read",
+        "title": "Run Typed Read-Only EDA Operation",
+        "description": (
+            "Run one operation that the selected Bridge has advertised as non-mutating. "
+            "Capability metadata must already be known; unknown or mutating operations are "
+            "rejected before execution."
+        ),
+        "inputSchema": _object_schema(
+            {
+                "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
+                "operation": {"type": "string"},
+                "payload": {"type": "object"},
+                "target": {"type": "object"},
+                "context": {"type": "string"},
+                "connection_id": {"type": "string"},
+                "eda": {"type": "string"},
+            },
+            ["purpose", "operation", "payload"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
+    },
+    {
         "name": "eda.submit",
         "title": "Submit Typed EDA Operation",
         "description": (
@@ -312,12 +334,16 @@ class MCPRuntimeServer:
         eda = str(arguments.get("eda") or (context.eda if context else "")) or None
         hinted = context.locator.get("connection_id") if context else None
         origin_id = str(context.origin.get("origin_id") or "") or None if context else None
+        selected_connection = str(arguments.get("connection_id") or hinted or "") or None
+        # An exact connection id is the deterministic selector. A redundant Agent-guessed EDA
+        # label must not veto it; Context identity remains strict because it is captured evidence.
+        selected_eda = context.eda if context else (None if selected_connection else eda)
         spec = self.registry.resolve(
-            connection_id=str(arguments.get("connection_id") or hinted or "") or None,
-            eda=eda,
+            connection_id=selected_connection,
+            eda=selected_eda,
             origin_id=origin_id,
         )
-        if name in {"eda.submit", "eda.capabilities"}:
+        if name in {"eda.read", "eda.submit", "eda.capabilities"}:
             supplied_target = arguments.get("target") or {}
             if not isinstance(supplied_target, dict):
                 raise ValueError("target must be an object")
@@ -341,7 +367,19 @@ class MCPRuntimeServer:
                 operation = str(arguments["operation"])
                 payload = dict(arguments["payload"])
                 metadata = self._operation_metadata.get(spec.connection_id, {}).get(operation)
-                if "mutating" not in payload and metadata is not None:
+                if name == "eda.read":
+                    if metadata is None:
+                        raise ValueError(
+                            "read operation metadata is unknown; discover capabilities once"
+                        )
+                    if bool(metadata.get("mutates", True)):
+                        raise PermissionError(
+                            f"operation {operation!r} is not advertised as read-only"
+                        )
+                    if payload.get("mutating") not in {None, False}:
+                        raise ValueError("eda.read payload cannot declare a mutation")
+                    payload["mutating"] = False
+                elif "mutating" not in payload and metadata is not None:
                     payload["mutating"] = bool(metadata.get("mutates", True))
         else:
             operation = "runtime.job_events" if name == "eda.job.events" else "runtime.job_status"

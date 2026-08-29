@@ -8,8 +8,10 @@ resume/idempotency, and bounded engineering workflows. Every case declares allow
 deterministic gates, budgets, and safety limits. The Agent executes the task; `run_case.py` scores it.
 
 Raw Agent streams may contain local target facts and are not saved unless `--raw-output` is supplied.
-Normalized results contain metrics, the canonical tool sequence, a final compact result, and the raw
-trace hash. Never commit real-host raw streams or customer artifacts.
+Normalized results contain only cross-client metrics with matching definitions, the canonical tool
+sequence, a final compact result, and the raw trace hash. Client-specific notions such as a Codex
+user turn versus a Pi assistant message are not mislabeled as one comparable metric. Never commit
+real-host raw streams or customer artifacts.
 
 ```powershell
 python evals/run_case.py --case evals/cases/l0_connections.json `

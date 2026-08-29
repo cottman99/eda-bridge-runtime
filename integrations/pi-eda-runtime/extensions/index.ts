@@ -121,6 +121,20 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
     Type.Object({ purpose: Type.String({ minLength: 3, maxLength: 240 }), ...TargetFields }),
   );
   register(
+    "eda_read",
+    "eda.read",
+    "Run Read-Only EDA Operation",
+    "Run an operation already advertised as non-mutating; unknown or mutating operations are rejected.",
+    Type.Object({
+      purpose: Type.String({ minLength: 3, maxLength: 240 }),
+      operation: Type.String({
+        description: "Exact operation already advertised as non-mutating by the selected Bridge.",
+      }),
+      payload: Type.Record(Type.String(), Type.Unknown()),
+      ...TargetFields,
+    }),
+  );
+  register(
     "eda_submit",
     "eda.submit",
     "Submit EDA Operation",

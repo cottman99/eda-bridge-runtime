@@ -25,7 +25,9 @@ def test_profile_disables_unrelated_skills_without_changing_global_config(tmp_pa
     global_config = tmp_path / "config.toml"
     global_config.write_text('model = "unchanged"\n', encoding="utf-8")
 
-    output, enabled, disabled = installer.install_profile(tmp_path)
+    output, enabled, disabled = installer.install_profile(
+        tmp_path, runtime_command="D:/runtime/eda-runtime.exe"
+    )
     profile = output.read_text(encoding="utf-8")
 
     assert enabled == 1
@@ -36,6 +38,7 @@ def test_profile_disables_unrelated_skills_without_changing_global_config(tmp_pa
     assert "enabled = false" in profile
     assert "plugins = false" in profile
     assert '[mcp_servers."eda-bridge-runtime"]' in profile
+    assert 'command = "D:/runtime/eda-runtime.exe"' in profile
     assert "eda-runtime hook codex-pre-tool-use" in profile
     assert "eda-runtime hook codex-post-tool-use" in profile
     assert global_config.read_text(encoding="utf-8") == 'model = "unchanged"\n'

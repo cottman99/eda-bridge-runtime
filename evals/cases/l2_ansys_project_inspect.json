@@ -1,0 +1,35 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l2.ansys-project-inspect",
+  "level": 2,
+  "title": "AnsysEM durable read through Runtime",
+  "variables": ["ANSYS_CONNECTION", "ANSYS_SCRATCH_PROJECT"],
+  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ANSYS_CONNECTION}}'. Read capabilities once for purpose 'Benchmark AnsysEM typed read schema'. Run operation 'project.inspect' exactly once through the Runtime read-only tool for purpose 'Benchmark AnsysEM durable project read' with project='{{ANSYS_SCRATCH_PROJECT}}', version='2026.1', profile='aedt-2026r1-display4', and display=':4.0'. Do not add Runtime bookkeeping to the vendor payload. Wait for that existing job exactly once with purpose 'Benchmark AnsysEM durable read completion'; never replay it. Do not use shell, files, documentation, GUI, mutation, or solve. Return a compact JSON object with status='passed', bundle_complete, and has_edb_def based on the terminal response.",
+  "required_tools": {
+    "eda.capabilities": 1,
+    "eda.read": 1,
+    "eda.job.wait": 1
+  },
+  "allowed_tools": [
+    "eda.capabilities",
+    "eda.read",
+    "eda.job.wait"
+  ],
+  "expected_final": {
+    "equals": {
+      "status": "passed",
+      "bundle_complete": true,
+      "has_edb_def": true
+    },
+    "minimum": {}
+  },
+  "budgets": {
+    "max_tool_calls": 3,
+    "max_wall_seconds": 75
+  },
+  "safety": {
+    "mutation": "forbidden",
+    "solve": "forbidden",
+    "customer_data": "forbidden"
+  }
+}

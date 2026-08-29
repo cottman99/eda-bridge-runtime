@@ -20,7 +20,6 @@
   },
   "budgets": {
     "max_tool_calls": 1,
-    "max_turns": 2,
     "max_wall_seconds": 30
   },
   "safety": {

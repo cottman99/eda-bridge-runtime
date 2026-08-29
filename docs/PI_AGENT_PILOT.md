@@ -27,7 +27,7 @@ and automatic global Skill discovery, then explicitly loads only three Skills: R
 ADS operation, and AnsysEM operation. The engineer still starts one command and uses natural
 language; Pi selects and reads the relevant Skill.
 
-The checked-in package is `integrations/pi-eda-runtime`. It registers exactly eight `eda_*` tools,
+The checked-in package is `integrations/pi-eda-runtime`. It registers exactly nine `eda_*` tools,
 maintains one persistent `eda-runtime mcp serve` child, and adds `/eda-runtime-status`. It does not
 contain SSH or vendor logic. Pi supplies provider, model, reasoning, session, and tool-call identity
 directly from its extension context; Runtime stores these as declared facts and stores MCP client
@@ -85,7 +85,7 @@ Skills. It does not receive shell, edit, or write as an alternate route around R
 
 The reviewed Pi package in this repository contains:
 
-- a native Pi extension that exposes only the eight Runtime tools;
+- a native Pi extension that exposes only the nine Runtime tools;
 - the Runtime control Skill and references to selected vendor Skills;
 - optional Pi lifecycle enrichment; the Runtime already records the mandatory base facts;
 - a small status view for active connection, Run state, and elapsed time.

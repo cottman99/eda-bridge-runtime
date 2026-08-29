@@ -1,0 +1,33 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l2.ads-session-status",
+  "level": 2,
+  "title": "ADS typed read through Runtime",
+  "variables": ["ADS_CONNECTION"],
+  "prompt": "Use only EDA Bridge Runtime tools and connection '{{ADS_CONNECTION}}'. Read capabilities once for purpose 'Benchmark ADS typed read schema', then run operation 'session.status' once through the Runtime read-only tool with an empty vendor payload for purpose 'Benchmark ADS typed session read'. Do not use shell, files, documentation, GUI, launch, shutdown, or mutation. Return a compact JSON object with status='passed' and session_count from the actual Bridge response.",
+  "required_tools": {
+    "eda.capabilities": 1,
+    "eda.read": 1
+  },
+  "allowed_tools": [
+    "eda.capabilities",
+    "eda.read"
+  ],
+  "expected_final": {
+    "equals": {
+      "status": "passed"
+    },
+    "minimum": {
+      "session_count": 0
+    }
+  },
+  "budgets": {
+    "max_tool_calls": 2,
+    "max_wall_seconds": 45
+  },
+  "safety": {
+    "mutation": "forbidden",
+    "solve": "forbidden",
+    "customer_data": "forbidden"
+  }
+}

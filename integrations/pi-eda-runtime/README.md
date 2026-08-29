@@ -1,6 +1,6 @@
 # Pi EDA Runtime adapter
 
-This is one thin Pi package over EDA Bridge Runtime. It registers exactly eight `eda_*` tools and
+This is one thin Pi package over EDA Bridge Runtime. It registers exactly nine `eda_*` tools and
 one local status command. It contains no SSH routing, EDA API knowledge, retry engine, job store, or
 audit database.
 

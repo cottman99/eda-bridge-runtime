@@ -26,12 +26,13 @@ the two bundled audit commands; routine calls need no extra Agent prompt after t
 acceptance may use Codex's explicit hook-trust bypass only after validating the installed Hook file.
 
 The stdio server supports both the legacy MCP initialization era through `2025-11-25` and the
-stateless `2026-07-28` discovery era. It exposes eight tools:
+stateless `2026-07-28` discovery era. It exposes nine tools:
 
 - `eda.context.resolve`
 - `eda.connections.list`
 - `eda.connection.reset`
 - `eda.capabilities`
+- `eda.read`
 - `eda.submit`
 - `eda.job.status`
 - `eda.job.wait`
@@ -49,6 +50,10 @@ large private artifacts.
 When a selected Skill and Context establish the operation, call `eda.submit` directly. Separate
 `eda.context.resolve` and `eda.capabilities` calls are diagnostic and discovery tools, not mandatory
 preflight. The adapter still validates the Context generation and target before execution.
+
+When capability metadata is required to prove an operation is non-mutating, call `eda.read` after
+that single discovery. This lets Agent clients authorize a statically read-only MCP tool while the
+Runtime still rejects unknown or mutating vendor operations before execution.
 
 The tools never accept a raw local or SSH launch command. They select a previously registered
 connection by `connection_id`, by a stable `origin_id` in `EDA_CONTEXT`, or by an unambiguous EDA

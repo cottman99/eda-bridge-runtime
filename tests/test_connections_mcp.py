@@ -228,6 +228,7 @@ def test_mcp_supports_legacy_and_modern_discovery():
         "eda.connections.list",
         "eda.connection.reset",
         "eda.capabilities",
+        "eda.read",
         "eda.submit",
         "eda.job.status",
         "eda.job.wait",
@@ -353,13 +354,35 @@ def test_mcp_capability_discovery_is_read_only_and_summary_is_bounded():
     assert json.dumps(response["result"]["structuredContent"], sort_keys=True) not in text
 
 
+def test_exact_connection_id_ignores_redundant_agent_eda_alias():
+    registry = FakeRegistry()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Use the exact registered connection",
+                    "connection_id": "ansys-one",
+                    "eda": "ansysem",
+                },
+            },
+        )
+    )
+
+    assert response["result"]["isError"] is False
+    assert registry.transport.requests[0].target["eda"] == "ansys-electronics-desktop"
+
+
 def test_mcp_stdio_bad_frame_does_not_kill_server():
     source = io.StringIO("bad\n" + json.dumps(_rpc(1, "tools/list")) + "\n")
     destination = io.StringIO()
     serve_mcp(source, destination, registry=FakeRegistry())
     responses = [json.loads(line) for line in destination.getvalue().splitlines()]
     assert responses[0]["error"]["code"] == -32700
-    assert len(responses[1]["result"]["tools"]) == 8
+    assert len(responses[1]["result"]["tools"]) == 9
 
 
 def test_mcp_uses_cached_capability_mutability_for_submit_payload():
@@ -396,6 +419,60 @@ def test_mcp_uses_cached_capability_mutability_for_submit_payload():
     )
     assert response["result"]["isError"] is False
     assert registry.transport.requests[-1].payload["mutating"] is False
+
+
+def test_mcp_read_requires_cached_non_mutating_capability():
+    registry = FakeRegistry()
+    registry.transport = CapabilityAwareTransport()
+    server = MCPRuntimeServer(registry)
+    server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Discover exact read operation metadata",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+    response = server.handle(
+        _rpc(
+            2,
+            "tools/call",
+            {
+                "name": "eda.read",
+                "arguments": {
+                    "purpose": "Inspect one project through the read-only lane",
+                    "connection_id": "ansys-one",
+                    "operation": "project.inspect",
+                    "payload": {},
+                },
+            },
+        )
+    )
+    rejected = server.handle(
+        _rpc(
+            3,
+            "tools/call",
+            {
+                "name": "eda.read",
+                "arguments": {
+                    "purpose": "Reject a mutation through the read-only lane",
+                    "connection_id": "ansys-one",
+                    "operation": "project.create",
+                    "payload": {},
+                },
+            },
+        )
+    )
+
+    assert response["result"]["isError"] is False
+    assert registry.transport.requests[-1].payload["mutating"] is False
+    assert rejected["result"]["isError"] is True
+    assert rejected["result"]["structuredContent"]["error"]["code"] == "PermissionError"
 
 
 def test_mcp_job_wait_polls_inside_runtime_until_terminal():

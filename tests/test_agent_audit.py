@@ -1,6 +1,8 @@
 import hashlib
 import json
 
+import pytest
+
 from eda_bridge_runtime.agent_audit import audit_events, record_codex_hook
 from eda_bridge_runtime.ledger import ExecutionLedger
 from eda_bridge_runtime.protocol import RUN_VIEW_PROTOCOL
@@ -89,3 +91,18 @@ def test_codex_hook_accepts_protocol_native_mcp_names(tmp_path):
     database = tmp_path / "agent-audit.sqlite3"
     assert record_codex_hook(event, phase="pre", database=database) is True
     assert audit_events(database)[0]["payload"]["tool"] == "eda.connections.list"
+
+
+@pytest.mark.parametrize(
+    ("codex_name", "runtime_name"),
+    [("eda_read", "eda.read"), ("eda_job_wait", "eda.job.wait")],
+)
+def test_codex_hook_covers_read_and_wait_tools(tmp_path, codex_name, runtime_name):
+    event = {
+        **_event(f"tool-{codex_name}"),
+        "tool_name": f"mcp__eda_bridge_runtime__{codex_name}",
+    }
+    database = tmp_path / f"{codex_name}.sqlite3"
+
+    assert record_codex_hook(event, phase="pre", database=database) is True
+    assert audit_events(database)[0]["payload"]["tool"] == runtime_name

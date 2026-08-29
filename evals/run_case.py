@@ -34,7 +34,8 @@ def json_lines(output: str) -> list[dict[str, Any]]:
 
 def parse_codex(events: list[dict[str, Any]]) -> dict[str, Any]:
     tools: list[str] = []
-    turns = 0
+    attempts: list[str] = []
+    messages = 0
     final_text = ""
     usage = {
         "input_tokens": 0,
@@ -43,26 +44,31 @@ def parse_codex(events: list[dict[str, Any]]) -> dict[str, Any]:
         "reasoning_output_tokens": 0,
     }
     for event in events:
-        if event.get("type") == "turn.started":
-            turns += 1
         if event.get("type") == "turn.completed":
             for key in usage:
                 usage[key] += int((event.get("usage") or {}).get(key, 0))
         item = event.get("item") if isinstance(event.get("item"), dict) else {}
-        if (
-            event.get("type") == "item.completed"
-            and item.get("type") == "mcp_tool_call"
-            and item.get("status") == "completed"
-        ):
-            tools.append(canonical_tool(str(item.get("tool") or "")))
+        if event.get("type") == "item.completed" and item.get("type") == "mcp_tool_call":
+            tool = canonical_tool(str(item.get("tool") or ""))
+            attempts.append(tool)
+            if item.get("status") == "completed" and not item.get("error"):
+                tools.append(tool)
         if event.get("type") == "item.completed" and item.get("type") == "agent_message":
+            messages += 1
             final_text = str(item.get("text") or "")
-    return {"tools": tools, "turns": turns, "usage": usage, "final_text": final_text}
+    return {
+        "tools": tools,
+        "attempts": attempts,
+        "messages": messages,
+        "usage": usage,
+        "final_text": final_text,
+    }
 
 
 def parse_pi(events: list[dict[str, Any]]) -> dict[str, Any]:
     tools: list[str] = []
-    turns = 0
+    attempts: list[str] = []
+    messages = 0
     final_text = ""
     usage = {
         "input_tokens": 0,
@@ -71,14 +77,17 @@ def parse_pi(events: list[dict[str, Any]]) -> dict[str, Any]:
         "reasoning_output_tokens": 0,
     }
     for event in events:
-        if event.get("type") == "tool_execution_end" and not event.get("isError", False):
-            tools.append(canonical_tool(str(event.get("toolName") or "")))
+        if event.get("type") == "tool_execution_end":
+            tool = canonical_tool(str(event.get("toolName") or ""))
+            attempts.append(tool)
+            if not event.get("isError", False):
+                tools.append(tool)
         if event.get("type") != "message_end":
             continue
         message = event.get("message") if isinstance(event.get("message"), dict) else {}
         if message.get("role") != "assistant":
             continue
-        turns += 1
+        messages += 1
         raw_usage = message.get("usage") if isinstance(message.get("usage"), dict) else {}
         usage["input_tokens"] += int(raw_usage.get("input", 0))
         usage["cached_input_tokens"] += int(raw_usage.get("cacheRead", 0))
@@ -87,7 +96,13 @@ def parse_pi(events: list[dict[str, Any]]) -> dict[str, Any]:
         text_parts = [str(item.get("text")) for item in content if item.get("type") == "text"]
         if text_parts:
             final_text = "".join(text_parts)
-    return {"tools": tools, "turns": turns, "usage": usage, "final_text": final_text}
+    return {
+        "tools": tools,
+        "attempts": attempts,
+        "messages": messages,
+        "usage": usage,
+        "final_text": final_text,
+    }
 
 
 def final_object(text: str) -> dict[str, Any] | None:
@@ -113,7 +128,7 @@ def score(case: dict[str, Any], observation: dict[str, Any], exit_code: int) -> 
     if exit_code != 0:
         failures.append(f"agent_exit_code:{exit_code}")
     allowed = set(case["allowed_tools"])
-    unexpected = [tool for tool in tools if tool not in allowed]
+    unexpected = [tool for tool in observation["attempts"] if tool not in allowed]
     if unexpected:
         failures.append("unexpected_tools:" + ",".join(unexpected))
     for tool, count in case["required_tools"].items():
@@ -123,8 +138,6 @@ def score(case: dict[str, Any], observation: dict[str, Any], exit_code: int) -> 
     budgets = case["budgets"]
     if len(tools) > int(budgets["max_tool_calls"]):
         failures.append("tool_budget_exceeded")
-    if observation["turns"] > int(budgets["max_turns"]):
-        failures.append("turn_budget_exceeded")
     final = final_object(observation["final_text"])
     if final is None:
         failures.append("final_not_json_object")
@@ -231,6 +244,19 @@ def render_prompt(case: dict[str, Any], supplied: dict[str, str]) -> str:
     return prompt
 
 
+def launch_failure(output: str) -> str | None:
+    lowered = output.casefold()
+    patterns = (
+        (("no api key found", "credentials_not_configured"), "agent_auth_unavailable"),
+        (("mcp tool is not exposed", "transport closed"), "runtime_mcp_unavailable"),
+        (("timed out", "timeoutexpired"), "agent_timeout"),
+    )
+    for messages, classification in patterns:
+        if any(message in lowered for message in messages):
+            return classification
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", type=Path, required=True)
@@ -282,6 +308,10 @@ def main() -> int:
     events = json_lines(output)
     observation = parse_codex(events) if args.agent == "codex" else parse_pi(events)
     scored = score(case, observation, exit_code)
+    classified_failure = launch_failure(output)
+    if classified_failure and classified_failure not in scored["failures"]:
+        scored["failures"].append(classified_failure)
+        scored["passed"] = False
     if wall_ms > int(case["budgets"]["max_wall_seconds"]) * 1000:
         scored["failures"].append("wall_budget_exceeded")
         scored["passed"] = False
@@ -294,8 +324,9 @@ def main() -> int:
         "failures": scored["failures"],
         "metrics": {
             "wall_ms": wall_ms,
-            "turns": observation["turns"],
-            "tool_calls": len(observation["tools"]),
+            "observed_agent_messages": observation["messages"],
+            "tool_attempts": len(observation["attempts"]),
+            "tool_calls_succeeded": len(observation["tools"]),
             "tool_sequence": observation["tools"],
             **observation["usage"],
         },

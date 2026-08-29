@@ -36,6 +36,9 @@ Runtime merely because SSH is absent.
 
 - Prefer a typed adapter operation. Inspect capabilities once only when support is uncertain; do not
   repeat doctor, environment, or full-state probes when the connection and target are unchanged.
+- After capabilities establish a non-mutating operation, use `eda.read` so the Agent client can
+  authorize the call through a statically read-only tool. Runtime rejects unknown or mutating
+  operations on that lane. Keep `eda.submit` for mutations and unresolved safety classes.
 - For a mutation, use one stable `idempotency_key` for the same intended change. A retry observes
   the same operation instead of starting a duplicate.
 - An accepted durable job is not a completed job. Prefer one `eda.job.wait` call when the task can

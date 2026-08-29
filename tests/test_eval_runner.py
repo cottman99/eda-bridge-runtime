@@ -43,7 +43,7 @@ def test_codex_trace_is_normalized_and_scored():
             "equals": {"status": "ready"},
             "minimum": {"connection_count": 1},
         },
-        "budgets": {"max_tool_calls": 1, "max_turns": 2},
+        "budgets": {"max_tool_calls": 1},
     }
 
     assert runner.score(case, observation, 0)["passed"] is True
@@ -76,11 +76,12 @@ def test_pi_tool_alias_and_unexpected_tool_are_detected():
             "equals": {"status": "ready"},
             "minimum": {"connection_count": 1},
         },
-        "budgets": {"max_tool_calls": 2, "max_turns": 2},
+        "budgets": {"max_tool_calls": 2},
     }
     scored = runner.score(case, observation, 0)
 
     assert observation["tools"][0] == "eda.connections.list"
+    assert observation["attempts"] == ["eda.connections.list", "bash"]
     assert scored["passed"] is False
     assert "unexpected_tools:bash" in scored["failures"]
 
@@ -105,3 +106,9 @@ def test_case_variables_are_required_and_not_stored_in_case_definition():
     case = {"prompt": "Inspect {{CONNECTION}}", "variables": ["CONNECTION"]}
 
     assert runner.render_prompt(case, {"CONNECTION": "one"}) == "Inspect one"
+
+
+def test_auth_failure_is_reduced_to_non_secret_classification():
+    runner = load_runner()
+
+    assert runner.launch_failure("No API key found for one provider") == "agent_auth_unavailable"
