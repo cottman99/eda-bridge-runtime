@@ -9,7 +9,13 @@ disables unrelated discovered Skills—including bundled `.system` Skills—only
 plugin discovery, declares the single Runtime MCP directly, and preserves the Runtime's two Codex
 audit hooks inline. The user's ordinary Codex configuration remains unchanged. Browser, Apps,
 Computer Use, memory injection, multi-agent, and shell snapshotting are disabled in this profile
-because normal EDA work uses the Runtime MCP.
+because normal EDA work uses the Runtime MCP. The Codex `shell_tool`, `code_mode`, and
+`code_mode_host` features are also disabled, so a prompt cannot probe local or remote EDA through
+commands or the JavaScript execution host when the Runtime tool set is empty or the task should stop for
+clarification. The ordinary Codex profile keeps its normal execution tools.
+The installer also discovers MCP servers inherited from the user's global Codex config and disables
+all of them inside this profile except `eda-bridge-runtime`. This is generated isolation, not a
+hard-coded list: adding another general-purpose MCP globally cannot silently expand the EDA profile.
 
 ```powershell
 python integrations/codex-eda-profile/install_profile.py `

@@ -17,6 +17,11 @@ DEFAULT_KEEP_NAMES = frozenset(
     }
 )
 _NAME = re.compile(r"^name:\s*[\"']?([^\"'\r\n]+)", re.MULTILINE)
+_MCP_TABLE = re.compile(
+    r"^\s*\[\s*mcp_servers\s*\.\s*"
+    r'(?:(?P<double>"(?:\\.|[^"\\])*")|(?P<single>\'[^\']*\')|(?P<bare>[A-Za-z0-9_-]+))'
+    r"(?:\s*\.|\s*\])"
+)
 _PLUGIN_VERSION = re.compile(
     r"^(?P<release>\d+(?:\.\d+)*)"
     r"(?:[-.]?(?P<label>dev|alpha|a|beta|b|rc|pre|preview)[.-]?(?P<number>\d+)?)?$",
@@ -106,10 +111,43 @@ def choose_enabled_skill_paths(skills: list[tuple[Path, str]], keep_names: set[s
     return enabled
 
 
+def discover_inherited_mcp_servers(codex_home: Path) -> list[str]:
+    """Return global MCP names that the narrow profile must explicitly disable."""
+
+    path = codex_home / "config.toml"
+    if not path.is_file():
+        return []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise ValueError(
+            "cannot inspect global Codex config; refusing to generate a leaky EDA profile"
+        ) from exc
+    names: set[str] = set()
+    for line in lines:
+        if not line.lstrip().startswith("[mcp_servers"):
+            continue
+        match = _MCP_TABLE.match(line)
+        if not match:
+            raise ValueError(
+                "cannot inspect global Codex config; refusing to generate a leaky EDA profile"
+            )
+        if match.group("double"):
+            name = json.loads(match.group("double"))
+        elif match.group("single"):
+            name = match.group("single")[1:-1]
+        else:
+            name = match.group("bare")
+        if name != "eda-bridge-runtime":
+            names.add(name)
+    return sorted(names)
+
+
 def render_profile(
     skills: list[tuple[Path, str]],
     keep_names: set[str],
     *,
+    disabled_mcp_servers: list[str] | None = None,
     runtime_command: str = "eda-runtime",
     approve_mutations: bool = False,
 ) -> str:
@@ -124,6 +162,8 @@ def render_profile(
         "plugins = false",
         "apps = false",
         "browser_use = false",
+        "code_mode = false",
+        "code_mode_host = false",
         "computer_use = false",
         "image_generation = false",
         "memories = false",
@@ -131,6 +171,7 @@ def render_profile(
         "goals = false",
         "skill_search = false",
         "workspace_dependencies = false",
+        "shell_tool = false",
         "shell_snapshot = false",
         "",
         '[mcp_servers."eda-bridge-runtime"]',
@@ -158,6 +199,14 @@ def render_profile(
         "timeout = 3",
         "",
     ]
+    for name in disabled_mcp_servers or []:
+        lines.extend(
+            [
+                f"[mcp_servers.{json.dumps(name)}]",
+                "enabled = false",
+                "",
+            ]
+        )
     if approve_mutations:
         lines.extend(
             [
@@ -190,6 +239,7 @@ def install_profile(
     approve_mutations: bool = False,
 ) -> tuple[Path, int, int]:
     skills = discover_skills(codex_home)
+    disabled_mcp_servers = discover_inherited_mcp_servers(codex_home)
     selected = set(keep_names or DEFAULT_KEEP_NAMES)
     enabled_paths = choose_enabled_skill_paths(skills, selected)
     output = codex_home / f"{profile_name}.config.toml"
@@ -197,6 +247,7 @@ def install_profile(
         render_profile(
             skills,
             selected,
+            disabled_mcp_servers=disabled_mcp_servers,
             runtime_command=runtime_command,
             approve_mutations=approve_mutations,
         ),

@@ -5,16 +5,25 @@ credentials, host address, or task-specific geometry is included here.
 
 ## 2026-08-30 ambiguity-guard acceptance
 
-- Two new zero-tool cases presented underspecified ADS tuning and AnsysEM bondwire-height execution
-  requests. All twelve interleaved trials made no tool attempt and asked one blocking question; no
-  Runtime, SSH, Bridge, EDA, mutation, or solve was started.
-- Pi passed all six trials with median decisions of 8.823 seconds for ADS and 9.036 seconds for
-  AnsysEM. Codex passed two of three ADS trials and was semantically correct in two of three
-  AnsysEM trials. One trial in each vendor incorrectly marked `execution_started=true`; two Codex
-  AnsysEM trials also exceeded the 30-second user-facing budget.
+- Two ambiguity-guard cases presented underspecified ADS tuning and AnsysEM bondwire-height
+  execution requests. No Runtime, SSH, Bridge, EDA, mutation, or solve was started.
+- Pi passed all six trials with zero tool attempts and median decisions of 8.823 seconds for ADS
+  and 9.036 seconds for AnsysEM. The first Codex audit revealed that the narrow profile still
+  inherited command and general-purpose MCP execution paths. After the profile generator disabled
+  built-in shell/code features and every inherited non-Runtime MCP, all six retained Codex trials
+  made zero tool attempts. Codex passed ADS 2/3—the miss stopped but omitted the required
+  question—and AnsysEM 3/3, with medians of 10.722 and 13.148 seconds.
 - The calibration run exposed that exact free-text status values falsely rejected safe variants
   such as `blocked_missing_target`. Evaluation now supports a bounded string-prefix gate while
   retaining exact checks for the safety-critical `execution_started=false` fact.
+- Review then exposed that the Codex observer counted only MCP calls. It now treats every
+  non-passive item, including commands, file changes, web actions, and unknown future item types, as
+  a tool attempt and deduplicates start/completion events by item id. Startup error classification
+  also stops after the first Agent message or tool attempt, so text printed by a child command
+  cannot masquerade as Agent authentication failure.
+- The installed local `eda-runtime` Codex profile was regenerated with the same repository logic.
+  It retains the five selected EDA Skills and Runtime MCP while disabling 210 unrelated Skills and
+  all inherited non-Runtime MCP servers. The user's ordinary Codex configuration remains unchanged.
 
 ## 2026-08-30 Runtime alpha.23 released and installed acceptance
 

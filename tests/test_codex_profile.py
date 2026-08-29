@@ -23,7 +23,10 @@ def test_profile_disables_unrelated_skills_without_changing_global_config(tmp_pa
     keep = write_skill(tmp_path / "skills", "ads", "ads-agent-bridge")
     disable = write_skill(tmp_path / "skills", "other", "unrelated")
     global_config = tmp_path / "config.toml"
-    global_config.write_text('model = "unchanged"\n', encoding="utf-8")
+    global_config.write_text(
+        'model = "unchanged"\n[mcp_servers.node_repl]\ncommand = "node"\n',
+        encoding="utf-8",
+    )
 
     output, enabled, disabled = installer.install_profile(
         tmp_path, runtime_command="D:/runtime/eda-runtime.exe"
@@ -37,11 +40,45 @@ def test_profile_disables_unrelated_skills_without_changing_global_config(tmp_pa
     assert "enabled = true" in profile
     assert "enabled = false" in profile
     assert "plugins = false" in profile
+    assert "code_mode = false" in profile
+    assert "code_mode_host = false" in profile
+    assert "shell_tool = false" in profile
+    assert '[mcp_servers."node_repl"]\nenabled = false' in profile
     assert '[mcp_servers."eda-bridge-runtime"]' in profile
     assert 'command = "D:/runtime/eda-runtime.exe"' in profile
     assert "eda-runtime hook codex-pre-tool-use" in profile
     assert "eda-runtime hook codex-post-tool-use" in profile
-    assert global_config.read_text(encoding="utf-8") == 'model = "unchanged"\n'
+    assert global_config.read_text(encoding="utf-8") == (
+        'model = "unchanged"\n[mcp_servers.node_repl]\ncommand = "node"\n'
+    )
+
+
+def test_profile_keeps_only_runtime_mcp_from_global_config(tmp_path):
+    installer = load_installer()
+    (tmp_path / "config.toml").write_text(
+        '[mcp_servers."eda-bridge-runtime"]\ncommand = "old-runtime"\n'
+        '[mcp_servers.docs]\ncommand = "docs"\n',
+        encoding="utf-8",
+    )
+
+    output, _, _ = installer.install_profile(tmp_path, runtime_command="new-runtime")
+    profile = output.read_text(encoding="utf-8")
+
+    assert profile.count('[mcp_servers."eda-bridge-runtime"]') == 1
+    assert 'command = "new-runtime"' in profile
+    assert '[mcp_servers."docs"]\nenabled = false' in profile
+
+
+def test_profile_fails_closed_when_global_mcp_config_cannot_be_read(tmp_path):
+    installer = load_installer()
+    (tmp_path / "config.toml").write_text("[mcp_servers.invalid\n", encoding="utf-8")
+
+    try:
+        installer.install_profile(tmp_path)
+    except ValueError as exc:
+        assert "refusing to generate a leaky EDA profile" in str(exc)
+    else:
+        raise AssertionError("invalid global config must fail closed")
 
 
 def test_unattended_profile_approves_only_typed_runtime_mutation(tmp_path):

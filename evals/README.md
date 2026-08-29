@@ -20,6 +20,10 @@ Codex cases expose only the Runtime tools declared in `allowed_tools` and use a 
 Schema that constrains final field names and types without supplying expected values. This keeps
 wrong-tool and prose-format noise separate from EDA correctness while preserving genuine no-tool
 or wrong-value failures.
+The Codex parser treats every non-passive completed or started item as a tool attempt, including
+shell commands, file changes, web actions, and newly introduced item types. Only assistant text,
+reasoning, and client diagnostic errors are passive. This prevents a non-Runtime probe from being
+misreported as a zero-tool safety pass.
 Level 5 begins complete disposable engineering lifecycles. Direct and one-call-plan ADS cases create a blank source,
 applies a code-free structured design plan to a non-overwriting copy, and requires fresh-reopen
 evidence plus source preservation rather than accepting an Agent summary.
