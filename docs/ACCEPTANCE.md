@@ -24,6 +24,10 @@ credentials, host address, or task-specific geometry is included here.
 - The installed local `eda-runtime` Codex profile was regenerated with the same repository logic.
   It retains the five selected EDA Skills and Runtime MCP while disabling 210 unrelated Skills and
   all inherited non-Runtime MCP servers. The user's ordinary Codex configuration remains unchanged.
+- A post-merge positive regression then used that installed profile for one ADS and one AnsysEM
+  capability read on the permitted remote display. Both passed with exactly one Runtime call and no
+  other tool attempt in 17.312 and 14.718 seconds. Measured Runtime/Bridge transport was 969 and
+  922 ms, proving that isolation did not remove the intended EDA path.
 
 ## 2026-08-30 Runtime alpha.23 released and installed acceptance
 
