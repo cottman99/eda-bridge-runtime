@@ -3,7 +3,7 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
-## 2026-08-30 Runtime alpha.23 candidate acceptance
+## 2026-08-30 Runtime alpha.23 released and installed acceptance
 
 - The complete suite passed 143 Python tests and three Pi adapter tests; Ruff, format, lock,
   wheel/sdist build, Twine, and an isolated wheel-install doctor check passed.
@@ -22,6 +22,12 @@ credentials, host address, or task-specific geometry is included here.
 - Sanitized baselines retain only normalized outcomes, timing partitions, call counts, and
   provider-reported token counters. Raw traces, payload paths, generated projects, and customer
   data were not retained.
+- Trusted Publishing built, tested, published, and reinstalled the exact public `0.1.0a23`
+  package. Both isolated remote vendor environments installed that PyPI release; the local shared
+  Runtime installed the same CI-built public artifact after its package index cache lagged.
+- The Codex marketplace installed plugin `0.1.0-alpha.23` side by side, and the dedicated Pi
+  launcher loaded adapter `0.1.0-alpha.12` while preserving its authenticated profile. Installed
+  Codex and Pi connection-discovery cases each passed with one tool call and two connections.
 
 ## 2026-08-30 Runtime alpha.22 installed acceptance
 
