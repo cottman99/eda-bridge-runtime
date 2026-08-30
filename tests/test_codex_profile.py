@@ -43,8 +43,8 @@ def test_profile_disables_unrelated_skills_without_changing_global_config(tmp_pa
     assert '[mcp_servers."node_repl"]\nenabled = false' in profile
     assert '[mcp_servers."eda-bridge-runtime"]' in profile
     assert 'command = "D:/runtime/eda-runtime.exe"' in profile
-    assert "eda-runtime hook codex-pre-tool-use" in profile
-    assert "eda-runtime hook codex-post-tool-use" in profile
+    assert "D:/runtime/eda-runtime.exe hook codex-pre-tool-use" in profile
+    assert "D:/runtime/eda-runtime.exe hook codex-post-tool-use" in profile
     assert global_config.read_text(encoding="utf-8") == (
         'model = "unchanged"\n[mcp_servers.node_repl]\ncommand = "node"\n'
     )
@@ -64,6 +64,21 @@ def test_profile_keeps_only_runtime_mcp_from_global_config(tmp_path):
     assert profile.count('[mcp_servers."eda-bridge-runtime"]') == 1
     assert 'command = "new-runtime"' in profile
     assert '[mcp_servers."docs"]\nenabled = false' in profile
+
+
+def test_profile_quotes_version_locked_runtime_for_hooks(tmp_path):
+    installer = load_installer()
+    write_skill(tmp_path / "skills", "ads", "ads-agent-bridge")
+    (tmp_path / "config.toml").write_text("", encoding="utf-8")
+
+    output, _, _ = installer.install_profile(
+        tmp_path, runtime_command="D:/EDA Tools/eda-runtime.exe"
+    )
+    profile = output.read_text(encoding="utf-8")
+
+    assert 'command = "D:/EDA Tools/eda-runtime.exe"' in profile
+    assert '\\"D:/EDA Tools/eda-runtime.exe\\" hook codex-pre-tool-use' in profile
+    assert '\\"D:/EDA Tools/eda-runtime.exe\\" hook codex-post-tool-use' in profile
 
 
 def test_profile_fails_closed_when_global_mcp_config_cannot_be_read(tmp_path):
