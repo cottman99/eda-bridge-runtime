@@ -24,6 +24,21 @@ It is not another EDA automation API and it does not replace the vendor Bridge.
 ADS and AnsysEM Bridges keep their native engineering knowledge; Runtime makes
 their execution predictable across Agents, hosts, reconnects, and long jobs.
 
+## One conversation can reach real, editable EDA results
+
+Runtime is the shared route, not the engineering tool itself. The vendor
+Bridges do the ADS or AEDT work; Runtime keeps the selected target, operation
+purpose, retry identity, long-job receipt, timing, and evidence consistent.
+
+| ADS circuit work | HFSS 3D Layout work |
+| --- | --- |
+| Build or edit a circuit, simulate it, export checked data, and leave an editable native Data Display page. | Build or update stackup, geometry and ports, solve explicit frequencies, export data, and leave a native AEDT Report. |
+| ![Native ADS schematic from the public acceptance](docs/assets/readme/ads-native-schematic.png) | ![Native AEDT S-parameter Report from the public acceptance](docs/assets/readme/ansys-native-s-parameters.png) |
+
+Both captures come from public synthetic acceptance projects running through
+the same Runtime path. They are application-window captures, not mockups; the
+EDA curves were not replotted in Python.
+
 ![One natural-language request becomes one recoverable EDA plan and returns fresh evidence](docs/assets/readme/runtime-user-flow.png)
 
 ## What this changes for an engineer

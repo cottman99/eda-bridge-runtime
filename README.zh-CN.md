@@ -20,6 +20,20 @@ EDA Bridge Runtime 是各类 EDA Agent Bridge 共用的、厂商无关的执行�
 继续负责各自的软件知识；Runtime 负责让这些操作在不同 Agent、主机、
 断线和长任务条件下仍然可预测。
 
+## 一段对话可以到达真实、可编辑的 EDA 结果
+
+Runtime 是共用执行通道，不是另一个工程工具。ADS 或 AnsysEM Bridge 负责
+真正的软件操作；Runtime 统一保存目标、动机、重试身份、长任务回执、耗时和
+验收证据。
+
+| ADS 电路工作 | HFSS 3D Layout 工作 |
+| --- | --- |
+| 搭建或修改电路、执行仿真、导出经过检查的数据，并留下可编辑的原生 Data Display 页面。 | 搭建或更新叠层、几何和端口，求解明确频点，导出数据，并留下原生 AEDT Report。 |
+| ![公开验收中的原生 ADS 原理图](docs/assets/readme/ads-native-schematic.png) | ![公开验收中的原生 AEDT S 参数 Report](docs/assets/readme/ansys-native-s-parameters.png) |
+
+两张图都来自通过同一 Runtime 路径执行的公开合成验收工程。它们是 EDA
+应用窗口的真实截图，不是效果图；曲线也没有用 Python 重绘。
+
 ![一条自然语言需求变成一个可恢复的 EDA 计划，并返回全新验证的证据](docs/assets/readme/runtime-user-flow.png)
 
 ## 它给工程师带来的变化
