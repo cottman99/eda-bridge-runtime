@@ -4,7 +4,9 @@
   private hostnames, private paths, or proprietary EDA models.
 - Preserve the agent-neutral and vendor-neutral boundary.
 - Every operation initiated by an agent must include a concise `purpose`.
-- Prefer typed capabilities over arbitrary script execution.
+- Follow `docs/CAPABILITY_MODEL.md`: the product is a governed path to official
+  EDA APIs, not a second vendor API. Prefer certified workflows when they match,
+  then governed native execution; never use wrapper count as capability scope.
 - Keep local and SSH behavior conformant through shared tests.
 - Do not claim success until durable state or a fresh observation proves it.
 - Do not publish or create releases without explicit owner authorization.

@@ -116,12 +116,15 @@ Runtime，因此审计、重试、目标选择和证据规则不会分裂成两�
 ## 下一步
 
 - 在不改变用户对话方式的前提下接入更多厂商 Bridge；
+- 通过统一、受治理的原生执行与事务信封广泛调用版本匹配的官方 API，
+  而不是把厂商 API 逐项重写成 Bridge wrapper；
 - 让长任务恢复与证据查看更直观；
 - 保留更多贯穿电路、版图、EM、仿真、提取和原生绘图的完整真实工程任务。
 
 ## 进一步了解
 
 - [整体架构](docs/ARCHITECTURE.md)
+- [不重写厂商 API 的能力扩展模型](docs/CAPABILITY_MODEL.md)
 - [Agent 主机、EDA 主机与同机部署](docs/DEPLOYMENT_ROLES.md)
 - [MCP 与 Codex 集成](docs/MCP_AND_CODEX.md)
 - [Pi Agent 试点](docs/PI_AGENT_PILOT.md)

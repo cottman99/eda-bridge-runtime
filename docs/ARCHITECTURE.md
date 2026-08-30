@@ -44,7 +44,7 @@ and SSH are interfaces or internal modules, not additional product layers.
 |---|---|---|
 | User and Agent | Intent, engineering judgment, concise purpose, attempted-or-omitted call record | Durable execution state |
 | Runtime kernel | Identity enrichment, facts, routing, transport, leases, jobs, Run projection | EDA semantics |
-| Vendor adapter and bridge | Typed EDA capabilities, native API calls, EDA lifecycle, result normalization | Agent policy or cross-EDA governance |
+| Vendor adapter and bridge | Official-runtime selection, governed native execution, certified workflows, EDA lifecycle, result normalization | Agent policy or cross-EDA governance |
 
 The physical modules remain separable for testing. MCP and CLI are stateless
 frontends to the Runtime kernel; local and SSH are interchangeable transports;
@@ -65,12 +65,18 @@ the same run identity, state, terminal flag, job identity, and path-free
 evidence references without forcing ADS and AnsysEM to share one execution
 implementation.
 
-## Escape lanes
+## Capability growth and escape lanes
 
-The preferred path is a typed adapter capability. If unavailable, callers may
-use a verified native API, then a bounded script, then bounded GUI assistance,
+The Runtime follows the shared [EDA capability model](CAPABILITY_MODEL.md).
+Vendor functionality normally grows through version-matched documentation plus
+governed official native execution. High-frequency, accepted recipes may also
+be advertised as certified workflows; their count is not the product's API
+coverage.
+
+If neither a matching certified workflow nor governed native execution is
+available, callers may use a bounded vendor script, then bounded GUI assistance,
 then a manual external action. Adapters advertise which lanes exist. Every
-non-typed lane must be explicit in the request and ledger.
+fallback lane must be explicit in the request and ledger.
 
 ## Privacy and retention
 

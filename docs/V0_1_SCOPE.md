@@ -1,5 +1,19 @@
 # Version 0.1 scope
 
+## Active direction — governed official API reach
+
+- Follow `CAPABILITY_MODEL.md`: Runtime and vendor Bridges are infrastructure
+  around official EDA APIs, not a second implementation of those APIs.
+- Add a common governed native batch/transaction contract before expanding more
+  scene-specific operations. It must bind exact Context, official runtime,
+  declared effects, scope, timeout/cancellation, staging, idempotency, ledger,
+  readback, artifact validation, and promotion.
+- Retain existing typed operations as compatible certified workflows. Extract
+  their reusable transaction and validation mechanisms before adding recipe
+  vocabulary.
+- Report knowledge, official API reach, generic execution, default support, and
+  validated workflows as separate coverage dimensions.
+
 ## 0.1.0a32 — lossless UTF-8 motives on Windows
 
 - Force UTF-8 at the MCP and Agent-hook protocol boundary instead of inheriting the Windows active

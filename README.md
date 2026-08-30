@@ -128,6 +128,9 @@ and evidence behavior do not split into two systems.
 ## Next
 
 - add more vendor Bridges without changing the user's conversation pattern;
+- make version-matched official APIs broadly reachable through one governed
+  native execution and transaction envelope, without rebuilding vendor APIs as
+  Bridge wrappers;
 - make long-job recovery and evidence review easier to see;
 - retain more complete, real engineering journeys across circuit, layout, EM,
   simulation, extraction, and native plotting.
@@ -135,6 +138,7 @@ and evidence behavior do not split into two systems.
 ## Learn more
 
 - [How the pieces fit together](docs/ARCHITECTURE.md)
+- [How EDA capability grows without rebuilding vendor APIs](docs/CAPABILITY_MODEL.md)
 - [Agent host, EDA host, and combined deployment](docs/DEPLOYMENT_ROLES.md)
 - [MCP and Codex integration](docs/MCP_AND_CODEX.md)
 - [Pi Agent pilot](docs/PI_AGENT_PILOT.md)
