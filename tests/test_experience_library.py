@@ -86,6 +86,16 @@ def test_rejects_drifted_experience_asset(tmp_path: Path):
         validate_experience_library(tmp_path)
 
 
+def test_experience_asset_hash_is_independent_of_checkout_line_endings(tmp_path: Path):
+    lf_path = tmp_path / "lf.md"
+    crlf_path = tmp_path / "crlf.md"
+    content = _asset()
+    lf_path.write_bytes(content.encode("utf-8"))
+    crlf_path.write_bytes(content.replace("\n", "\r\n").encode("utf-8"))
+
+    assert sha256_file(lf_path) == sha256_file(crlf_path)
+
+
 def test_compiled_shortcut_must_match_eligible_asset(tmp_path: Path):
     from eda_bridge_runtime.experience_library import validate_compiled_shortcut_binding
 

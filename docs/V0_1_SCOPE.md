@@ -14,6 +14,13 @@
 - Report knowledge, official API reach, generic execution, default support, and
   validated workflows as separate coverage dimensions.
 
+## 0.1.0a34 — cross-platform semantic experience hashes
+
+- Normalize text line endings before hashing experience Markdown so Linux LF and
+  Windows CRLF checkouts identify the same semantic asset.
+- Keep real content drift fail-closed while eliminating platform-only shortcut
+  degradation.
+
 ## 0.1.0a33 — governed native execution and bootstrap experience assets
 
 - Add the vendor-neutral `eda.native-batch/v1` contract for exact-context,

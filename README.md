@@ -96,7 +96,7 @@ one-turn cross-EDA workflow. Sanitized acceptance evidence is maintained in
 Install Runtime on the computer where the Agent runs:
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a33"
+python -m pip install "eda-bridge-runtime==0.1.0a34"
 eda-runtime doctor
 ```
 

@@ -54,11 +54,10 @@ _SHORTCUT_FIELDS = {
 
 
 def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
+    """Hash the semantic UTF-8 Markdown content independent of checkout EOLs."""
+
+    content = path.read_text(encoding="utf-8")
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
 def parse_experience_asset(path: Path) -> tuple[dict[str, Any], str]:
