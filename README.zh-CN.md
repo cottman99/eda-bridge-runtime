@@ -10,7 +10,7 @@
   <a href="README.md">English</a>
 </p>
 
-![一个工程请求经过稳定的执行桥，返回经过验证的电路与电磁结果](docs/assets/readme/runtime-user-value-v2.png)
+![一个工程请求到达本机或远程 EDA，并返回经过验证的结果](docs/assets/readme/runtime-engineer-workflow-v3.png)
 
 EDA Bridge Runtime 是各类 EDA Agent Bridge 共用的、厂商无关的执行通道。
 无论 Agent 与 EDA 在同一台电脑，还是通过 SSH 分处两台主机，用户看到的
@@ -19,6 +19,8 @@ EDA Bridge Runtime 是各类 EDA Agent Bridge 共用的、厂商无关的执行�
 它不是新的 EDA 自动化 API，也不取代厂商 Bridge。ADS 与 AnsysEM Bridge
 继续负责各自的软件知识；Runtime 负责让这些操作在不同 Agent、主机、
 断线和长任务条件下仍然可预测。
+
+![一条自然语言需求变成一个可恢复的 EDA 计划，并返回全新验证的证据](docs/assets/readme/runtime-user-flow.png)
 
 ## 它给工程师带来的变化
 
@@ -33,6 +35,23 @@ EDA Bridge Runtime 是各类 EDA Agent Bridge 共用的、厂商无关的执行�
 
 ## 公开测试证明了什么
 
+![ADS 与 HFSS 完整闭环中 Agent 编排和真实 Bridge 加 EDA 工作的时间占比](docs/assets/readme/runtime-complete-workflow-time.png)
+
+最新验收测试覆盖的是完整用户旅程，而不是孤立 API：ADS 从空白工作区
+搭建并仿真电路，导出 31 行有限数据，再全新打开可编辑 DDS 页面；HFSS
+3D Layout 从空白工程搭建 3 层、2 端口模型，求解 5 个频点，再全新打开
+原生 S 参数 Report。Codex 与 Pi 各自都只用一个 Runtime 计划完成闭环。
+
+| 完整旅程 | Codex 总耗时 / Bridge + EDA | Pi 总耗时 / Bridge + EDA |
+| --- | ---: | ---: |
+| ADS 电路 → 数据 → DDS | 39.782 秒 / 5.438 秒 | 33.922 秒 / 5.140 秒 |
+| HFSS 版图 → 求解 → Report | 242.657 秒 / 209.360 秒 | 229.328 秒 / 202.641 秒 |
+
+以上是每个 Agent、每个 EDA 保留的一次功能性验收，不是统计速度排名。
+它说明了真正的时间边界：ADS 工程操作只需数秒；长 HFSS 工作流主要由
+求解本身主导。测试没有单独测量数据包级网络耗时，但未观察到占主导的
+SSH 命令传递成本。
+
 ![Codex 与 Pi Agent 在六项受控 EDA 重复测试中的耗时](docs/assets/readme/codex-pi-bounded-tests.png)
 
 图中是六项公开受控测试的中位耗时，每个 Agent、每项任务重复三次。
@@ -45,17 +64,12 @@ AEDT 生命周期占主导的任务主要受 EDA 本身耗时限制。这是工�
 操作、真实 Momentum 求解，以及一次跨 EDA 协作。脱敏后的真实主机
 验收记录见 [Acceptance](docs/ACCEPTANCE.md)。
 
-最新的功能性验收已经从空白工程走到原生结果：ADS 搭建并仿真六元件
-电路，再全新打开 DDS 曲线；AnsysEM 搭建三层双端口 HFSS 3D Layout，
-求解 5 个频点，并全新打开原生 S 参数 Report。Codex 与 Pi 都只用了
-一次 Runtime 调用完成各自闭环。这是单次功能验收，不是统计速度结论。
-
 ## 从一个 Agent 配置开始
 
 在 Agent 所在的电脑安装 Runtime：
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a28"
+python -m pip install "eda-bridge-runtime==0.1.0a29"
 eda-runtime doctor
 ```
 

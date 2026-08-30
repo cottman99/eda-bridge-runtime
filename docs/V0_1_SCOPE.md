@@ -1,5 +1,14 @@
 # Version 0.1 scope
 
+## 0.1.0a29 — one version-locked Codex execution path
+
+- Use the configured Runtime command for both the MCP server and its Codex audit hooks, so a
+  side-by-side or versioned installation cannot silently mix two Runtime releases.
+- Quote a trusted Runtime executable path containing spaces and reject quotes or newlines in that
+  generated command boundary.
+- Add user-facing complete-workflow visuals and exact retained ADS/HFSS timing evidence without
+  treating synthetic acceptance fixtures as customer or RF-valid designs.
+
 ## 0.1.0a28 — complete workflows without polling turns
 
 - Allow an explicitly requested durable wait of up to five minutes while retaining the 60-second

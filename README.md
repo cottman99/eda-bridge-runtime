@@ -13,7 +13,7 @@
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/cottman99/eda-bridge-runtime"></a>
 </p>
 
-![One engineering request crosses a durable bridge and returns verified circuit and electromagnetic outcomes](docs/assets/readme/runtime-user-value-v2.png)
+![One engineering request reaches local or remote EDA work and returns a verified result](docs/assets/readme/runtime-engineer-workflow-v3.png)
 
 EDA Bridge Runtime is the shared, vendor-neutral execution path behind EDA
 Agent Bridges. Whether the Agent and EDA run on the same computer or connect
@@ -23,6 +23,8 @@ and evidence model.
 It is not another EDA automation API and it does not replace the vendor Bridge.
 ADS and AnsysEM Bridges keep their native engineering knowledge; Runtime makes
 their execution predictable across Agents, hosts, reconnects, and long jobs.
+
+![One natural-language request becomes one recoverable EDA plan and returns fresh evidence](docs/assets/readme/runtime-user-flow.png)
 
 ## What this changes for an engineer
 
@@ -37,6 +39,25 @@ their execution predictable across Agents, hosts, reconnects, and long jobs.
 
 ## What the public tests show
 
+![Complete ADS and HFSS workflow time split between the Agent and the actual Bridge plus EDA work](docs/assets/readme/runtime-complete-workflow-time.png)
+
+The newest acceptance cases are complete user journeys, not isolated API calls.
+ADS started from an empty workspace, built and simulated a circuit, exported 31
+finite rows, and freshly reopened an editable DDS page. HFSS 3D Layout started
+from an empty project, built three layers and two ports, solved five frequencies,
+and freshly reopened a native S-parameter report. Codex and Pi each completed
+each journey with exactly one Runtime plan.
+
+| Journey | Codex wall / Bridge + EDA | Pi wall / Bridge + EDA |
+| --- | ---: | ---: |
+| ADS circuit → data → DDS | 39.782 s / 5.438 s | 33.922 s / 5.140 s |
+| HFSS layout → solve → report | 242.657 s / 209.360 s | 229.328 s / 202.641 s |
+
+These are one retained functional trial per Agent and EDA, not statistical
+speed claims. They show the useful boundary: the ADS engineering work took
+seconds, while the HFSS solve dominated the long workflow. Packet-level network
+time was not measured separately, but no dominant SSH command cost was observed.
+
 ![Codex and Pi Agent wall time across six bounded repeated EDA tests](docs/assets/readme/codex-pi-bounded-tests.png)
 
 The chart reports median wall time from six bounded public test cases, with
@@ -50,19 +71,12 @@ typed ADS and AnsysEM work, a real generated-input Momentum solve, and a
 one-turn cross-EDA workflow. Sanitized acceptance evidence is maintained in
 [Acceptance](docs/ACCEPTANCE.md).
 
-The newest functional cases go from an empty project all the way to native
-results: ADS builds and simulates a six-instance circuit and freshly reopens a
-DDS plot; AnsysEM builds a three-layer two-port HFSS 3D Layout design, solves
-five points, and freshly reopens its native S-parameter report. Codex and Pi
-both completed each workflow with one Runtime call. These are one-trial
-functional acceptances, not statistical speed claims.
-
 ## Start with one Agent profile
 
 Install Runtime on the computer where the Agent runs:
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a28"
+python -m pip install "eda-bridge-runtime==0.1.0a29"
 eda-runtime doctor
 ```
 
