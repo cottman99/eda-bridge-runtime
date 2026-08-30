@@ -15,31 +15,29 @@
 
 ![One engineering request reaches local or remote EDA work and returns a verified result](docs/assets/readme/runtime-engineer-workflow-v3.png)
 
-EDA Bridge Runtime is the shared, vendor-neutral execution path behind EDA
-Agent Bridges. Whether the Agent and EDA run on the same computer or connect
-over SSH, the user gets the same target selection, durable jobs, timing record,
-and evidence model.
-
-It is not another EDA automation API and it does not replace the vendor Bridge.
-ADS and AnsysEM Bridges keep their native engineering knowledge; Runtime makes
-their execution predictable across Agents, hosts, reconnects, and long jobs.
-
 ## One conversation can reach real, editable EDA results
 
-Runtime is the shared route, not the engineering tool itself. The vendor
-Bridges do the ADS or AEDT work; Runtime keeps the selected target, operation
-purpose, retry identity, long-job receipt, timing, and evidence consistent.
+Ask in normal engineering language. The vendor Bridge performs the ADS or AEDT
+work while Runtime keeps the selected target, purpose, retry identity, long-job
+receipt, timing, and evidence consistent across local and SSH execution.
 
-| ADS circuit work | HFSS 3D Layout work |
+| Editable ADS result | Editable HFSS result |
 | --- | --- |
-| Build or edit a circuit, simulate it, export checked data, and leave an editable native Data Display page. | Build or update stackup, geometry and ports, solve explicit frequencies, export data, and leave a native AEDT Report. |
-| ![Native ADS schematic from the public acceptance](docs/assets/readme/ads-native-schematic.png) | ![Native AEDT S-parameter Report from the public acceptance](docs/assets/readme/ansys-native-s-parameters.png) |
+| ![Native ADS Data Display from the public acceptance](docs/assets/readme/ads-native-dds.png) | ![Native AEDT S-parameter Report from the public acceptance](docs/assets/readme/ansys-native-s-parameters.png) |
 
-Both captures come from public synthetic acceptance projects running through
-the same Runtime path. They are application-window captures, not mockups; the
-EDA curves were not replotted in Python.
+The retained public journeys built an ADS circuit, simulated 31 finite rows and
+freshly reopened its native DDS page; and built a three-layer HFSS layout with
+two ports, solved five frequencies and freshly reopened its native Report.
+Codex and Pi each completed each journey with one recoverable Runtime plan.
 
-![One natural-language request becomes one recoverable EDA plan and returns fresh evidence](docs/assets/readme/runtime-user-flow.png)
+| Model state you can inspect | The route that keeps it recoverable |
+| --- | --- |
+| ![Native AEDT model window with project tree, layout and stackup](docs/assets/readme/ansys-native-layout-stackup.png) | ![One natural-language request becomes one recoverable EDA plan and returns fresh evidence](docs/assets/readme/runtime-user-flow.png) |
+
+These are real application-window captures from public synthetic projects, not
+mockups or Python replots. EDA Bridge Runtime is the shared, vendor-neutral path
+behind the vendor Bridges: it preserves execution continuity and evidence while
+ADS and AnsysEM Bridges retain their native engineering knowledge.
 
 ## What this changes for an engineer
 
@@ -126,6 +124,13 @@ and evidence behavior do not split into two systems.
 - Vendor-specific behavior stays in vendor Bridges, not in the Runtime core.
 - Runtime does not claim a solve, artifact, or persisted change without
   corresponding Bridge evidence.
+
+## Next
+
+- add more vendor Bridges without changing the user's conversation pattern;
+- make long-job recovery and evidence review easier to see;
+- retain more complete, real engineering journeys across circuit, layout, EM,
+  simulation, extraction, and native plotting.
 
 ## Learn more
 

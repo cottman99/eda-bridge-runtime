@@ -12,29 +12,27 @@
 
 ![一个工程请求到达本机或远程 EDA，并返回经过验证的结果](docs/assets/readme/runtime-engineer-workflow-v3.png)
 
-EDA Bridge Runtime 是各类 EDA Agent Bridge 共用的、厂商无关的执行通道。
-无论 Agent 与 EDA 在同一台电脑，还是通过 SSH 分处两台主机，用户看到的
-目标选择、长任务恢复、耗时记录和证据规则都保持一致。
-
-它不是新的 EDA 自动化 API，也不取代厂商 Bridge。ADS 与 AnsysEM Bridge
-继续负责各自的软件知识；Runtime 负责让这些操作在不同 Agent、主机、
-断线和长任务条件下仍然可预测。
-
 ## 一段对话可以到达真实、可编辑的 EDA 结果
 
-Runtime 是共用执行通道，不是另一个工程工具。ADS 或 AnsysEM Bridge 负责
-真正的软件操作；Runtime 统一保存目标、动机、重试身份、长任务回执、耗时和
-验收证据。
+用户只需要使用正常的工程语言。厂商 Bridge 负责 ADS 或 AEDT 操作，
+Runtime 则让所选目标、操作动机、重试身份、长任务回执、时间和证据在
+本机与 SSH 路径中保持一致。
 
-| ADS 电路工作 | HFSS 3D Layout 工作 |
+| 可继续编辑的 ADS 结果 | 可继续编辑的 HFSS 结果 |
 | --- | --- |
-| 搭建或修改电路、执行仿真、导出经过检查的数据，并留下可编辑的原生 Data Display 页面。 | 搭建或更新叠层、几何和端口，求解明确频点，导出数据，并留下原生 AEDT Report。 |
-| ![公开验收中的原生 ADS 原理图](docs/assets/readme/ads-native-schematic.png) | ![公开验收中的原生 AEDT S 参数 Report](docs/assets/readme/ansys-native-s-parameters.png) |
+| ![公开验收中的原生 ADS Data Display](docs/assets/readme/ads-native-dds.png) | ![公开验收中的原生 AEDT S 参数 Report](docs/assets/readme/ansys-native-s-parameters.png) |
 
-两张图都来自通过同一 Runtime 路径执行的公开合成验收工程。它们是 EDA
-应用窗口的真实截图，不是效果图；曲线也没有用 Python 重绘。
+公开保留的完整任务已经证明：ADS 可从电路建立走到 31 行有限数据并重新
+打开原生 DDS 页面；HFSS 可建立三层、双端口模型，求解五个频点并重新
+打开原生 Report。Codex 和 Pi 都能各用一个可恢复 Runtime 计划完成任务。
 
-![一条自然语言需求变成一个可恢复的 EDA 计划，并返回全新验证的证据](docs/assets/readme/runtime-user-flow.png)
+| 可直接检查的模型状态 | 让执行可恢复的公共路径 |
+| --- | --- |
+| ![包含工程树、布局和叠层的原生 AEDT 模型窗口](docs/assets/readme/ansys-native-layout-stackup.png) | ![一条自然语言需求变成一个可恢复的 EDA 计划，并返回全新验证的证据](docs/assets/readme/runtime-user-flow.png) |
+
+这些都是真实公开合成工程的应用窗口截图，不是效果图或 Python 重绘。
+EDA Bridge Runtime 是厂商 Bridge 背后的公共、厂商无关执行路径：它保存
+执行连续性和证据，而 ADS 与 AnsysEM Bridge 继续承载原生工程知识。
 
 ## 它给工程师带来的变化
 
@@ -114,6 +112,12 @@ Runtime，因此审计、重试、目标选择和证据规则不会分裂成两�
 - 追加式日志保存指纹与受控元信息，不保存完整聊天或原始操作载荷。
 - 厂商相关行为保留在各自 Bridge 中，不进入 Runtime 核心。
 - 没有 Bridge 证据时，不宣称求解、产物或持久化修改成功。
+
+## 下一步
+
+- 在不改变用户对话方式的前提下接入更多厂商 Bridge；
+- 让长任务恢复与证据查看更直观；
+- 保留更多贯穿电路、版图、EM、仿真、提取和原生绘图的完整真实工程任务。
 
 ## 进一步了解
 
