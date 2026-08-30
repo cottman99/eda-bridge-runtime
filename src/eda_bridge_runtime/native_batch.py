@@ -55,9 +55,12 @@ def validate_python_program_policy(
                 for prefix in allowed_import_prefixes
             ):
                 raise ValueError(f"official Python program imports undeclared module: {module}")
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-            if node.func.id in _DANGEROUS_CALLS:
-                raise ValueError(f"official Python program calls forbidden builtin: {node.func.id}")
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id in _DANGEROUS_CALLS
+        ):
+            raise ValueError(f"official Python program calls forbidden builtin: {node.func.id}")
         if isinstance(node, ast.Name) and node.id.startswith("__"):
             raise ValueError("official Python program uses a forbidden dunder name")
         if isinstance(node, ast.Attribute) and node.attr.startswith("__"):
