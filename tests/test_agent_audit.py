@@ -140,6 +140,37 @@ def test_runtime_bypass_is_visible_but_never_records_a_raw_command(tmp_path):
     assert "taskkill" not in json.dumps(audit_events(database))
 
 
+def test_database_compact_view_keeps_bypass_alongside_mcp_runtime(tmp_path):
+    database = tmp_path / "agent-audit.sqlite3"
+    record_runtime_bypass(
+        purpose="Use one external maintenance route",
+        lane="shell",
+        reason="The operation is host maintenance rather than an EDA command",
+        outcome="passed",
+        database=database,
+    )
+    with ExecutionLedger(database) as ledger:
+        ledger.append(
+            run_id="runtime-one",
+            request_id="request-one",
+            event_type="agent.tool.requested",
+            source="mcp-runtime",
+            payload={"tool": "eda.read", "purpose": "Read one EDA fact"},
+        )
+        ledger.append(
+            run_id="runtime-one",
+            request_id="request-one",
+            event_type="agent.tool.completed",
+            source="mcp-runtime",
+            payload={"execution": {"state": "passed", "terminal": True}},
+        )
+        ledger.finalize("runtime-one")
+
+    calls = compact_audit_calls_from_database(database, limit=10)
+    assert [call["source"] for call in calls] == ["runtime-bypass", "mcp-runtime"]
+    assert calls[0]["reason"] == "The operation is host maintenance rather than an EDA command"
+
+
 def test_audit_list_cli_is_compact_by_default_and_full_only_when_requested(tmp_path, capsys):
     from eda_bridge_runtime.cli import main
 
@@ -150,6 +181,7 @@ def test_audit_list_cli_is_compact_by_default_and_full_only_when_requested(tmp_p
     compact = json.loads(capsys.readouterr().out)
     assert compact["schema_version"] == "eda-runtime.audit-calls/v1"
     assert compact["source_policy"] == "mcp-runtime-preferred"
+    assert compact["included_sources"] == ["mcp-runtime", "runtime-bypass"]
     assert compact["calls"][0]["purpose"] == "Inspect one synthetic design"
     assert "input_sha256" not in json.dumps(compact)
 

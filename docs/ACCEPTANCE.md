@@ -3,9 +3,18 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 Runtime alpha.31 compact bypass-query acceptance
+
+- The complete suite passed 164 tests; Ruff check and format validation passed.
+- A query against the real local append-only ledger returned normal MCP calls and both recorded
+  maintenance/candidate-cleanup bypass facts in timestamp order, including each concise reason and
+  outcome without exposing a raw command.
+- This correction changes only audit projection. It opened no EDA application, made no SSH call,
+  and does not require ADS or AnsysEM Bridge version changes.
+
 ## 2026-08-30 Runtime alpha.30 owned-resource acceptance
 
-- The local suite passed 162 tests. Ruff check and format validation passed.
+- The local suite passed 163 tests. Ruff check and format validation passed.
 - Runtime audit completion now retains the selected connection, EDA, vendor operation, evidence
   count, token-free resource state, and numeric Bridge timing already present in the response.
 - Observed MCP client names infer Codex, Pi, or Claude agent-family facts and one stable anonymous

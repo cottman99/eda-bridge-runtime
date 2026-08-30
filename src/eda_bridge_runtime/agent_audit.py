@@ -203,9 +203,12 @@ def recent_audit_run_events(
     """Read complete recent call groups from the authoritative observation source."""
     scan_limit = 1000 if session_id or execution_run_id else limit
     with ExecutionLedger(database or default_agent_audit_path()) as ledger:
-        events = ledger.recent_run_events(limit=scan_limit, source="mcp-runtime")
-        if not events:
-            events = ledger.recent_run_events(limit=scan_limit)
+        events = ledger.recent_run_events(limit=min(1000, max(20, scan_limit * 3)))
+    canonical = [
+        event for event in events if event.get("source") in {"mcp-runtime", "runtime-bypass"}
+    ]
+    if canonical:
+        events = canonical
     selected = select_audit_run_events(
         events,
         session_id=session_id,

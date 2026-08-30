@@ -237,6 +237,7 @@ def main(argv: list[str] | None = None) -> int:
             result = {
                 "schema_version": "eda-runtime.audit-calls/v1",
                 "source_policy": "mcp-runtime-preferred",
+                "included_sources": ["mcp-runtime", "runtime-bypass"],
                 "calls": compact_audit_calls_from_database(
                     args.database,
                     limit=args.limit,

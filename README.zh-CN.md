@@ -81,7 +81,7 @@ AEDT 生命周期占主导的任务主要受 EDA 本身耗时限制。这是工�
 在 Agent 所在的电脑安装 Runtime：
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a30"
+python -m pip install "eda-bridge-runtime==0.1.0a31"
 eda-runtime doctor
 ```
 

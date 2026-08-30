@@ -1,5 +1,13 @@
 # Version 0.1 scope
 
+## 0.1.0a31 — complete compact view of Runtime facts
+
+- Keep bounded bypass facts visible beside normal MCP calls in the default compact audit query.
+  The append-only ledger already retained these events; this corrects only the source-selection
+  projection and does not change EDA execution.
+- Declare the two included authoritative sources in the compact response while retaining the
+  existing source-policy field for compatible consumers.
+
 ## 0.1.0a30 — owned interactive resources and complete local audit facts
 
 - Standardize token-free audit views for Runtime-owned EDA resources while leaving exact release
