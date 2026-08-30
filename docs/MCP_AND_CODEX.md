@@ -99,6 +99,11 @@ durable job, Runtime polls that existing job internally and returns its terminal
 same Agent call; it never resubmits the operation. Use `eda.job.wait` only when resuming a job that
 was already returned, and `eda.job.status` for one observation after reconnecting.
 
+The default inline wait remains 60 seconds. A caller that already knows a bounded EDA stage needs
+longer may request up to five minutes. The Pi adapter leaves a small transport margin beyond that
+ceiling. This reduces model polling turns; it does not turn an unbounded solve into a blocking MCP
+call, and durable receipts remain the recovery mechanism after disconnects.
+
 For a known read response that is much larger than the facts needed by the task, `eda.read` accepts
 an optional `result_view`. Each selector uses an RFC 6901 JSON Pointer relative to the Bridge
 `result` and a deterministic `value`, `count`, or `exists` mode. Runtime receives the complete

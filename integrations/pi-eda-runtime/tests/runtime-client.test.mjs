@@ -3,6 +3,11 @@ import { test } from "node:test";
 
 import { RuntimeClient } from "../lib/runtime-client.mjs";
 
+test("default client timeout exceeds Runtime's bounded five-minute wait", () => {
+  const client = new RuntimeClient();
+  assert.equal(client.timeoutMs, 330_000);
+});
+
 test("persistent client lists the ten installed Runtime tools", async () => {
   const client = new RuntimeClient({
     command: process.env.EDA_RUNTIME_COMMAND ?? "eda-runtime",

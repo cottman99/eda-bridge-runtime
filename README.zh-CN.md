@@ -45,12 +45,17 @@ AEDT 生命周期占主导的任务主要受 EDA 本身耗时限制。这是工�
 操作、真实 Momentum 求解，以及一次跨 EDA 协作。脱敏后的真实主机
 验收记录见 [Acceptance](docs/ACCEPTANCE.md)。
 
+最新的功能性验收已经从空白工程走到原生结果：ADS 搭建并仿真六元件
+电路，再全新打开 DDS 曲线；AnsysEM 搭建三层双端口 HFSS 3D Layout，
+求解 5 个频点，并全新打开原生 S 参数 Report。Codex 与 Pi 都只用了
+一次 Runtime 调用完成各自闭环。这是单次功能验收，不是统计速度结论。
+
 ## 从一个 Agent 配置开始
 
 在 Agent 所在的电脑安装 Runtime：
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a27"
+python -m pip install "eda-bridge-runtime==0.1.0a28"
 eda-runtime doctor
 ```
 

@@ -3,6 +3,32 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 Runtime alpha.28 complete-workflow acceptance
+
+- Codex and Pi each completed the same ADS blank-workspace → six-instance AC schematic → 31-point
+  simulation → deterministic native dataset/CSV → freshly reopened DDS equation and plot contract
+  with exactly one `eda.run_plan` call. Codex took 39.782 seconds and Pi 33.922 seconds; the matched
+  Bridge/EDA boundaries were 5.438 and 5.140 seconds.
+- Codex and Pi each completed the same AnsysEM blank project → three-layer HFSS 3D Layout geometry
+  → two wave ports → setup → five-point solve → two finite S-parameter expressions → native report
+  → fresh reopen contract with exactly one `eda.run_plan` call. Codex took 242.657 seconds and Pi
+  229.328 seconds; the matched Runtime/Bridge/EDA boundaries were 209.360 and 202.641 seconds.
+- Each retained row is one functional trial and not a statistical performance claim. Provider token
+  counters are retained for within-client observability, not treated as billing-equivalent units.
+- The first ADS evaluation exposed an invalid test-owned DDS output path. Runtime stopped only at
+  report creation after preserving the accepted source, design, and 31-point dataset; the case now
+  derives the report path directly inside the workspace instead of adding another user variable.
+- Pi's first long AnsysEM attempt exposed a 120-second Pi transport timeout below Runtime's explicit
+  five-minute wait ceiling. The remote durable solve continued, was recovered by its existing
+  `job_id` without replay, and passed. After raising only the client transport margin, an independent
+  candidate completed end to end in one call.
+- Large Pi case prompts now use Pi's native `@file` input. This removed the Windows command-line
+  limit while leaving the prompt file disposable and keeping shell/file tools unavailable to the
+  Agent. Installed-profile evaluation also avoids injecting a duplicate Runtime extension.
+- Both workflows used synthetic scratch only, `DISPLAY=:4.0`, explicit mutation and solve approval,
+  source preservation, fresh-reopen evidence, and no GUI coordinates, arbitrary vendor code, or
+  customer data.
+
 ## 2026-08-30 Runtime alpha.27 timing-semantics acceptance
 
 - The privacy-preserving audit analyzer now emits canonical `adapter_boundary_ms` and
