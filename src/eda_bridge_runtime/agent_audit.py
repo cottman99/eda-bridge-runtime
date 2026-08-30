@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from .ledger import ExecutionLedger
-from .protocol import RUN_VIEW_PROTOCOL, ActorIdentity
+from .protocol import RUN_VIEW_PROTOCOL, ActorIdentity, new_id
 
 AGENT_AUDIT_PROTOCOL = "eda-runtime.agent-audit/v1"
 _RUNTIME_TOOL = re.compile(r"^mcp__(?P<server>.+)__(?P<tool>.+)$")
@@ -112,6 +112,62 @@ def record_codex_hook(
         if phase == "post":
             ledger.finalize(run_id)
     return True
+
+
+def record_runtime_bypass(
+    *,
+    purpose: str,
+    lane: str,
+    reason: str,
+    outcome: str,
+    database: str | Path | None = None,
+) -> str:
+    """Record an unavoidable operation outside Runtime without storing its command."""
+    purpose = purpose.strip()
+    reason = reason.strip()
+    if not 3 <= len(purpose) <= 240:
+        raise ValueError("purpose must contain 3..240 non-whitespace characters")
+    if not 3 <= len(reason) <= 240:
+        raise ValueError("reason must contain 3..240 non-whitespace characters")
+    if lane not in {"shell", "gui", "vendor-cli", "other"}:
+        raise ValueError("unsupported bypass lane")
+    if outcome not in {"passed", "failed", "blocked", "unknown"}:
+        raise ValueError("unsupported bypass outcome")
+    run_id = new_id("bypass")
+    request_id = new_id("req")
+    action = json.dumps(
+        {"lane": lane, "reason": reason, "outcome": outcome},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    actor = ActorIdentity.detect(inferred={"harness": "external-bypass"})
+    with ExecutionLedger(database or default_agent_audit_path()) as ledger:
+        ledger.append(
+            run_id=run_id,
+            request_id=request_id,
+            event_type="agent.tool.requested",
+            source="runtime-bypass",
+            payload={
+                "protocol": AGENT_AUDIT_PROTOCOL,
+                "actor": actor.to_dict(),
+                "tool": f"external.{lane}",
+                "purpose": purpose,
+                "reason": reason,
+                "action_sha256": hashlib.sha256(action.encode("utf-8")).hexdigest(),
+            },
+        )
+        ledger.append(
+            run_id=run_id,
+            request_id=request_id,
+            event_type="agent.tool.completed",
+            source="runtime-bypass",
+            payload={
+                "protocol": AGENT_AUDIT_PROTOCOL,
+                "execution": {"linked": False, "state": outcome, "terminal": True},
+            },
+        )
+        ledger.finalize(run_id)
+    return run_id
 
 
 def audit_events(database: str | Path | None = None, *, limit: int = 20) -> list[dict[str, Any]]:
@@ -249,6 +305,8 @@ def compact_audit_calls(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
             actor = _compact_actor(payload.get("actor"))
             if actor:
                 row["actor"] = actor
+            if event.get("source") == "runtime-bypass" and payload.get("reason"):
+                row["reason"] = payload["reason"]
             plan_steps = payload.get("plan_steps")
             if isinstance(plan_steps, list):
                 row["plan_step_count"] = len(plan_steps)
@@ -261,6 +319,25 @@ def compact_audit_calls(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 row["execution_run_id"] = execution["run_id"]
             if execution.get("job_id"):
                 row["job_id"] = execution["job_id"]
+            for key in ("connection_id", "eda", "operation"):
+                if execution.get(key):
+                    row[key] = execution[key]
+            evidence_refs = execution.get("evidence_refs")
+            if isinstance(evidence_refs, list):
+                row["evidence_count"] = len(evidence_refs)
+            resource = execution.get("resource")
+            if isinstance(resource, Mapping):
+                row["resource"] = {
+                    key: resource[key]
+                    for key in (
+                        "resource_id",
+                        "kind",
+                        "ownership",
+                        "state",
+                        "release_operation",
+                    )
+                    if resource.get(key) is not None
+                }
             steps = execution.get("steps")
             if isinstance(steps, list):
                 row["completed_step_count"] = len(steps)
@@ -275,8 +352,11 @@ def compact_audit_calls(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
             timing = timing if isinstance(timing, Mapping) else {}
             if timing.get("mcp_server_ms") is not None:
                 row["elapsed_ms"] = timing["mcp_server_ms"]
+            bridge = timing.get("bridge")
+            if isinstance(bridge, Mapping):
+                row["bridge_timing"] = dict(bridge)
     rows = [calls[run_id] for run_id in order]
-    runtime_rows = [row for row in rows if row.get("source") == "mcp-runtime"]
+    runtime_rows = [row for row in rows if row.get("source") in {"mcp-runtime", "runtime-bypass"}]
     return runtime_rows or rows
 
 

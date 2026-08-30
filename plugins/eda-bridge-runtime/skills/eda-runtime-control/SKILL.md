@@ -65,7 +65,13 @@ Runtime merely because SSH is absent.
 - Keep small corrections in the same candidate workspace. Create a frozen revision only at an
   explicit promotion or delivery gate.
 - Use a verified native API or bounded script only when the adapter advertises that lane. Treat GUI
-  automation as a bounded fallback and record why the typed path was unavailable.
+  automation as a bounded fallback. If an operation genuinely has no typed Runtime route, record
+  one bounded fact with `eda-runtime audit bypass`: concise purpose, lane, reason, and outcome only;
+  never copy the raw shell command or GUI input into the ledger.
+- When a result includes an `eda-runtime.resource/v1` object, retain its returned release fields for
+  the active task and use its declared typed `release_operation` when the resource is no longer
+  needed. Release only `runtime-owned` resources. Never close, kill, or claim a reused or user-owned
+  EDA application merely because it is visible.
 - After a Bridge or Runtime upgrade, use `eda.connection.reset` once to close only the
   Runtime-owned transport. The next explicit operation starts a fresh local or SSH Bridge process;
   the EDA application is not closed or modified.

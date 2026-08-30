@@ -3,6 +3,21 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-30 Runtime alpha.30 owned-resource acceptance
+
+- The local suite passed 162 tests. Ruff check and format validation passed.
+- Runtime audit completion now retains the selected connection, EDA, vendor operation, evidence
+  count, token-free resource state, and numeric Bridge timing already present in the response.
+- Observed MCP client names infer Codex, Pi, or Claude agent-family facts and one stable anonymous
+  MCP lifecycle session; unavailable model, provider, reasoning, and Skill facts remain unknown.
+- Real `DISPLAY=:4.0` acceptance on `eda-server` launched and released one isolated AEDT 2026.1
+  desktop through the new owned-resource contract. The first field-name candidate was correctly
+  transport-redacted and therefore rejected as unusable; the corrected opaque release handle then
+  completed the typed release path.
+- The same acceptance created and closed one isolated ADS 2026 Update 2.1 managed session. Existing
+  sessions were not changed. A bounded bypass event recorded the one candidate-cleanup exception
+  without storing its raw command.
+
 ## 2026-08-30 Runtime alpha.28 complete-workflow acceptance
 
 - Codex and Pi each completed the same ADS blank-workspace → six-instance AC schematic → 31-point

@@ -12,7 +12,51 @@ from eda_bridge_runtime.connections import (
     ConnectionSpec,
     discover_connection_origin,
 )
-from eda_bridge_runtime.mcp_server import MAX_WAIT_MS, TOOLS, MCPRuntimeServer, serve_mcp
+from eda_bridge_runtime.mcp_server import (
+    MAX_WAIT_MS,
+    TOOLS,
+    MCPRuntimeServer,
+    _bounded_timing,
+    _find_resource,
+    serve_mcp,
+)
+
+
+def test_nested_durable_resource_and_bridge_timing_are_projected_without_release_handle():
+    value = {
+        "response": {
+            "result": {
+                "job": {
+                    "result": {
+                        "result": {
+                            "data": {
+                                "bridge": {
+                                    "resource": {
+                                        "resource_id": "owned-one",
+                                        "kind": "aedt-desktop",
+                                        "ownership": "runtime-owned",
+                                        "state": "active",
+                                        "release_operation": "session.release",
+                                        "release_handle": "never-in-audit",
+                                    }
+                                },
+                                "timing": {"adapter_total_ms": 14.5},
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    assert _find_resource(value) == {
+        "protocol": "eda-runtime.resource-view/v1",
+        "resource_id": "owned-one",
+        "kind": "aedt-desktop",
+        "ownership": "runtime-owned",
+        "state": "active",
+        "release_operation": "session.release",
+    }
+    assert _bounded_timing(value) == {"adapter_total_ms": 14.5}
 
 
 def test_run_plan_schema_separates_vendor_payload_from_runtime_wait_policy():
@@ -1677,10 +1721,17 @@ def test_mcp_runtime_records_agent_fact_without_codex_hook(tmp_path):
         "value": "0.50",
         "provenance": "observed",
     }
+    assert requested["actor"]["agent_family"] == {
+        "value": "pi",
+        "provenance": "inferred",
+    }
     assert requested["actor"]["session_id"]["value"].startswith("mcp_")
     assert requested["actor"]["session_id"]["provenance"] == "inferred"
     assert completed["execution"]["linked"] is True
     assert completed["execution"]["state"] == "passed"
+    assert completed["execution"]["connection_id"] == "ansys-one"
+    assert completed["execution"]["eda"] == "ansys-electronics-desktop"
+    assert completed["execution"]["operation"] == "runtime.capabilities"
     assert completed["timing"]["client_transport_ms"] is not None
     assert completed["timing"]["mcp_server_ms"] >= 0
     assert events[2]["payload"]["actor"]["session_id"] == requested["actor"]["session_id"]

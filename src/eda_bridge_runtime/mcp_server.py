@@ -6,6 +6,7 @@ import hashlib
 import json
 import sys
 import time
+from collections.abc import Mapping
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, TextIO
@@ -15,13 +16,47 @@ from .agent_audit import AGENT_AUDIT_PROTOCOL
 from .connections import ConnectionRegistry
 from .context import EDAContext
 from .ledger import ExecutionLedger
-from .protocol import ActorIdentity, RequestEnvelope, new_id, project_run
+from .protocol import ActorIdentity, RequestEnvelope, new_id, project_resource, project_run
 
 MODERN_PROTOCOL = "2026-07-28"
 LEGACY_PROTOCOL = "2025-11-25"
 SERVER_INFO = {"name": "eda-bridge-runtime", "version": __version__}
 SERVER_META = {"io.modelcontextprotocol/serverInfo": SERVER_INFO}
 MAX_WAIT_MS = 300_000
+
+
+def _find_resource(value: Any, *, depth: int = 0) -> dict[str, Any] | None:
+    if depth > 8 or not isinstance(value, Mapping):
+        return None
+    if projected := project_resource(value.get("resource")):
+        return projected
+    for key in ("response", "result", "job", "data", "bridge"):
+        if projected := _find_resource(value.get(key), depth=depth + 1):
+            return projected
+    return None
+
+
+def _bounded_timing(value: Any, *, depth: int = 0) -> dict[str, float]:
+    """Collect timing facts already returned by an adapter; never run extra probes."""
+    if depth > 8 or not isinstance(value, Mapping):
+        return {}
+    found: dict[str, float] = {}
+    timing = value.get("timing")
+    if isinstance(timing, Mapping):
+        for key, item in timing.items():
+            name = str(key)
+            if (
+                len(found) < 16
+                and (name.endswith("_ms") or name.endswith("_seconds"))
+                and isinstance(item, int | float)
+                and not isinstance(item, bool)
+            ):
+                found[name[:80]] = float(item)
+    for key in ("response", "result", "job", "data", "bridge"):
+        for name, item in _bounded_timing(value.get(key), depth=depth + 1).items():
+            if len(found) < 16:
+                found.setdefault(name, item)
+    return found
 
 
 def _object_schema(properties: dict[str, Any], required: list[str] = ()) -> dict[str, Any]:
@@ -528,7 +563,13 @@ class MCPRuntimeServer:
                 value,
                 is_error=True,
             )
-        self._audit_finish(audit, value, round((time.monotonic() - started) * 1000, 3))
+        self._audit_finish(
+            audit,
+            value,
+            round((time.monotonic() - started) * 1000, 3),
+            tool=str(name),
+            arguments=arguments,
+        )
         return self._result(message["id"], result, modern=self._modern(message))
 
     def _call(
@@ -718,6 +759,8 @@ class MCPRuntimeServer:
             client_response = _project_response_result(response_value, arguments["result_view"])
         return {
             "connection_id": spec.connection_id,
+            "eda": spec.eda,
+            "operation": operation,
             "client_transport_ms": round(
                 preflight_transport_ms + (time.monotonic() - started) * 1000, 3
             ),
@@ -1042,6 +1085,14 @@ class MCPRuntimeServer:
             if isinstance(raw_declared, dict)
             else {}
         )
+        inferred = {"session_id": self._mcp_session_id}
+        normalized_client = client_name.lower().replace("_", "-")
+        if "codex" in normalized_client:
+            inferred["agent_family"] = "codex"
+        elif normalized_client.startswith("pi-") or normalized_client in {"pi", "pi-agent"}:
+            inferred["agent_family"] = "pi"
+        elif "claude" in normalized_client:
+            inferred["agent_family"] = "claude"
         return ActorIdentity.detect(
             declared=declared,
             observed={
@@ -1049,7 +1100,7 @@ class MCPRuntimeServer:
                 "client_version": client_version,
                 "harness": "mcp",
             },
-            inferred={"session_id": self._mcp_session_id},
+            inferred=inferred,
         )
 
     def _audit_start(
@@ -1104,6 +1155,9 @@ class MCPRuntimeServer:
         audit: tuple[str, str] | None,
         value: dict[str, Any],
         elapsed_ms: float,
+        *,
+        tool: str,
+        arguments: dict[str, Any],
     ) -> None:
         if self._audit is None or audit is None:
             return
@@ -1117,6 +1171,22 @@ class MCPRuntimeServer:
             "state": run.get("state") if run else value.get("status"),
             "terminal": bool(run.get("terminal")) if run else True,
         }
+        connection_id = str(value.get("connection_id") or arguments.get("connection_id") or "")
+        if connection_id:
+            execution["connection_id"] = connection_id[:160]
+        eda = str(value.get("eda") or arguments.get("eda") or "")
+        if eda:
+            execution["eda"] = eda[:80]
+        operation = str(value.get("operation") or arguments.get("operation") or "")
+        if operation:
+            execution["operation"] = operation[:160]
+        if run:
+            evidence_refs = run.get("evidence_refs")
+            if isinstance(evidence_refs, list):
+                execution["evidence_refs"] = evidence_refs[:16]
+        resource = _find_resource(value)
+        if resource:
+            execution["resource"] = resource
         if isinstance(value.get("steps"), list):
             execution["steps"] = [
                 {
@@ -1134,6 +1204,13 @@ class MCPRuntimeServer:
             execution["linked"] = bool(execution["steps"])
             execution["state"] = value.get("status")
             execution["terminal"] = value.get("status") in {"passed", "failed", "cancelled"}
+        timing = {
+            "mcp_server_ms": elapsed_ms,
+            "client_transport_ms": value.get("client_transport_ms"),
+        }
+        bridge_timing = _bounded_timing(value)
+        if bridge_timing:
+            timing["bridge"] = bridge_timing
         self._audit.append(
             run_id=run_id,
             request_id=request_id,
@@ -1141,10 +1218,7 @@ class MCPRuntimeServer:
             source="mcp-runtime",
             payload={
                 "protocol": AGENT_AUDIT_PROTOCOL,
-                "timing": {
-                    "mcp_server_ms": elapsed_ms,
-                    "client_transport_ms": value.get("client_transport_ms"),
-                },
+                "timing": timing,
                 "execution": execution,
             },
         )

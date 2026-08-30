@@ -17,6 +17,7 @@ RESPONSE_PROTOCOL = "eda-runtime.response/v1"
 EVENT_PROTOCOL = "eda-runtime.event/v1"
 HANDSHAKE_PROTOCOL = "eda-runtime.handshake/v1"
 RUN_VIEW_PROTOCOL = "eda-runtime.run-view/v1"
+RESOURCE_VIEW_PROTOCOL = "eda-runtime.resource-view/v1"
 TERMINAL_RUN_STATES = frozenset({"passed", "failed", "cancelled"})
 
 
@@ -222,6 +223,29 @@ def project_run(response: Mapping[str, Any]) -> dict[str, Any]:
         "terminal": state in TERMINAL_RUN_STATES,
         "updated_at": updated_at,
         "evidence_refs": _evidence_refs(result),
+    }
+
+
+def project_resource(value: Any) -> dict[str, Any] | None:
+    """Return the safe, portable part of a vendor-owned resource handle.
+
+    Release handles and vendor locators deliberately stay in the wire response.
+    The audit ledger only needs enough information to explain ownership and
+    lifecycle state without becoming a second credential or remote database.
+    """
+    if not isinstance(value, Mapping):
+        return None
+    resource_id = str(value.get("resource_id") or "").strip()
+    kind = str(value.get("kind") or "").strip()
+    if not resource_id or not kind:
+        return None
+    return {
+        "protocol": RESOURCE_VIEW_PROTOCOL,
+        "resource_id": resource_id[:160],
+        "kind": kind[:80],
+        "ownership": str(value.get("ownership") or "unknown")[:40],
+        "state": str(value.get("state") or "unknown")[:40],
+        "release_operation": str(value.get("release_operation") or "")[:160] or None,
     }
 
 

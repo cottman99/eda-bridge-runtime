@@ -29,6 +29,12 @@ Mutating calls require a stable `idempotency_key`. Never blindly repeat a mutati
 disconnect; inspect its durable job or Run state first. `eda_connection_reset` only refreshes the
 Runtime-owned transport and never closes EDA.
 
+When a result includes an `eda-runtime.resource/v1` object, retain its release fields for the active
+task and use the declared typed release operation when finished. Release only `runtime-owned`
+resources. Never close, kill, or claim a reused or user-owned EDA application merely because it is
+visible. If no typed Runtime route exists, record the bounded purpose, lane, reason, and outcome with
+`eda-runtime audit bypass`; never store the raw command or GUI input in the ledger.
+
 For a new `eda_read` or `eda_submit`, request its bounded `wait` option when completion is needed,
 avoiding a second Agent turn. Use `eda_job_wait` to resume a job already returned to the Agent.
 Use `eda_job_status` only for a single observation after reconnecting and `eda_job_events` only

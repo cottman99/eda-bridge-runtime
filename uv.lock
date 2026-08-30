@@ -145,7 +145,7 @@ toml = [
 
 [[package]]
 name = "eda-bridge-runtime"
-version = "0.1.0a29"
+version = "0.1.0a30"
 source = { editable = "." }
 
 [package.optional-dependencies]

@@ -8,6 +8,7 @@ from eda_bridge_runtime.agent_audit import (
     compact_audit_calls,
     compact_audit_calls_from_database,
     record_codex_hook,
+    record_runtime_bypass,
 )
 from eda_bridge_runtime.ledger import ExecutionLedger
 from eda_bridge_runtime.protocol import RUN_VIEW_PROTOCOL
@@ -113,6 +114,32 @@ def test_compact_audit_calls_preserve_motive_and_identity_without_forensic_noise
     assert "input_sha256" not in json.dumps(calls)
 
 
+def test_runtime_bypass_is_visible_but_never_records_a_raw_command(tmp_path):
+    database = tmp_path / "agent-audit.sqlite3"
+    run_id = record_runtime_bypass(
+        purpose="Close a legacy user interface safely",
+        lane="gui",
+        reason="No typed lifecycle operation was available in the installed Bridge",
+        outcome="passed",
+        database=database,
+    )
+    calls = compact_audit_calls(audit_events(database))
+    assert calls == [
+        {
+            "timestamp": calls[0]["timestamp"],
+            "source": "runtime-bypass",
+            "status": "passed",
+            "tool": "external.gui",
+            "purpose": "Close a legacy user interface safely",
+            "reason": "No typed lifecycle operation was available in the installed Bridge",
+            "terminal": True,
+        }
+    ]
+    assert run_id.startswith("bypass_")
+    assert "legacy user interface safely" in json.dumps(calls)
+    assert "taskkill" not in json.dumps(audit_events(database))
+
+
 def test_audit_list_cli_is_compact_by_default_and_full_only_when_requested(tmp_path, capsys):
     from eda_bridge_runtime.cli import main
 
@@ -164,8 +191,25 @@ def test_compact_audit_calls_prefer_runtime_facts_over_duplicate_hook_observatio
             "event_type": "agent.tool.completed",
             "source": "mcp-runtime",
             "payload": {
-                "execution": {"state": "passed", "terminal": True},
-                "timing": {"mcp_server_ms": 12.0},
+                "execution": {
+                    "state": "passed",
+                    "terminal": True,
+                    "connection_id": "ansys-one",
+                    "eda": "ansys-electronics-desktop",
+                    "operation": "runtime.snapshot",
+                    "evidence_refs": [{"kind": "snapshot", "sha256": "abc"}],
+                    "resource": {
+                        "resource_id": "session-one",
+                        "kind": "aedt-desktop",
+                        "ownership": "runtime-owned",
+                        "state": "active",
+                        "release_operation": "session.release",
+                    },
+                },
+                "timing": {
+                    "mcp_server_ms": 12.0,
+                    "bridge": {"adapter_total_ms": 8.5},
+                },
             },
         },
     ]
@@ -175,6 +219,11 @@ def test_compact_audit_calls_prefer_runtime_facts_over_duplicate_hook_observatio
     assert len(calls) == 1
     assert calls[0]["source"] == "mcp-runtime"
     assert calls[0]["status"] == "passed"
+    assert calls[0]["connection_id"] == "ansys-one"
+    assert calls[0]["operation"] == "runtime.snapshot"
+    assert calls[0]["evidence_count"] == 1
+    assert calls[0]["resource"]["state"] == "active"
+    assert calls[0]["bridge_timing"] == {"adapter_total_ms": 8.5}
 
 
 def test_compact_database_read_keeps_interleaved_request_and_completion_together(tmp_path):

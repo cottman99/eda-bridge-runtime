@@ -1,5 +1,16 @@
 # Version 0.1 scope
 
+## 0.1.0a30 — owned interactive resources and complete local audit facts
+
+- Standardize token-free audit views for Runtime-owned EDA resources while leaving exact release
+  authority with each vendor Bridge.
+- Materialize connection, EDA, operation, evidence count, resource state, and already-reported
+  Bridge timing into the local Runtime ledger under the same call record.
+- Infer stable Codex, Pi, and Claude agent-family facts from the observed MCP client without asking
+  the Agent to assemble metadata or guessing unavailable model details.
+- Provide a bounded bypass record for the exceptional operation that has no typed Runtime route;
+  record motive, lane, and outcome without retaining raw commands or GUI input.
+
 ## 0.1.0a29 — one version-locked Codex execution path
 
 - Use the configured Runtime command for both the MCP server and its Codex audit hooks, so a

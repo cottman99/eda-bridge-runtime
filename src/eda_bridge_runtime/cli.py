@@ -95,6 +95,16 @@ def _parser() -> argparse.ArgumentParser:
     audit_analyze.add_argument("--limit", type=int, default=1000)
     audit_analyze.add_argument("--session-id")
     audit_analyze.add_argument("--execution-run-id")
+    audit_bypass = audit_sub.add_parser("bypass")
+    audit_bypass.add_argument("--database", type=Path)
+    audit_bypass.add_argument("--purpose", required=True)
+    audit_bypass.add_argument(
+        "--lane", choices=("shell", "gui", "vendor-cli", "other"), required=True
+    )
+    audit_bypass.add_argument("--reason", required=True)
+    audit_bypass.add_argument(
+        "--outcome", choices=("passed", "failed", "blocked", "unknown"), required=True
+    )
     return parser
 
 
@@ -247,6 +257,18 @@ def main(argv: list[str] | None = None) -> int:
             execution_run_id=args.execution_run_id,
         )
         print(json.dumps(analyze_events(events), indent=2))
+        return 0
+    if args.command == "audit" and args.audit_command == "bypass":
+        from .agent_audit import record_runtime_bypass
+
+        run_id = record_runtime_bypass(
+            purpose=args.purpose,
+            lane=args.lane,
+            reason=args.reason,
+            outcome=args.outcome,
+            database=args.database,
+        )
+        print(json.dumps({"status": "recorded", "run_id": run_id}))
         return 0
     if args.command == "ledger":
         with ExecutionLedger(args.database) as ledger:
