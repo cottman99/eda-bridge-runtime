@@ -50,12 +50,19 @@ typed ADS and AnsysEM work, a real generated-input Momentum solve, and a
 one-turn cross-EDA workflow. Sanitized acceptance evidence is maintained in
 [Acceptance](docs/ACCEPTANCE.md).
 
+The newest functional cases go from an empty project all the way to native
+results: ADS builds and simulates a six-instance circuit and freshly reopens a
+DDS plot; AnsysEM builds a three-layer two-port HFSS 3D Layout design, solves
+five points, and freshly reopens its native S-parameter report. Codex and Pi
+both completed each workflow with one Runtime call. These are one-trial
+functional acceptances, not statistical speed claims.
+
 ## Start with one Agent profile
 
 Install Runtime on the computer where the Agent runs:
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a27"
+python -m pip install "eda-bridge-runtime==0.1.0a28"
 eda-runtime doctor
 ```
 

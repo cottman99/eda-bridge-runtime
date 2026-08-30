@@ -21,6 +21,7 @@ MODERN_PROTOCOL = "2026-07-28"
 LEGACY_PROTOCOL = "2025-11-25"
 SERVER_INFO = {"name": "eda-bridge-runtime", "version": __version__}
 SERVER_META = {"io.modelcontextprotocol/serverInfo": SERVER_INFO}
+MAX_WAIT_MS = 300_000
 
 
 def _object_schema(properties: dict[str, Any], required: list[str] = ()) -> dict[str, Any]:
@@ -62,13 +63,32 @@ _RESULT_VIEW_SCHEMA["properties"]["fields"]["items"]["properties"]["pointer"]["d
 
 _WAIT_SCHEMA = _object_schema(
     {
-        "timeout_ms": {"type": "integer", "minimum": 1000, "maximum": 90000},
+        "timeout_ms": {"type": "integer", "minimum": 1000, "maximum": MAX_WAIT_MS},
         "poll_interval_ms": {"type": "integer", "minimum": 100, "maximum": 5000},
     }
 )
 
 
 _MISSING = object()
+
+
+def _wait_values(value: Any) -> tuple[int, int]:
+    if not isinstance(value, dict):
+        raise ValueError("wait must be an object")
+    unknown = set(value) - {"timeout_ms", "poll_interval_ms"}
+    if unknown:
+        raise ValueError("wait contains unknown fields")
+    timeout = value.get("timeout_ms", 60_000)
+    interval = value.get("poll_interval_ms", 1_000)
+    if (
+        isinstance(timeout, bool)
+        or not isinstance(timeout, int)
+        or not 1_000 <= timeout <= MAX_WAIT_MS
+    ):
+        raise ValueError("timeout_ms is out of range")
+    if isinstance(interval, bool) or not isinstance(interval, int) or not 100 <= interval <= 5_000:
+        raise ValueError("poll_interval_ms is out of range")
+    return timeout, interval
 
 
 def _json_pointer(value: Any, pointer: str) -> Any:
@@ -323,7 +343,7 @@ TOOLS = [
                                         "timeout_ms": {
                                             "type": "integer",
                                             "minimum": 1000,
-                                            "maximum": 90000,
+                                            "maximum": MAX_WAIT_MS,
                                         },
                                         "poll_interval_ms": {
                                             "type": "integer",
@@ -382,7 +402,11 @@ TOOLS = [
                 "connection_id": _CONNECTION_ID_SCHEMA,
                 "eda": _EDA_SELECTOR_SCHEMA,
                 "result_view": _RESULT_VIEW_SCHEMA,
-                "timeout_ms": {"type": "integer", "minimum": 1000, "maximum": 90000},
+                "timeout_ms": {
+                    "type": "integer",
+                    "minimum": 1000,
+                    "maximum": MAX_WAIT_MS,
+                },
                 "poll_interval_ms": {"type": "integer", "minimum": 100, "maximum": 5000},
             },
             ["purpose", "job_id"],
@@ -625,6 +649,19 @@ class MCPRuntimeServer:
             if name == "eda.job.events":
                 payload["after_cursor"] = int(arguments.get("after_cursor", 0))
             target = {"eda": spec.eda}
+        inline_wait = arguments.get("wait") if name in {"eda.read", "eda.submit"} else None
+        wait_values: tuple[int, int] | None = None
+        if name == "eda.job.wait" or inline_wait is not None:
+            wait_options = (
+                inline_wait
+                if inline_wait is not None
+                else {
+                    key: arguments[key]
+                    for key in ("timeout_ms", "poll_interval_ms")
+                    if key in arguments
+                }
+            )
+            wait_values = _wait_values(wait_options)
         actor = self._actor(message)
         request = RequestEnvelope(
             purpose=str(arguments["purpose"]),
@@ -643,11 +680,8 @@ class MCPRuntimeServer:
         try:
             response = transport.request(request)
             response_value = response.to_dict()
-            inline_wait = arguments.get("wait") if name in {"eda.read", "eda.submit"} else None
-            if name == "eda.job.wait" or inline_wait is not None:
-                wait_options = inline_wait if isinstance(inline_wait, dict) else arguments
-                timeout_ms = int(wait_options.get("timeout_ms", 60_000))
-                interval_ms = int(wait_options.get("poll_interval_ms", 1_000))
+            if wait_values is not None:
+                timeout_ms, interval_ms = wait_values
                 deadline = time.monotonic() + timeout_ms / 1000
                 while not project_run(response_value).get("terminal", False):
                     job_id = project_run(response_value).get("job_id")
@@ -815,17 +849,10 @@ class MCPRuntimeServer:
             if wait is not None and not isinstance(wait, dict):
                 raise ValueError(f"step {step.get('step_id')!r} wait must be an object")
             if isinstance(wait, dict):
-                unknown_wait_keys = set(wait) - {"timeout_ms", "poll_interval_ms"}
-                if unknown_wait_keys:
-                    raise ValueError(f"step {step.get('step_id')!r} wait contains unknown fields")
-                timeout_ms = int(wait.get("timeout_ms", 60_000))
-                poll_interval_ms = int(wait.get("poll_interval_ms", 1_000))
-                if not 1_000 <= timeout_ms <= 90_000:
-                    raise ValueError(f"step {step.get('step_id')!r} timeout_ms is out of range")
-                if not 100 <= poll_interval_ms <= 5_000:
-                    raise ValueError(
-                        f"step {step.get('step_id')!r} poll_interval_ms is out of range"
-                    )
+                try:
+                    _wait_values(wait)
+                except ValueError as exc:
+                    raise ValueError(f"step {step.get('step_id')!r} {exc}") from exc
             validated.append((step, mutates, operation, effective_target))
 
         results: list[dict[str, Any]] = []

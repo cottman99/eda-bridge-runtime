@@ -1,0 +1,43 @@
+{
+  "schema_version": "eda-runtime.eval-case/v1",
+  "case_id": "l7.ads-circuit-to-dds",
+  "level": 7,
+  "title": "ADS blank workspace to simulated circuit and native DDS",
+  "variables": ["ADS_CONNECTION", "ADS_SOURCE_WORKSPACE", "ADS_DESIGN_WORKSPACE", "ADS_RESULT_DIRECTORY", "ADS_CREATE_KEY", "ADS_APPLY_KEY", "ADS_SIMULATE_KEY", "ADS_DDS_KEY"],
+  "prompt": "Use exactly one EDA Bridge Runtime tool call: eda.run_plan on connection '{{ADS_CONNECTION}}'. Its purpose is 'Evaluate the complete ADS circuit-to-DDS user workflow'. Supply exactly four ordered typed steps and do not call capabilities. Step create: purpose 'Create the disposable ADS source workspace', operation workspace.create, idempotency_key='{{ADS_CREATE_KEY}}', payload workspace='{{ADS_SOURCE_WORKSPACE}}', library='RuntimeEval_lib', cell='Main', display=':4.0'. Step build: purpose 'Build and freshly verify the disposable AC low-pass schematic', operation design.apply, idempotency_key='{{ADS_APPLY_KEY}}', payload display=':4.0' and plan={schema_version:'ads.design-plan/v1',operation_id:'runtime_eval_ac_build',source_workspace:'{{ADS_SOURCE_WORKSPACE}}',output_workspace:'{{ADS_DESIGN_WORKSPACE}}',design:'RuntimeEval_lib:Main:schematic',expected_before:{instance_names:[]},operations:[{op:'add_instance',item:['ads_sources','V_AC','symbol'],at:[-2,0],name:'SRC1',angle:-90},{op:'add_instance',item:['ads_rflib','R','symbol'],at:[0,0],name:'R1',parameters:{R:'3.0 kOhm'}},{op:'add_instance',item:['ads_rflib','C','symbol'],at:[2,0],name:'C1',angle:-90,parameters:{C:'1.0 uF'}},{op:'add_instance',item:['ads_rflib','GROUND','symbol'],at:[-2,-1],name:'G1',angle:-90},{op:'add_instance',item:['ads_rflib','GROUND','symbol'],at:[2,-1],name:'G2',angle:-90},{op:'add_instance',item:['ads_simulation','AC','symbol'],at:[-4,1],name:'AC1',parameters:{Start:'1.0 Hz',Stop:'1.0 MHz',Dec:'5',Step:''}},{op:'add_wire',points:[[-2,0],[0,0]]},{op:'add_wire',points:[[1,0],[2,0]],label:'R1_v'}],assertions:{instance_names:['AC1','C1','G1','G2','R1','SRC1'],parameters:[{instance:'R1',parameter:'R',value:'3.0 kOhm'},{instance:'C1',parameter:'C',value:'1.0 uF'},{instance:'AC1',parameter:'Start',value:'1.0 Hz'},{instance:'AC1',parameter:'Stop',value:'1.0 MHz'}],netlist_contains:['SRC1','R1','C1','AC1']}}. Step simulate: purpose 'Simulate the accepted schematic and persist deterministic numeric evidence', operation circuit.simulate, idempotency_key='{{ADS_SIMULATE_KEY}}', payload display=':4.0' and plan={schema_version:'ads.circuit-simulation/v1',operation_id:'runtime_eval_ac_simulate',workspace:'{{ADS_DESIGN_WORKSPACE}}',design:'RuntimeEval_lib:Main:schematic',output_directory:'{{ADS_RESULT_DIRECTORY}}',dataset_name:'accepted.ds',assertions:{minimum_rows:31,required_columns:['freq','R1_v','SRC1.i'],finite_columns:['freq','R1_v','SRC1.i']}}. Step report: purpose 'Create and freshly verify the native DDS result plot', operation dds.create, idempotency_key='{{ADS_DDS_KEY}}', payload display=':4.0' and plan={schema_version:'ads.dds-report/v1',operation_id:'runtime_eval_dds_report',workspace:'{{ADS_DESIGN_WORKSPACE}}',dataset:'{{ADS_RESULT_DIRECTORY}}/accepted.ds',output_file:'{{ADS_DESIGN_WORKSPACE}}/AgentReport.dds',page:'Results',equations:[{name:'output_db',expression:'dB(R1_v)'}],plots:[{name:'Output response',traces:['output_db'],rect:[0,0,800,500]}]}. Do not use shell, files, documentation, GUI, arbitrary code/AEL, launch, shutdown, replay, or customer data. From the four actual terminal step responses return only compact JSON with status='passed', stage_count=4, source_preserved, fresh_reopen, row_count, deterministic_dataset, and dds_verified.",
+  "required_tools": {
+    "eda.run_plan": 1
+  },
+  "allowed_tools": [
+    "eda.run_plan"
+  ],
+  "expected_runtime": {
+    "equals": {
+      "deduplicated_calls": 0,
+      "reused_run_calls": 0,
+      "distinct_projected_runs": 4,
+      "distinct_jobs": 0
+    }
+  },
+  "expected_final": {
+    "equals": {
+      "status": "passed",
+      "stage_count": 4,
+      "source_preserved": true,
+      "fresh_reopen": true,
+      "row_count": 31,
+      "deterministic_dataset": true,
+      "dds_verified": true
+    },
+    "minimum": {}
+  },
+  "budgets": {
+    "max_tool_calls": 1,
+    "max_wall_seconds": 120
+  },
+  "safety": {
+    "mutation": "disposable-only",
+    "solve": "bounded-required",
+    "customer_data": "forbidden"
+  }
+}

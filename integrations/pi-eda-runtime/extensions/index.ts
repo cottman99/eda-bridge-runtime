@@ -5,6 +5,7 @@ import { modelVisibleResult, runtimeFailed } from "../lib/model-visible-result.m
 import { RuntimeClient } from "../lib/runtime-client.mjs";
 
 const PI_AGENT_VERSION = "0.84.4";
+const MAX_WAIT_MS = 300_000;
 const JsonObject = Type.Record(Type.String(), Type.Unknown());
 const ResultView = Type.Object({
   fields: Type.Array(Type.Object({
@@ -154,7 +155,7 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
       payload: Type.Record(Type.String(), Type.Unknown()),
       result_view: Type.Optional(ResultView),
       wait: Type.Optional(Type.Object({
-        timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: 90000 })),
+        timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: MAX_WAIT_MS })),
         poll_interval_ms: Type.Optional(Type.Integer({ minimum: 100, maximum: 5000 })),
       }, { additionalProperties: false })),
       ...TargetFields,
@@ -177,7 +178,7 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
       expected_effect: Type.Optional(Type.String()),
       idempotency_key: Type.Optional(Type.String()),
       wait: Type.Optional(Type.Object({
-        timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: 90000 })),
+        timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: MAX_WAIT_MS })),
         poll_interval_ms: Type.Optional(Type.Integer({ minimum: 100, maximum: 5000 })),
       }, { additionalProperties: false })),
     }),
@@ -200,7 +201,7 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
         expected_effect: Type.Optional(Type.String()),
         idempotency_key: Type.Optional(Type.String()),
         wait: Type.Optional(Type.Object({
-          timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: 90000 })),
+          timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: MAX_WAIT_MS })),
           poll_interval_ms: Type.Optional(Type.Integer({ minimum: 100, maximum: 5000 })),
         }, {
           description: "Runtime durable-job wait policy for this plan step. This is a sibling of payload and must never be nested inside payload.",
@@ -232,7 +233,7 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
       job_id: Type.String(),
       connection_id: Type.Optional(Type.String()),
       eda: Type.Optional(Type.String()),
-      timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: 90000 })),
+      timeout_ms: Type.Optional(Type.Integer({ minimum: 1000, maximum: MAX_WAIT_MS })),
       poll_interval_ms: Type.Optional(Type.Integer({ minimum: 100, maximum: 5000 })),
       result_view: Type.Optional(ResultView),
     }),

@@ -370,6 +370,16 @@ def test_pi_command_exposes_only_case_allowed_runtime_tools():
     assert command[command.index("--tools") + 1] == "eda_connections_list,eda_run_plan"
 
 
+def test_pi_prompt_is_materialized_as_native_file_reference(tmp_path):
+    runner = load_runner()
+    case = {"prompt": "x" * 20_000, "allowed_tools": ["eda.run_plan"]}
+
+    selected, prompt_path = runner.materialize_pi_prompt(case, tmp_path / "prompt.md")
+
+    assert selected["prompt"] == "@" + str(prompt_path.resolve())
+    assert prompt_path.read_text(encoding="utf-8") == case["prompt"]
+
+
 def test_pi_command_can_reuse_installed_launcher_profile_without_duplicate_assets():
     runner = load_runner()
     args = SimpleNamespace(

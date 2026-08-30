@@ -12,7 +12,7 @@ from eda_bridge_runtime.connections import (
     ConnectionSpec,
     discover_connection_origin,
 )
-from eda_bridge_runtime.mcp_server import TOOLS, MCPRuntimeServer, serve_mcp
+from eda_bridge_runtime.mcp_server import MAX_WAIT_MS, TOOLS, MCPRuntimeServer, serve_mcp
 
 
 def test_run_plan_schema_separates_vendor_payload_from_runtime_wait_policy():
@@ -21,6 +21,16 @@ def test_run_plan_schema_separates_vendor_payload_from_runtime_wait_policy():
 
     assert "Vendor Bridge operation payload only" in step["payload"]["description"]
     assert "sibling of payload" in step["wait"]["description"]
+    assert step["wait"]["properties"]["timeout_ms"]["maximum"] == MAX_WAIT_MS
+
+
+def test_all_wait_tools_expose_the_same_bounded_long_poll_limit():
+    tools = {tool["name"]: tool for tool in TOOLS}
+    for name in ("eda.read", "eda.submit"):
+        wait = tools[name]["inputSchema"]["properties"]["wait"]
+        assert wait["properties"]["timeout_ms"]["maximum"] == MAX_WAIT_MS
+    timeout = tools["eda.job.wait"]["inputSchema"]["properties"]["timeout_ms"]
+    assert timeout["maximum"] == MAX_WAIT_MS
 
 
 def test_connection_registry_round_trip_and_deterministic_resolution(tmp_path):
@@ -1418,6 +1428,34 @@ def test_mcp_job_wait_polls_inside_runtime_until_terminal():
     assert value["run"]["state"] == "passed"
     assert value["run"]["terminal"] is True
     assert len(registry.transport.requests) == 3
+
+
+@pytest.mark.parametrize("timeout", [True, MAX_WAIT_MS + 1])
+def test_mcp_job_wait_rejects_unbounded_or_boolean_timeout(timeout):
+    registry = FakeRegistry()
+    registry.transport = EventuallyTerminalTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.job.wait",
+                "arguments": {
+                    "purpose": "Reject an invalid durable wait bound",
+                    "connection_id": "ansys-one",
+                    "job_id": "job-one",
+                    "timeout_ms": timeout,
+                },
+            },
+        )
+    )
+
+    assert response["result"]["isError"] is True
+    assert (
+        "timeout_ms is out of range" in response["result"]["structuredContent"]["error"]["message"]
+    )
+    assert registry.transport.requests == []
 
 
 def test_mcp_job_wait_can_project_a_terminal_durable_result():

@@ -402,6 +402,15 @@ def pi_command(args: argparse.Namespace, case: dict[str, Any]) -> list[str]:
     return native_command(command)
 
 
+def materialize_pi_prompt(case: dict[str, Any], path: Path) -> tuple[dict[str, Any], Path]:
+    """Pass large evaluation prompts through Pi's native @file input."""
+
+    prompt_path = path.resolve()
+    prompt_path.parent.mkdir(parents=True, exist_ok=True)
+    prompt_path.write_text(str(case["prompt"]), encoding="utf-8")
+    return {**case, "prompt": "@" + str(prompt_path)}, prompt_path
+
+
 def native_command(command: list[str]) -> list[str]:
     if os.name != "nt":
         return command
@@ -539,6 +548,7 @@ def main() -> int:
     validate_case(case)
     case["prompt"] = render_prompt(case, variables(args.var))
     schema_path: Path | None = None
+    pi_prompt_path: Path | None = None
     if args.agent == "codex":
         schema_path = (args.output or args.cwd / ".codex_tmp" / case["case_id"]).with_suffix(
             ".output-schema.json"
@@ -550,7 +560,11 @@ def main() -> int:
         )
         command = native_command(codex_command(args, case, schema_path))
     else:
-        command = pi_command(args, case)
+        prompt_base = args.output or args.cwd / ".codex_tmp" / case["case_id"]
+        pi_case, pi_prompt_path = materialize_pi_prompt(
+            case, prompt_base.with_suffix(".pi-prompt.md")
+        )
+        command = pi_command(args, pi_case)
     timeout = int(case["budgets"]["max_wall_seconds"]) + 15
     started = time.monotonic()
     try:
@@ -573,6 +587,8 @@ def main() -> int:
     finally:
         if schema_path is not None:
             schema_path.unlink(missing_ok=True)
+        if pi_prompt_path is not None:
+            pi_prompt_path.unlink(missing_ok=True)
     wall_ms = round((time.monotonic() - started) * 1000, 3)
     events = json_lines(output)
     observation = parse_codex(events) if args.agent == "codex" else parse_pi(events)

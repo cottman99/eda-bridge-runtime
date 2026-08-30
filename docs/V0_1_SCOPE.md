@@ -1,5 +1,16 @@
 # Version 0.1 scope
 
+## 0.1.0a28 — complete workflows without polling turns
+
+- Allow an explicitly requested durable wait of up to five minutes while retaining the 60-second
+  default and durable reconnect path. This lets one validated plan contain a small real HFSS solve
+  without forcing another Agent turn solely because the former 90-second ceiling expired.
+- Keep the Pi transport timeout slightly beyond Runtime's maximum bounded wait so the client never
+  abandons a valid Runtime request first.
+- Pass Pi evaluation prompts through its native `@file` input, avoiding Windows command-line length
+  limits without adding a read tool, shell step, or retained raw prompt artifact.
+- Add complete disposable ADS circuit-to-DDS and AnsysEM layout-to-report evaluation contracts.
+
 ## 0.1.0a27 — unambiguous execution timing
 
 - Report canonical adapter/EDA-boundary and Runtime-local timing names while retaining the original

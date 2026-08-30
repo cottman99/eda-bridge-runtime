@@ -25,6 +25,8 @@ the same Runtime/Bridge contracts.
 | L5 AnsysEM candidate begin/abort | 1 each, both passed | 85.011 s | 67.829 s | 20.2% | Mixed Agent and AEDT lifecycle |
 | L6 generated-input Momentum solve (Codex 2/3; Pi 3/3) | 3 each | 38.814 s | 21.701 s | 44.1% | Mixed Agent and solver |
 | L6 one-turn ADS plus AnsysEM | 3 each, both 3/3 | 103.691 s | 92.718 s | 10.6% | AEDT lifecycle |
+| L7 ADS circuit to native DDS | 1 each, both passed | 39.782 s | 33.922 s | 14.7% | Agent/client; ADS was ~5 s |
+| L7 AnsysEM layout to native report | 1 each, both passed | 242.657 s | 229.328 s | 5.5% | AEDT build and solve |
 
 An alpha.26 public-install spot check is retained separately from the repeated rows above. With one
 trial per Agent and vendor, Pi completed ADS/AnsysEM capability reads in 9.375/8.984 seconds and
@@ -65,6 +67,15 @@ evidence plan with one Agent call and three durable jobs: create, fresh inspect,
 export. Codex took 102.047 seconds and Pi 79.312 seconds, while their measured AEDT/Bridge boundaries
 were essentially identical at 63.312/63.422 seconds. This isolates the remaining 22.7-second gap to
 Agent/client work rather than SSH or AEDT. Both synthetic Bundles and images were removed.
+
+The L7 functional cases then moved from lifecycle evidence to user-visible engineering outcomes.
+For ADS, both Agents used one call to create a blank workspace, build a six-instance AC circuit,
+return 31 finite rows under a deterministic dataset name, and freshly reopen a native DDS plot.
+For AnsysEM, both used one call to create a blank project, build a three-layer two-port layout,
+solve five explicit points, verify two finite S-parameter expressions, and freshly reopen the native
+report. Pi used 6,491/6,636 provider-reported input tokens versus Codex 49,106/47,982, but those
+counters are not billing-equivalent across clients. One trial per row proves functional closure,
+not statistical speed or reliability.
 
 ## Evidence-backed decisions
 

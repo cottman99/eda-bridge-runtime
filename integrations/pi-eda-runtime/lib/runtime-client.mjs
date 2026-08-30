@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 
-const DEFAULT_TIMEOUT_MS = 120_000;
+// Runtime accepts an explicit wait of at most five minutes. Leave a small
+// transport margin so the client never abandons a valid bounded wait first.
+const DEFAULT_TIMEOUT_MS = 330_000;
 
 export class RuntimeClient {
   constructor(options = {}) {

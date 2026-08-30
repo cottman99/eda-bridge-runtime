@@ -41,6 +41,18 @@ The same level also includes one-turn cross-EDA coordination. It deliberately us
 plan per exact vendor connection and does not invent a cross-vendor transaction or shared rollback
 claim.
 
+Level 7 is the first ordinary-engineer outcome gate. ADS starts from no workspace and reaches a
+simulated native dataset, CSV, and freshly reopened DDS plot. AnsysEM starts from no project and
+reaches a built HFSS 3D Layout stackup, ports, setup, finite five-point S-parameters, and freshly
+reopened native report. Each case requires one prevalidated Runtime plan and explicit mutation plus
+solve approval. A single trial proves the maintained workflow is functional; it is not enough for a
+performance ranking.
+
+Pi prompts are supplied through Pi's native `@file` input and deleted after the run. This avoids the
+Windows command-line length ceiling for complete typed plans without granting a file-read tool or
+retaining prompt content. When a generated Pi launcher already contains the Runtime extension,
+pass `--pi-use-launcher-profile`; injecting a second copy correctly fails on duplicate tool names.
+
 Raw Agent streams may contain local target facts and are not saved unless `--raw-output` is supplied.
 Normalized results contain only cross-client metrics with matching definitions, the canonical tool
 sequence, non-sensitive Run/job/deduplication counts, aggregate response character counts, a final
