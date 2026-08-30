@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import re
 from typing import Any
@@ -16,6 +17,9 @@ _SHA256 = re.compile(r"[a-f0-9]{64}")
 _MAX_PROGRAM_BYTES = 131_072
 _MAX_PATHS = 64
 _MAX_ARTIFACTS = 64
+_DANGEROUS_CALLS = frozenset(
+    {"breakpoint", "compile", "eval", "exec", "input", "open", "__import__"}
+)
 
 
 def validate_operation_class(value: Any) -> str:
@@ -23,6 +27,41 @@ def validate_operation_class(value: Any) -> str:
     if operation_class not in OPERATION_CLASSES:
         raise ValueError("unsupported operation_class")
     return operation_class
+
+
+def validate_python_program_policy(
+    source: str, *, allowed_import_prefixes: tuple[str, ...]
+) -> None:
+    """Reject common accidental escapes before a vendor runner executes Python.
+
+    This is a policy lint, not a hostile-code sandbox. Vendor adapters must also
+    enforce staging, scope fingerprints, lifecycle, and output limits.
+    """
+
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as exc:
+        raise ValueError(f"official Python program has invalid syntax: {exc.msg}") from exc
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            modules = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            modules = [node.module or ""]
+        else:
+            modules = []
+        for module in modules:
+            if not any(
+                module == prefix or module.startswith(prefix + ".")
+                for prefix in allowed_import_prefixes
+            ):
+                raise ValueError(f"official Python program imports undeclared module: {module}")
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            if node.func.id in _DANGEROUS_CALLS:
+                raise ValueError(f"official Python program calls forbidden builtin: {node.func.id}")
+        if isinstance(node, ast.Name) and node.id.startswith("__"):
+            raise ValueError("official Python program uses a forbidden dunder name")
+        if isinstance(node, ast.Attribute) and node.attr.startswith("__"):
+            raise ValueError("official Python program uses a forbidden dunder attribute")
 
 
 def _exact_object(value: Any, *, name: str, fields: set[str]) -> dict[str, Any]:

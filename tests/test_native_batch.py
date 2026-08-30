@@ -4,7 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from eda_bridge_runtime.native_batch import validate_native_batch, validate_operation_class
+from eda_bridge_runtime.native_batch import (
+    validate_native_batch,
+    validate_operation_class,
+    validate_python_program_policy,
+)
 
 
 def _program(entrypoint: str, body: str = "return {'status': 'passed'}") -> dict[str, str]:
@@ -99,3 +103,20 @@ def test_public_native_batch_schema_is_valid_json():
         (root / "docs" / "schemas" / "native-batch-v1.schema.json").read_text(encoding="utf-8")
     )
     assert schema["properties"]["schema_version"]["const"] == "eda.native-batch/v1"
+
+
+def test_python_policy_allows_declared_vendor_import_and_rejects_shell_escape():
+    validate_python_program_policy(
+        "from ansys.aedt.core import Hfss3dLayout\ndef run(api, context):\n    return {}\n",
+        allowed_import_prefixes=("ansys.aedt.core", "math"),
+    )
+    with pytest.raises(ValueError, match="undeclared module"):
+        validate_python_program_policy(
+            "import subprocess\ndef run(api, context):\n    return {}\n",
+            allowed_import_prefixes=("ansys.aedt.core",),
+        )
+    with pytest.raises(ValueError, match="forbidden builtin"):
+        validate_python_program_policy(
+            "def run(api, context):\n    return open('outside.txt')\n",
+            allowed_import_prefixes=(),
+        )
