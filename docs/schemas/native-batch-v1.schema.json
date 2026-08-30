@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cottman99/eda-bridge-runtime/native-batch-v1.schema.json",
+  "title": "Governed official EDA native batch v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "batch_id", "runtime", "effect", "program", "scope", "transaction", "validation", "limits"],
+  "properties": {
+    "schema_version": {"const": "eda.native-batch/v1"},
+    "batch_id": {"$ref": "#/$defs/identifier"},
+    "runtime": {"$ref": "#/$defs/identifier"},
+    "effect": {"enum": ["observe", "staged_mutation"]},
+    "program": {"$ref": "#/$defs/program"},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resource_kind", "selectors", "read_paths", "write_paths", "artifacts"],
+      "properties": {
+        "resource_kind": {"$ref": "#/$defs/identifier"},
+        "selectors": {"type": "object", "maxProperties": 32},
+        "read_paths": {"$ref": "#/$defs/paths"},
+        "write_paths": {"$ref": "#/$defs/paths"},
+        "artifacts": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 512}
+        }
+      }
+    },
+    "transaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "source_fingerprints", "fresh_reopen", "promotion"],
+      "properties": {
+        "strategy": {"enum": ["none", "adapter_staging"]},
+        "source_fingerprints": {
+          "type": "object",
+          "maxProperties": 64,
+          "additionalProperties": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        },
+        "fresh_reopen": {"type": "boolean"},
+        "promotion": {"enum": ["none", "on_validation"]}
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["program", "required_artifacts"],
+      "properties": {
+        "program": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/program"}]},
+        "required_artifacts": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 512}
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timeout_seconds", "max_output_bytes"],
+      "properties": {
+        "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 86400},
+        "max_output_bytes": {"type": "integer", "minimum": 1024, "maximum": 16777216}
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"},
+    "program": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["language", "source", "sha256"],
+      "properties": {
+        "language": {"$ref": "#/$defs/identifier"},
+        "source": {"type": "string", "minLength": 1, "maxLength": 131072},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "paths": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 4096}
+    }
+  }
+}

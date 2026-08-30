@@ -83,6 +83,14 @@ The common reusable unit is the execution envelope and transaction lifecycle,
 not a growing vocabulary of `add_instance`, `add_wire`, plot types, or solver
 cases.
 
+The first shared wire contract is
+[`eda.native-batch/v1`](schemas/native-batch-v1.schema.json). It validates the
+program fingerprint, official runtime selector, observe-versus-staged effect,
+declared read/write paths, source fingerprints, fresh-reopen policy, validation
+program, artifacts, timeout, and output bound. Vendor Bridges remain
+responsible for enforcing those declarations against their real workspace or
+project format.
+
 ## Route order
 
 Use this order:

@@ -6,6 +6,7 @@ from .connections import ConnectionRegistry, ConnectionSpec, discover_connection
 from .context import EDAContext, capability_digest, stable_origin_id
 from .jobs import JobStore
 from .ledger import ExecutionLedger
+from .native_batch import NATIVE_BATCH_SCHEMA, OPERATION_CLASSES, validate_native_batch
 from .protocol import ActorIdentity, RequestEnvelope, ResponseEnvelope, project_run
 from .runtime import Runtime
 from .supervisor import run_job_worker, spawn_detached_worker
@@ -27,6 +28,9 @@ __all__ = [
     "ResponseEnvelope",
     "Runtime",
     "project_run",
+    "NATIVE_BATCH_SCHEMA",
+    "OPERATION_CLASSES",
+    "validate_native_batch",
     "run_job_worker",
     "spawn_detached_worker",
     "stable_origin_id",
