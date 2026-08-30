@@ -120,15 +120,11 @@ def validate_experience_asset(metadata: dict[str, Any], *, body: str) -> None:
         raise ValueError("experience asset applies_to must be an object")
     if not isinstance(metadata["validation"], dict):
         raise ValueError("experience asset validation must be an object")
-    if not isinstance(metadata["confidence"], (int, float)) or not 0 <= metadata[
-        "confidence"
-    ] <= 1:
+    if not isinstance(metadata["confidence"], (int, float)) or not 0 <= metadata["confidence"] <= 1:
         raise ValueError("experience asset confidence must be between zero and one")
     if not isinstance(metadata["last_verified"], str) or len(metadata["last_verified"]) != 10:
         raise ValueError("experience asset last_verified must be an ISO date")
-    if not isinstance(metadata["summary"], str) or not isinstance(
-        metadata["recommendation"], str
-    ):
+    if not isinstance(metadata["summary"], str) or not isinstance(metadata["recommendation"], str):
         raise ValueError("experience asset summary and recommendation must be strings")
     if not body.strip():
         raise ValueError("experience asset body must explain its evidence boundary")
@@ -176,11 +172,7 @@ def validate_compiled_shortcut_binding(
         raise ValueError("compiled shortcut binding has an invalid shape")
     manifest = validate_experience_library(library_root)
     entry = next(
-        (
-            item
-            for item in manifest["assets"]
-            if item["id"] == binding["implements_asset_id"]
-        ),
+        (item for item in manifest["assets"] if item["id"] == binding["implements_asset_id"]),
         None,
     )
     if entry is None:
@@ -214,9 +206,10 @@ def validate_compiled_shortcut_binding(
         raise ValueError("compiled shortcut schemas must be objects")
     if binding["fallback"] != "governed_native_execution":
         raise ValueError("compiled shortcut must preserve governed native execution fallback")
-    if not isinstance(binding["implementation_version"], str) or not binding[
-        "implementation_version"
-    ]:
+    if (
+        not isinstance(binding["implementation_version"], str)
+        or not binding["implementation_version"]
+    ):
         raise ValueError("compiled shortcut implementation version must be non-empty")
     return metadata
 
@@ -235,10 +228,7 @@ def list_experience_assets(
         matches = []
         for entry in manifest["assets"]:
             metadata, _body = parse_experience_asset(root / entry["path"])
-            terms = {
-                str(item).casefold()
-                for item in metadata["intents"] + metadata["tags"]
-            }
+            terms = {str(item).casefold() for item in metadata["intents"] + metadata["tags"]}
             if requested and not requested.intersection(terms):
                 continue
             matches.append(
