@@ -14,6 +14,19 @@ from .ledger import ExecutionLedger
 from .protocol import ActorIdentity, RuntimeFacts
 
 
+def _configure_protocol_stdio() -> None:
+    """Use the MCP/Hook wire encoding instead of the Windows active code page."""
+    for stream in (sys.stdin, sys.stdout):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8")
+        except (AttributeError, OSError, ValueError):
+            # In-memory and captured streams may not support reconfiguration.
+            continue
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="eda-runtime")
     parser.add_argument("--version", action="version", version=__version__)
@@ -110,6 +123,8 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command in {"mcp", "hook"}:
+        _configure_protocol_stdio()
     if args.command == "doctor":
         print(
             json.dumps(
