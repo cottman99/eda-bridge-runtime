@@ -3,6 +3,17 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+## 2026-08-31 Runtime alpha.32 Windows UTF-8 protocol acceptance
+
+- The complete suite passed 166 tests; Ruff check, format validation, lock validation, wheel/sdist
+  build, and Twine checks passed.
+- Subprocess acceptance forced the inherited Python pipe encoding to CP936 while sending UTF-8 MCP
+  and Codex Hook frames. A Chinese JSON-RPC request identifier and a Chinese operation purpose were
+  both retained exactly.
+- A live Codex MCP call reached the registered AnsysEM adapter after the client restart in 828 ms.
+  This correction changes only Agent-host protocol decoding and does not require vendor Bridge or
+  EDA application changes.
+
 ## 2026-08-30 Runtime alpha.31 compact bypass-query acceptance
 
 - The complete suite passed 164 tests; Ruff check and format validation passed.

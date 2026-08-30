@@ -1,5 +1,13 @@
 # Version 0.1 scope
 
+## 0.1.0a32 — lossless UTF-8 motives on Windows
+
+- Force UTF-8 at the MCP and Agent-hook protocol boundary instead of inheriting the Windows active
+  code page. Natural-language purposes and Agent metadata therefore remain lossless in both
+  execution and audit records.
+- Cover MCP request identifiers and Codex Hook purposes under an explicit CP936 pipe simulation so
+  future Windows releases cannot silently reintroduce mojibake.
+
 ## 0.1.0a31 — complete compact view of Runtime facts
 
 - Keep bounded bypass facts visible beside normal MCP calls in the default compact audit query.
