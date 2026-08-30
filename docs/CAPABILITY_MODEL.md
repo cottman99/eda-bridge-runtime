@@ -22,6 +22,12 @@ version-matched official documentation
 The Bridge and Runtime own the reliability envelope around official code. They
 do not replace the official API inside that envelope.
 
+A packaged bootstrap experience library may help an Agent choose a proven
+official route without rediscovering every operational detail. It remains
+advisory and independently versioned: it does not increase official API reach,
+authorize execution, or prove workflow success. See
+[`EXPERIENCE_LIBRARY.md`](EXPERIENCE_LIBRARY.md).
+
 ## Five different coverage claims
 
 Never collapse these dimensions into one capability count:
@@ -48,14 +54,21 @@ Every advertised operation must be classified as one of:
 2. **Generic native execution** — official Python, AEL, or native batches inside
    an exact Context and a governed effect boundary. This is the main extension
    path for vendor functionality.
-3. **Certified workflow** — a high-frequency, versioned, tested recipe that
-   composes infrastructure and official APIs into a convenient shortcut.
+3. **Certified workflow** — an asset-bound compiled shortcut for a
+   high-frequency, versioned, tested command group. The asset is semantic truth;
+   the implementation only compresses tokens and reduces transcription risk.
 4. **Acceptance probe** — a narrow diagnostic or example used to prove one
    environment or contract. It is not a top-level product capability merely
    because it is callable.
 
 Certified workflows remain valuable. They are shortcuts and quality baselines,
 not the only way to reach EDA functionality.
+
+The execution surface therefore has three distinct parts: core infrastructure
+primitives, asset-bound compiled shortcuts, and universal governed native
+execution. Infrastructure needs no experience binding. Every engineering
+command-group shortcut does, and must fall back to governed native execution
+when its asset is absent, deprecated, drifted, inapplicable, or unhealthy.
 
 ## What generic native execution must govern
 

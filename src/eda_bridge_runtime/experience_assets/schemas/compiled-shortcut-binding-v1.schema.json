@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cottman99.github.io/eda-bridge-runtime/schemas/compiled-shortcut-binding-v1.schema.json",
+  "title": "EDA Asset-bound Compiled Shortcut v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "implements_asset_id", "asset_version", "asset_schema_version",
+    "asset_content_hash", "implementation_version", "applies_to",
+    "effect_class", "parameter_schema", "validation", "fallback"
+  ],
+  "properties": {
+    "implements_asset_id": {"type": "string", "minLength": 1},
+    "asset_version": {"type": "string", "minLength": 1},
+    "asset_schema_version": {"const": "eda.experience-asset/v1"},
+    "asset_content_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "implementation_version": {"type": "string", "minLength": 1},
+    "applies_to": {"type": "object"},
+    "effect_class": {"enum": ["observe", "mutation", "job"]},
+    "parameter_schema": {"type": "object"},
+    "validation": {"type": "object"},
+    "fallback": {"const": "governed_native_execution"}
+  }
+}

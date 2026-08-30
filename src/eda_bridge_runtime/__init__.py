@@ -4,6 +4,16 @@ from ._version import __version__
 from .adapter import Adapter, AdapterContext, AdapterResult
 from .connections import ConnectionRegistry, ConnectionSpec, discover_connection_origin
 from .context import EDAContext, capability_digest, stable_origin_id
+from .experience_library import (
+    EXPERIENCE_ASSET_SCHEMA,
+    EXPERIENCE_LIBRARY_SCHEMA,
+    get_experience_asset,
+    list_experience_assets,
+    parse_experience_asset,
+    validate_compiled_shortcut_binding,
+    validate_experience_asset,
+    validate_experience_library,
+)
 from .jobs import JobStore
 from .ledger import ExecutionLedger
 from .native_batch import (
@@ -28,14 +38,22 @@ __all__ = [
     "EDAContext",
     "capability_digest",
     "ExecutionLedger",
+    "EXPERIENCE_ASSET_SCHEMA",
+    "EXPERIENCE_LIBRARY_SCHEMA",
+    "get_experience_asset",
     "JobStore",
+    "list_experience_assets",
     "RequestEnvelope",
     "ResponseEnvelope",
     "Runtime",
     "project_run",
+    "parse_experience_asset",
     "NATIVE_BATCH_SCHEMA",
     "OPERATION_CLASSES",
     "validate_native_batch",
+    "validate_compiled_shortcut_binding",
+    "validate_experience_asset",
+    "validate_experience_library",
     "validate_python_program_policy",
     "run_job_worker",
     "spawn_detached_worker",

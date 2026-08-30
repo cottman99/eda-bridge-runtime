@@ -32,7 +32,12 @@ Runtime 则让所选目标、操作动机、重试身份、长任务回执、时
 
 这些都是真实公开合成工程的应用窗口截图，不是效果图或 Python 重绘。
 EDA Bridge Runtime 是厂商 Bridge 背后的公共、厂商无关执行路径：它保存
-执行连续性和证据，而 ADS 与 AnsysEM Bridge 继续承载原生工程知识。
+执行连续性和证据，而 ADS 与 AnsysEM Bridge 保留版本相关的运行时集成。
+
+能力不再用 wrapper 数量衡量。Agent 结合准确 Context、版本匹配的官方文档
+和随包提供的小型启动经验库，通过受控事务执行官方厂商代码。高频操作可以
+保留为与经验资产绑定的编译快捷方式，用于省 token 和降低转写错误；快捷
+方式既不是知识真相，也不是触达该能力的唯一通路。
 
 ## 它给工程师带来的变化
 
@@ -81,7 +86,7 @@ AEDT 生命周期占主导的任务主要受 EDA 本身耗时限制。这是工�
 在 Agent 所在的电脑安装 Runtime：
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a32"
+python -m pip install "eda-bridge-runtime==0.1.0a33"
 eda-runtime doctor
 ```
 
@@ -111,6 +116,8 @@ Runtime，因此审计、重试、目标选择和证据规则不会分裂成两�
 - Context 只包含定位信息和指纹，不包含凭据。
 - 追加式日志保存指纹与受控元信息，不保存完整聊天或原始操作载荷。
 - 厂商相关行为保留在各自 Bridge 中，不进入 Runtime 核心。
+- 启动经验是带哈希的建议性包数据，Markdown 永不执行；缺失时不阻断受控
+  原生执行。
 - 没有 Bridge 证据时，不宣称求解、产物或持久化修改成功。
 
 ## 下一步

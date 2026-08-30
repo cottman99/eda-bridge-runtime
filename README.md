@@ -37,7 +37,14 @@ Codex and Pi each completed each journey with one recoverable Runtime plan.
 These are real application-window captures from public synthetic projects, not
 mockups or Python replots. EDA Bridge Runtime is the shared, vendor-neutral path
 behind the vendor Bridges: it preserves execution continuity and evidence while
-ADS and AnsysEM Bridges retain their native engineering knowledge.
+ADS and AnsysEM Bridges retain version-specific runtime integration.
+
+Capability is not measured by wrapper count. An Agent combines exact Context,
+version-matched official docs, and a small packaged Bootstrap Experience
+Library, then runs official vendor code through a governed transaction.
+High-frequency operations may remain as asset-bound compiled shortcuts to save
+tokens and reduce transcription errors; the shortcut never becomes the source
+of truth or the only route to that capability.
 
 ## What this changes for an engineer
 
@@ -89,7 +96,7 @@ one-turn cross-EDA workflow. Sanitized acceptance evidence is maintained in
 Install Runtime on the computer where the Agent runs:
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a32"
+python -m pip install "eda-bridge-runtime==0.1.0a33"
 eda-runtime doctor
 ```
 
@@ -122,6 +129,8 @@ and evidence behavior do not split into two systems.
 - The append-only ledger stores fingerprints and bounded metadata, not chat
   transcripts or raw operation payloads.
 - Vendor-specific behavior stays in vendor Bridges, not in the Runtime core.
+- Advisory experience is hashed package data, never executable Markdown; its
+  absence cannot block governed native execution.
 - Runtime does not claim a solve, artifact, or persisted change without
   corresponding Bridge evidence.
 

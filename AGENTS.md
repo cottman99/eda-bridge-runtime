@@ -7,7 +7,11 @@
 - Follow `docs/CAPABILITY_MODEL.md`: the product is a governed path to official
   EDA APIs, not a second vendor API. Prefer certified workflows when they match,
   then governed native execution; never use wrapper count as capability scope.
+- Follow `docs/EXPERIENCE_LIBRARY.md`: bootstrap experience is independent,
+  advisory package data. Execution must still work when it is absent, and no
+  adapter may import an asset as product logic or learn from receipts.
 - Keep local and SSH behavior conformant through shared tests.
+- Read `docs/RELEASE_CONTRACT.md` before changing package or plugin release scope.
 - Do not claim success until durable state or a fresh observation proves it.
 - Do not publish or create releases without explicit owner authorization.
 

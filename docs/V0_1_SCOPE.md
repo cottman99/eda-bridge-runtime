@@ -14,6 +14,18 @@
 - Report knowledge, official API reach, generic execution, default support, and
   validated workflows as separate coverage dimensions.
 
+## 0.1.0a33 — governed native execution and bootstrap experience assets
+
+- Add the vendor-neutral `eda.native-batch/v1` contract for exact-context,
+  effect-declared, scope-bounded official API execution with validation and
+  auditable receipts.
+- Publish an advisory Bootstrap Experience Library contract whose assets remain
+  independent from Runtime execution and can degrade without blocking native
+  capability.
+- Define asset-bound compiled shortcuts as optional token and reliability
+  optimizations. The asset is the semantic source of truth; hash or applicability
+  drift disables the shortcut while governed native execution remains available.
+
 ## 0.1.0a32 — lossless UTF-8 motives on Windows
 
 - Force UTF-8 at the MCP and Agent-hook protocol boundary instead of inheriting the Windows active

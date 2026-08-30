@@ -51,6 +51,12 @@ frontends to the Runtime kernel; local and SSH are interchangeable transports;
 Skills are routing policy; vendor adapters preserve real EDA differences.
 See [Deployment roles](DEPLOYMENT_ROLES.md) for host placement.
 
+The optional [Bootstrap Experience Library](EXPERIENCE_LIBRARY.md) is advisory
+package data beside this execution path, not a fourth responsibility domain.
+Skills may consult it after version-matched official documentation. Runtime and
+vendor adapters never depend on it to execute, never mutate it from a receipt,
+and never infer engineering success from a technically successful call.
+
 ## Reliability model
 
 Delivery is at-least-once. Mutating operations therefore require an

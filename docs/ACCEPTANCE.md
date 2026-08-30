@@ -3,6 +3,10 @@
 Acceptance used a remote Linux EDA host over one persistent SSH transport. No customer project,
 credentials, host address, or task-specific geometry is included here.
 
+The current governed official-code and Bootstrap Experience Library milestone
+is recorded in
+[the 2026-08-31 native and experience acceptance](ACCEPTANCE_2026-08-31_NATIVE_AND_EXPERIENCE.md).
+
 ## 2026-08-31 Runtime alpha.32 Windows UTF-8 protocol acceptance
 
 - The complete suite passed 166 tests; Ruff check, format validation, lock validation, wheel/sdist

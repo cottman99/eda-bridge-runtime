@@ -8,6 +8,12 @@ description: Route local or SSH EDA work through the stable EDA Bridge Runtime f
 Use the ten `eda_*` tools for EDA work. Do not use shell commands as an alternate EDA control
 path. Every call needs one concise `purpose` explaining the immediate engineering reason.
 
+For vendor semantics, establish exact Context, query version-matched official
+docs, retrieve only matching experience and anti-pattern assets, then use an
+eligible asset-bound compiled shortcut or governed native execution. Assets are
+advisory Markdown and never executable. Missing assets do not block native
+execution, and a new vendor API use does not justify a new wrapper.
+
 When the pasted EDA context and the selected vendor Skill already identify the connection and
 operation, call `eda_submit` directly. Do not routinely list connections, resolve context, or query
 capabilities first. Use discovery only when information is genuinely missing or stale.

@@ -34,7 +34,16 @@ Runtime merely because SSH is absent.
 
 ## Execute safely
 
-- Prefer a typed adapter operation. Inspect capabilities once only when support is uncertain; do not
+- For vendor semantics, establish exact Context, query version-matched official
+  docs, retrieve only matching experience and anti-pattern assets, then use an
+  eligible asset-bound compiled shortcut or governed native execution. Assets
+  are advisory Markdown and never executable. Missing assets do not block the
+  native lane, and a new vendor API use does not justify a new wrapper.
+- Prefer a compiled shortcut only while its asset id/version/hash,
+  applicability, parameter schema, and runtime health match. Otherwise use the
+  governed native fallback and retain its receipt.
+
+- Prefer an eligible asset-bound shortcut or governed native adapter operation. Inspect capabilities once only when support is uncertain; do not
   repeat doctor, environment, or full-state probes when the connection and target are unchanged.
 - Use `eda.read` for an intended non-mutating operation so the Agent client can authorize a
   statically read-only tool. Runtime mechanically discovers missing safety metadata and rejects
