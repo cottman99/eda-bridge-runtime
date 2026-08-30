@@ -42,7 +42,8 @@ plan per exact vendor connection and does not invent a cross-vendor transaction 
 claim.
 
 Level 7 is the first ordinary-engineer outcome gate. ADS starts from no workspace and reaches a
-simulated native dataset, CSV, and freshly reopened DDS plot. AnsysEM starts from no project and
+simulated native dataset, CSV, and freshly reopened multi-page DDS result with rectangular and polar
+plots. AnsysEM starts from no project and
 reaches a built HFSS 3D Layout stackup, ports, setup, finite five-point S-parameters, and freshly
 reopened native report. Each case requires one prevalidated Runtime plan and explicit mutation plus
 solve approval. A single trial proves the maintained workflow is functional; it is not enough for a
