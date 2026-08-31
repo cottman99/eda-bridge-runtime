@@ -21,7 +21,7 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.8"]
+dev = ["pillow>=11.0", "pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.8"]
 
 [project.scripts]
 eda-runtime = "eda_bridge_runtime.cli:main"

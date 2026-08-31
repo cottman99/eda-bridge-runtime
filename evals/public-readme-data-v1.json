@@ -1,0 +1,66 @@
+{
+  "schema": "eda.public-readme-data/v1",
+  "generated_from": [
+    "docs/ACCEPTANCE.md",
+    "evals/BASELINE_2026-08-30_CODEX_PI_SUMMARY.md",
+    "https://github.com/cottman99/ads-agent-bridge/blob/main/docs/VALIDATION_2026-08-31_LIVE_EDIT.md",
+    "https://github.com/cottman99/ansysem-agent-bridge/blob/main/docs/VALIDATION_2026-08-31_LIVE_EDIT.md"
+  ],
+  "complete_workflows": {
+    "date": "2026-08-30",
+    "sample": "one retained functional trial per Agent and EDA",
+    "rows": [
+      {"label": "ADS\nCodex", "total_seconds": 40.594, "bridge_eda_seconds": 5.157},
+      {"label": "ADS\nPi", "total_seconds": 36.953, "bridge_eda_seconds": 5.157},
+      {"label": "HFSS\nCodex", "total_seconds": 242.657, "bridge_eda_seconds": 209.360},
+      {"label": "HFSS\nPi", "total_seconds": 229.328, "bridge_eda_seconds": 202.641}
+    ]
+  },
+  "bounded_agent_tests": {
+    "date": "2026-08-30",
+    "sample": "median wall time, three trials per Agent and task",
+    "rows": [
+      {"label": "ADS docs evidence", "codex_seconds": 23.118, "pi_seconds": 13.978},
+      {"label": "AnsysEM docs evidence", "codex_seconds": 23.724, "pi_seconds": 13.970},
+      {"label": "ADS create + safe replay", "codex_seconds": 32.109, "pi_seconds": 16.605},
+      {"label": "AnsysEM create + safe replay", "codex_seconds": 67.000, "pi_seconds": 56.672},
+      {"label": "Momentum solve", "codex_seconds": 38.814, "pi_seconds": 21.701},
+      {"label": "AnsysEM project evidence", "codex_seconds": 90.871, "pi_seconds": 84.140}
+    ]
+  },
+  "supervised_live_edit": {
+    "date": "2026-08-31",
+    "sample": "bounded functional acceptance in disposable projects; no restart or project copy per patch",
+    "vendors": [
+      {
+        "name": "ADS 2026 Update 2.1",
+        "accepted_version": "ads-agent-bridge 0.1.0a48",
+        "boundary_note": "end-to-end warm edit; Bridge round trip for object operations",
+        "metrics": [
+          {"label": "Warm edit", "low_ms": 93, "high_ms": 187},
+          {"label": "Create + readback", "value_ms": 253},
+          {"label": "Exact replay", "value_ms": 3},
+          {"label": "Patch rollback", "value_ms": 21}
+        ]
+      },
+      {
+        "name": "AEDT 2026 R1",
+        "accepted_version": "ansysem-agent-bridge 0.2.0a12",
+        "boundary_note": "warm live call; adapter time for object operations",
+        "metrics": [
+          {"label": "Warm edit", "low_ms": 296, "high_ms": 453},
+          {"label": "Create + readback", "value_ms": 937},
+          {"label": "Exact replay", "value_ms": 12},
+          {"label": "Patch rollback", "value_ms": 204}
+        ]
+      }
+    ],
+    "shared_assertions": [
+      "same graphical EDA process reused",
+      "created objects read back",
+      "exact replay created zero duplicates",
+      "rollback removed only the named patch",
+      "Codex and Pi Agent both passed"
+    ]
+  }
+}

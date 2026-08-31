@@ -59,6 +59,30 @@ of truth or the only route to that capability.
 
 ## What the public tests show
 
+![Observed supervised live-edit latency in ADS and AEDT](docs/assets/readme/supervised-live-edit-latency.png)
+
+When the engineer is watching the open EDA application, small supervised edits
+stay in that same graphical process. The accepted ADS and AEDT paths apply a
+typed patch, read the changed object back immediately, preserve an exact retry
+without creating duplicates, and can roll back only that patch without saving.
+
+| Accepted live operation | ADS 2026 Update 2.1 | AEDT 2026 R1 |
+| --- | ---: | ---: |
+| Warm edit | 93–187 ms | 296–453 ms |
+| Create object(s) + readback | 253 ms | 937 ms |
+| Exact replay, zero duplicate objects | 3 ms | 12 ms |
+| Patch-local rollback | 21 ms | 204 ms |
+
+These are bounded functional observations from disposable projects on
+2026-08-31, not a statistical vendor comparison. ADS reports end-to-end warm
+calls and Bridge round trips for object operations; AnsysEM reports warm live
+calls and adapter time. Both Codex and Pi Agent passed the create, replay, and
+rollback contract. The [machine-readable source data](evals/public-readme-data-v1.json)
+and [chart generator](scripts/render_public_readme_charts.py) keep this public
+presentation tied to the retained evidence.
+
+### Complete journeys show where long-task time goes
+
 ![Complete ADS and HFSS workflow time split between the Agent and the actual Bridge plus EDA work](docs/assets/readme/runtime-complete-workflow-time.png)
 
 The newest acceptance cases are complete user journeys, not isolated API calls.
@@ -70,19 +94,21 @@ each journey with exactly one Runtime plan.
 
 | Journey | Codex wall / Bridge + EDA | Pi wall / Bridge + EDA |
 | --- | ---: | ---: |
-| ADS circuit → data → DDS | 39.782 s / 5.438 s | 33.922 s / 5.140 s |
+| ADS circuit → data → two-page DDS | 40.594 s / 5.157 s | 36.953 s / 5.157 s |
 | HFSS layout → solve → report | 242.657 s / 209.360 s | 229.328 s / 202.641 s |
 
-These are one retained functional trial per Agent and EDA, not statistical
-speed claims. They show the useful boundary: the ADS engineering work took
+These are the final frozen 2026-08-30 public baseline: one retained functional
+trial per Agent and EDA, not statistical speed claims. They show the useful
+boundary: the ADS engineering work took
 seconds, while the HFSS solve dominated the long workflow. Packet-level network
 time was not measured separately, but no dominant SSH command cost was observed.
 
 ![Codex and Pi Agent wall time across six bounded repeated EDA tests](docs/assets/readme/codex-pi-bounded-tests.png)
 
-The chart reports median wall time from six bounded public test cases, with
-three trials per Agent and task. Both Agents used the same Runtime and Bridge
-path. Agent-heavy tasks show the largest difference; AEDT-lifecycle-heavy work
+The chart reports the frozen 2026-08-30 median wall time from six bounded public
+test cases, with three trials per Agent and task. Both Agents used the same
+Runtime and Bridge path. Agent-heavy tasks show the largest difference;
+AEDT-lifecycle-heavy work
 is dominated by the EDA itself. This is an engineering baseline, not a universal
 Agent ranking. See the [full method, pass rates, and interpretation boundary](evals/BASELINE_2026-08-30_CODEX_PI_SUMMARY.md).
 

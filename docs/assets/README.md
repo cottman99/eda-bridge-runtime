@@ -9,6 +9,14 @@ project, EDA screenshot, private host information, or vendor artwork.
 ADS and HFSS acceptance results documented in `docs/ACCEPTANCE.md`; it is one
 functional trial per Agent and EDA, not a statistical speed ranking.
 
+`readme/codex-pi-bounded-tests.png` and
+`readme/runtime-complete-workflow-time.png` are frozen 2026-08-30 baselines.
+`readme/supervised-live-edit-latency.png` adds the bounded 2026-08-31 live-edit
+acceptance for ADS and AEDT. The machine-readable values for all three charts
+are in `evals/public-readme-data-v1.json`; regenerate them with
+`python scripts/render_public_readme_charts.py`. The live-edit panels use
+different vendor timing boundaries and are explicitly not a vendor ranking.
+
 `readme/ads-native-dds.png` is the editable native ADS Data Display left by the
 public synthetic acceptance. `readme/ansys-native-s-parameters.png` is the
 persisted native AEDT Report from the solved public acceptance. Neither result

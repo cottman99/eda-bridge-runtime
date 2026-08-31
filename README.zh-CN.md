@@ -52,6 +52,27 @@ EDA Bridge Runtime 是厂商 Bridge 背后的公共、厂商无关执行路径�
 
 ## 公开测试证明了什么
 
+![ADS 与 AEDT 受监督实时编辑的观测耗时](docs/assets/readme/supervised-live-edit-latency.png)
+
+工程师正在查看已打开的 EDA 时，小型受监督修改直接留在同一个图形进程中。
+已验收的 ADS 与 AEDT 路径会应用类型化 Patch、立即回读对象；完全相同的重试
+不会创建重复对象，也可以只回滚该 Patch，而不必隐式保存。
+
+| 已验收实时操作 | ADS 2026 Update 2.1 | AEDT 2026 R1 |
+| --- | ---: | ---: |
+| 暖态修改 | 93–187 ms | 296–453 ms |
+| 创建对象并回读 | 253 ms | 937 ms |
+| 精确回放，重复对象为 0 | 3 ms | 12 ms |
+| 仅回滚该 Patch | 21 ms | 204 ms |
+
+这些是 2026-08-31 在可丢弃工程中得到的受控功能性观察，不是厂商性能排名。
+ADS 的数据分别来自端到端暖态调用和对象操作的 Bridge 往返；AnsysEM 的数据
+分别来自暖态实时调用和 Adapter 时间。Codex 与 Pi Agent 均通过创建、回放和
+回滚合同。公开表述由[源数据与图表生成输入](evals/public-readme-data-v1.json)
+约束，并可追溯到保留的验收证据。
+
+### 完整旅程说明长任务的时间花在哪里
+
 ![ADS 与 HFSS 完整闭环中 Agent 编排和真实 Bridge 加 EDA 工作的时间占比](docs/assets/readme/runtime-complete-workflow-time.png)
 
 最新验收测试覆盖的是完整用户旅程，而不是孤立 API：ADS 从空白工作区
@@ -61,17 +82,19 @@ EDA Bridge Runtime 是厂商 Bridge 背后的公共、厂商无关执行路径�
 
 | 完整旅程 | Codex 总耗时 / Bridge + EDA | Pi 总耗时 / Bridge + EDA |
 | --- | ---: | ---: |
-| ADS 电路 → 数据 → DDS | 39.782 秒 / 5.438 秒 | 33.922 秒 / 5.140 秒 |
+| ADS 电路 → 数据 → 两页 DDS | 40.594 秒 / 5.157 秒 | 36.953 秒 / 5.157 秒 |
 | HFSS 版图 → 求解 → Report | 242.657 秒 / 209.360 秒 | 229.328 秒 / 202.641 秒 |
 
-以上是每个 Agent、每个 EDA 保留的一次功能性验收，不是统计速度排名。
+以上是最终冻结于 2026-08-30 的公开基线：每个 Agent、每个 EDA 保留一次功能性验收，
+不是统计速度排名。
 它说明了真正的时间边界：ADS 工程操作只需数秒；长 HFSS 工作流主要由
 求解本身主导。测试没有单独测量数据包级网络耗时，但未观察到占主导的
 SSH 命令传递成本。
 
 ![Codex 与 Pi Agent 在六项受控 EDA 重复测试中的耗时](docs/assets/readme/codex-pi-bounded-tests.png)
 
-图中是六项公开受控测试的中位耗时，每个 Agent、每项任务重复三次。
+图中是冻结于 2026-08-30 的六项公开受控测试中位耗时，每个 Agent、每项任务
+重复三次。
 两者都走相同 Runtime 与 Bridge。Agent 占比较高的任务差异更明显；
 AEDT 生命周期占主导的任务主要受 EDA 本身耗时限制。这是工程基线，
 不是对 Agent 的普遍排名。完整方法、通过率和解释边界见
@@ -86,7 +109,7 @@ AEDT 生命周期占主导的任务主要受 EDA 本身耗时限制。这是工�
 在 Agent 所在的电脑安装 Runtime：
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a36"
+python -m pip install "eda-bridge-runtime==0.1.0a37"
 eda-runtime doctor
 ```
 

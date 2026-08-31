@@ -68,6 +68,10 @@ found are recorded in the
 - Large Pi case prompts now use Pi's native `@file` input. This removed the Windows command-line
   limit while leaving the prompt file disposable and keeping shell/file tools unavailable to the
   Agent. Installed-profile evaluation also avoids injecting a duplicate Runtime extension.
+- The later final ADS multi-page DDS rerun is the public README baseline: Codex 40.594 seconds,
+  Pi 36.953 seconds, and a matched 5.157-second ADS boundary for both. The alpha.28 values above
+  remain a retained earlier functional trial rather than being silently rewritten. See
+  `evals/BASELINE_2026-08-30_CODEX_PI_SUMMARY.md`.
 - Both workflows used synthetic scratch only, `DISPLAY=:4.0`, explicit mutation and solve approval,
   source preservation, fresh-reopen evidence, and no GUI coordinates, arbitrary vendor code, or
   customer data.
