@@ -16,6 +16,7 @@ from .experience_library import (
 )
 from .jobs import JobStore
 from .ledger import ExecutionLedger
+from .live_edit import LIVE_EDIT_SCHEMA, validate_live_edit
 from .native_batch import (
     NATIVE_BATCH_SCHEMA,
     OPERATION_CLASSES,
@@ -43,6 +44,7 @@ __all__ = [
     "get_experience_asset",
     "JobStore",
     "list_experience_assets",
+    "LIVE_EDIT_SCHEMA",
     "RequestEnvelope",
     "ResponseEnvelope",
     "Runtime",
@@ -54,6 +56,7 @@ __all__ = [
     "validate_compiled_shortcut_binding",
     "validate_experience_asset",
     "validate_experience_library",
+    "validate_live_edit",
     "validate_python_program_policy",
     "run_job_worker",
     "spawn_detached_worker",

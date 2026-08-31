@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cottman99/eda-bridge-runtime/blob/main/docs/schemas/live-edit-v1.schema.json",
+  "title": "EDA live edit envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "patch_id", "operations"],
+  "properties": {
+    "schema_version": {"const": "eda.live-edit/v1"},
+    "patch_id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,79}$"},
+    "expected_revision": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "required": ["op"],
+        "properties": {"op": {"type": "string", "minLength": 1, "maxLength": 128}}
+      }
+    },
+    "conflict_policy": {"const": "fail_on_change", "default": "fail_on_change"},
+    "validation": {"const": "readback", "default": "readback"}
+  }
+}

@@ -14,6 +14,15 @@
 - Report knowledge, official API reach, generic execution, default support, and
   validated workflows as separate coverage dimensions.
 
+## 0.1.0a37 — shared supervised live-edit envelope
+
+- Add the vendor-neutral `eda.live-edit/v1` envelope for one idempotent patch,
+  bounded typed operations, fail-on-change conflict handling, and immediate
+  readback validation.
+- Keep vendor operation vocabularies and rollback mechanisms in their Bridges;
+  Runtime validates only the common coordination contract and does not pretend
+  to provide a cross-vendor transaction engine.
+
 ## 0.1.0a36 — compact worker-ledger run recovery
 
 - Recover one prior execution by `run_id` from the selected local or SSH worker

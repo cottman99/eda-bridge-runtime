@@ -10,7 +10,13 @@ from typing import Any
 
 NATIVE_BATCH_SCHEMA = "eda.native-batch/v1"
 OPERATION_CLASSES = frozenset(
-    {"bridge-infrastructure", "generic-native-execution", "certified-workflow", "acceptance-probe"}
+    {
+        "bridge-infrastructure",
+        "generic-native-execution",
+        "certified-workflow",
+        "acceptance-probe",
+        "typed-live-edit",
+    }
 )
 
 _IDENTIFIER = re.compile(r"[A-Za-z][A-Za-z0-9_.-]{0,127}")
