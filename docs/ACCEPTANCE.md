@@ -7,6 +7,10 @@ The current governed official-code and Bootstrap Experience Library milestone
 is recorded in
 [the 2026-08-31 native and experience acceptance](ACCEPTANCE_2026-08-31_NATIVE_AND_EXPERIENCE.md).
 
+The first real continuation-context timing snapshot and the contract break it
+found are recorded in the
+[2026-08-31 continuation A/B acceptance](benchmarks/CONTINUATION_CONTEXT_AB_2026-08-31.md).
+
 ## 2026-08-31 Runtime alpha.32 Windows UTF-8 protocol acceptance
 
 - The complete suite passed 166 tests; Ruff check, format validation, lock validation, wheel/sdist
