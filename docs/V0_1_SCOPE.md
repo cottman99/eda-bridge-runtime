@@ -14,6 +14,13 @@
 - Report knowledge, official API reach, generic execution, default support, and
   validated workflows as separate coverage dimensions.
 
+## 0.1.0a36 — compact worker-ledger run recovery
+
+- Recover one prior execution by `run_id` from the selected local or SSH worker
+  as a hash-chain-verified compact receipt without replaying work.
+- Keep the stored raw customer result on the worker; return only motive,
+  operation, state, timing, evidence references, and content hashes.
+
 ## 0.1.0a35 — upgrade-safe Agent profiles and derived native bookkeeping
 
 - Launch generated Codex and Pi Runtime profiles through the installer Python
