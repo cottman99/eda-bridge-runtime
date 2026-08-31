@@ -10,7 +10,14 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
-from .protocol import EVENT_PROTOCOL, RequestEnvelope, utc_now
+from .protocol import (
+    EVENT_PROTOCOL,
+    RUN_RECEIPT_PROTOCOL,
+    RUN_VIEW_PROTOCOL,
+    RequestEnvelope,
+    project_run,
+    utc_now,
+)
 from .redaction import redact
 
 
@@ -241,6 +248,75 @@ class ExecutionLedger:
             run_ids,
         ).fetchall()
         return [self._row_to_event(row) for row in events]
+
+    def compact_receipt(self, run_id: str) -> dict[str, Any] | None:
+        """Return a path-free, bounded receipt without exposing the stored response.
+
+        The worker ledger remains the authority for the full redacted response.  This
+        projection is intentionally small enough to cross local or SSH transport and
+        be retained by an Agent without mirroring customer result data.
+        """
+        events = self.events(run_id=run_id)
+        if not events:
+            return None
+        requested = next(
+            (event for event in events if event["event_type"] == "request.received"),
+            None,
+        )
+        completed = next(
+            (event for event in reversed(events) if event["event_type"] == "request.completed"),
+            None,
+        )
+        declared = requested.get("payload", {}).get("declared_intent", {}) if requested else {}
+        observed = completed.get("payload", {}).get("observed_result", {}) if completed else {}
+        timing = completed.get("payload", {}).get("timing", {}) if completed else {}
+        canonical = json.dumps(observed, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        final = self._connection.execute(
+            "SELECT final_hash, finalized_at FROM finalized_runs WHERE run_id = ?",
+            (run_id,),
+        ).fetchone()
+        run = (
+            project_run(observed)
+            if observed
+            else {
+                "protocol": RUN_VIEW_PROTOCOL,
+                "run_id": run_id,
+                "request_id": str(declared.get("request_id") or events[0]["request_id"]),
+                "job_id": None,
+                "state": "running",
+                "terminal": False,
+                "updated_at": events[-1]["timestamp"],
+                "evidence_refs": [],
+            }
+        )
+        run["evidence_refs"] = list(run.get("evidence_refs") or [])[:16]
+        error = observed.get("error") if isinstance(observed, dict) else None
+        return {
+            "protocol": RUN_RECEIPT_PROTOCOL,
+            "run": run,
+            "purpose": str(declared.get("purpose") or "")[:240],
+            "operation": str(declared.get("operation") or "")[:160],
+            "expected_effect": (
+                str(declared.get("expected_effect"))[:240]
+                if declared.get("expected_effect") is not None
+                else None
+            ),
+            "eda": str((declared.get("target") or {}).get("eda") or "")[:80] or None,
+            "started_at": events[0]["timestamp"],
+            "completed_at": completed["timestamp"] if completed else None,
+            "runtime_total_ms": timing.get("runtime_total_ms"),
+            "event_count": len(events),
+            "response_sha256": hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+            if observed
+            else None,
+            "error_code": str((error or {}).get("code") or "")[:120] or None,
+            "ledger": {
+                "finalized": final is not None,
+                "finalized_at": final["finalized_at"] if final else None,
+                "final_hash": final["final_hash"] if final else None,
+                "verified": self.verify(run_id),
+            },
+        }
 
     @staticmethod
     def _row_to_event(row: sqlite3.Row) -> dict[str, Any]:

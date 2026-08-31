@@ -45,6 +45,8 @@ For a new `eda_read` or `eda_submit`, request its bounded `wait` option when com
 avoiding a second Agent turn. Use `eda_job_wait` to resume a job already returned to the Agent.
 Use `eda_job_status` only for a single observation after reconnecting and `eda_job_events` only
 when event detail is needed for diagnosis.
+When only a prior `run_id` remains, use `eda_run_get` once to recover the compact worker-ledger
+receipt. It does not replay work and intentionally omits the stored raw customer result.
 
 Treat Runtime results and audit records as execution facts. Keep customer-specific object names,
 coordinates, and business rules in the task or vendor Skill, not in this shared adapter.

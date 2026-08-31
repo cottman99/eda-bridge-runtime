@@ -3,7 +3,7 @@
 ## Product promise
 
 Runtime gives local and SSH EDA Bridges one request, identity, transport, job,
-ledger, transaction, and evidence envelope. It defines the governed native batch
+ledger, compact run-receipt, transaction, and evidence envelope. It defines the governed native batch
 contract and the independent Bootstrap Experience Library contract without
 implementing a second ADS, AEDT, or future-vendor API.
 

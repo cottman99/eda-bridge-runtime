@@ -146,7 +146,7 @@ def test_pi_profile_loads_selected_vendor_skills_without_exposing_shell(tmp_path
     assert str(vendor_skill.resolve()) in text
     assert result["loaded_skills"] == 2
     assert "--tools read,eda_context_resolve" in text
-    assert result["runtime_tools"] == 10
+    assert result["runtime_tools"] == 11
     assert "shell" not in text
     assert "write" not in text
     assert "edit" not in text
@@ -204,5 +204,5 @@ def test_packaged_cli_installs_pi_profile(tmp_path, capsys):
 
     assert result["status"] == "installed"
     assert result["agent"] == "pi"
-    assert result["runtime_tools"] == 10
+    assert result["runtime_tools"] == 11
     assert Path(result["runtime_extension"]).is_dir()

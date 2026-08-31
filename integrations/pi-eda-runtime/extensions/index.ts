@@ -212,6 +212,19 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
     }),
   );
   register(
+    "eda_run_get",
+    "eda.run.get",
+    "Get Compact EDA Run Receipt",
+    "Read one prior execution receipt by run_id without returning its stored raw result or replaying work.",
+    Type.Object({
+      purpose: Type.String({ minLength: 3, maxLength: 240 }),
+      run_id: Type.String({ minLength: 5, maxLength: 160 }),
+      context: Type.Optional(Type.String()),
+      connection_id: Type.Optional(Type.String()),
+      eda: Type.Optional(Type.String()),
+    }),
+  );
+  register(
     "eda_job_status",
     "eda.job.status",
     "Get EDA Job Status",

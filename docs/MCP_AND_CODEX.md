@@ -70,6 +70,7 @@ stateless `2026-07-28` discovery era. It exposes ten tools:
 - `eda.read`
 - `eda.submit`
 - `eda.run_plan`
+- `eda.run.get`
 - `eda.job.status`
 - `eda.job.wait`
 - `eda.job.events`
@@ -77,6 +78,12 @@ stateless `2026-07-28` discovery era. It exposes ten tools:
 Operation, status, and event calls include an additive compact `run` object.
 It projects synchronous responses and durable jobs into one observation shape
 and lists content-addressed evidence metadata without exposing artifact paths.
+
+Use `eda.run.get` after reconnecting when only a prior `run_id` remains. The
+selected worker returns a compact, hash-chain-verified receipt containing the
+original purpose, operation, state, timing, evidence references, and response
+hash. It never replays work and never mirrors the stored raw customer result
+into the Agent-host audit database.
 
 For a greenfield task, use the create operation established by the selected vendor Skill; discover
 capabilities only when that operation is not known. ADS and AnsysEM intentionally keep different

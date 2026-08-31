@@ -33,6 +33,37 @@ class Runtime:
                 self._record_completed(request, response, started)
                 return response
         eda = str(request.target.get("eda", ""))
+        if request.operation == "runtime.run_receipt":
+            source_run_id = str(request.payload.get("run_id") or "").strip()
+            if not 5 <= len(source_run_id) <= 160:
+                response = ResponseEnvelope(
+                    request_id=request.request_id,
+                    run_id=request.run_id,
+                    status="failed",
+                    error={
+                        "code": "invalid_run_id",
+                        "message": "run_id must contain 5..160 non-whitespace characters",
+                    },
+                )
+            elif (receipt := self.ledger.compact_receipt(source_run_id)) is None:
+                response = ResponseEnvelope(
+                    request_id=request.request_id,
+                    run_id=request.run_id,
+                    status="failed",
+                    error={
+                        "code": "run_not_found",
+                        "message": "the requested run is not present in this Runtime ledger",
+                    },
+                )
+            else:
+                response = ResponseEnvelope(
+                    request_id=request.request_id,
+                    run_id=request.run_id,
+                    status="passed",
+                    result={"data": {"receipt": receipt}, "artifacts": []},
+                )
+            self._record_completed(request, response, started)
+            return response
         adapter = self._adapters.get(eda)
         if adapter is None:
             response = ResponseEnvelope(

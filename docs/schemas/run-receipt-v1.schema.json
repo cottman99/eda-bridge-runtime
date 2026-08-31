@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cottman99/eda-bridge-runtime/schemas/run-receipt-v1.schema.json",
+  "title": "EDA Runtime compact run receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "run",
+    "purpose",
+    "operation",
+    "started_at",
+    "event_count",
+    "ledger"
+  ],
+  "properties": {
+    "protocol": { "const": "eda-runtime.run-receipt/v1" },
+    "run": {
+      "type": "object",
+      "required": ["protocol", "run_id", "request_id", "state", "terminal", "evidence_refs"],
+      "properties": {
+        "protocol": { "const": "eda-runtime.run-view/v1" },
+        "run_id": { "type": "string" },
+        "request_id": { "type": "string" },
+        "job_id": { "type": ["string", "null"] },
+        "state": { "type": "string" },
+        "terminal": { "type": "boolean" },
+        "updated_at": { "type": ["string", "null"] },
+        "evidence_refs": { "type": "array", "maxItems": 16 }
+      },
+      "additionalProperties": false
+    },
+    "purpose": { "type": "string", "maxLength": 240 },
+    "operation": { "type": "string", "maxLength": 160 },
+    "expected_effect": { "type": ["string", "null"], "maxLength": 240 },
+    "eda": { "type": ["string", "null"], "maxLength": 80 },
+    "started_at": { "type": "string" },
+    "completed_at": { "type": ["string", "null"] },
+    "runtime_total_ms": { "type": ["number", "null"], "minimum": 0 },
+    "event_count": { "type": "integer", "minimum": 1 },
+    "response_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "error_code": { "type": ["string", "null"], "maxLength": 120 },
+    "ledger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finalized", "finalized_at", "final_hash", "verified"],
+      "properties": {
+        "finalized": { "type": "boolean" },
+        "finalized_at": { "type": ["string", "null"] },
+        "final_hash": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "verified": { "type": "boolean" }
+      }
+    }
+  }
+}

@@ -207,6 +207,17 @@ def _project_response_result(response: dict[str, Any], result_view: Any) -> dict
     }
 
 
+def _receipt_from_response(response: Mapping[str, Any]) -> dict[str, Any] | None:
+    result = response.get("result")
+    if not isinstance(result, Mapping):
+        return None
+    data = result.get("data")
+    if not isinstance(data, Mapping):
+        return None
+    receipt = data.get("receipt")
+    return dict(receipt) if isinstance(receipt, Mapping) else None
+
+
 _CONNECTION_ID_SCHEMA = {
     "type": "string",
     "description": (
@@ -405,6 +416,26 @@ TOOLS = [
             ["purpose", "steps"],
         ),
         "annotations": {"readOnlyHint": False, "destructiveHint": True, "openWorldHint": False},
+    },
+    {
+        "name": "eda.run.get",
+        "title": "Get Compact EDA Run Receipt",
+        "description": (
+            "Read one prior execution from the selected Runtime worker ledger by run_id. "
+            "Returns a bounded receipt and response hash, never the stored raw customer result, "
+            "and never restarts or replays work."
+        ),
+        "inputSchema": _object_schema(
+            {
+                "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
+                "run_id": {"type": "string", "minLength": 5, "maxLength": 160},
+                "context": {"type": "string"},
+                "connection_id": _CONNECTION_ID_SCHEMA,
+                "eda": _EDA_SELECTOR_SCHEMA,
+            },
+            ["purpose", "run_id"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
     },
     {
         "name": "eda.job.status",
@@ -685,10 +716,16 @@ class MCPRuntimeServer:
                 elif "mutating" not in payload and metadata is not None:
                     payload["mutating"] = bool(metadata.get("mutates", True))
         else:
-            operation = "runtime.job_events" if name == "eda.job.events" else "runtime.job_status"
-            payload = {"mutating": False, "job_id": str(arguments["job_id"])}
-            if name == "eda.job.events":
-                payload["after_cursor"] = int(arguments.get("after_cursor", 0))
+            if name == "eda.run.get":
+                operation = "runtime.run_receipt"
+                payload = {"mutating": False, "run_id": str(arguments["run_id"])}
+            else:
+                operation = (
+                    "runtime.job_events" if name == "eda.job.events" else "runtime.job_status"
+                )
+                payload = {"mutating": False, "job_id": str(arguments["job_id"])}
+                if name == "eda.job.events":
+                    payload["after_cursor"] = int(arguments.get("after_cursor", 0))
             target = {"eda": spec.eda}
         inline_wait = arguments.get("wait") if name in {"eda.read", "eda.submit"} else None
         wait_values: tuple[int, int] | None = None
@@ -749,7 +786,9 @@ class MCPRuntimeServer:
             raise
         if name == "eda.capabilities":
             self._remember_capabilities(spec.connection_id, response_value)
-        projected = project_run(response_value)
+        lookup_run = project_run(response_value)
+        receipt = _receipt_from_response(response_value) if name == "eda.run.get" else None
+        projected = receipt["run"] if receipt is not None else lookup_run
         client_response = response_value
         if (
             name in {"eda.read", "eda.job.wait"}
@@ -766,6 +805,7 @@ class MCPRuntimeServer:
             ),
             "run": projected,
             "response": client_response,
+            **({"receipt": receipt, "lookup_run": lookup_run} if receipt is not None else {}),
             **(
                 {"wait_timed_out": True}
                 if (name == "eda.job.wait" or inline_wait is not None)

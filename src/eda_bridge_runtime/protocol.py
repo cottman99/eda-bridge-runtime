@@ -17,6 +17,7 @@ RESPONSE_PROTOCOL = "eda-runtime.response/v1"
 EVENT_PROTOCOL = "eda-runtime.event/v1"
 HANDSHAKE_PROTOCOL = "eda-runtime.handshake/v1"
 RUN_VIEW_PROTOCOL = "eda-runtime.run-view/v1"
+RUN_RECEIPT_PROTOCOL = "eda-runtime.run-receipt/v1"
 RESOURCE_VIEW_PROTOCOL = "eda-runtime.resource-view/v1"
 TERMINAL_RUN_STATES = frozenset({"passed", "failed", "cancelled"})
 

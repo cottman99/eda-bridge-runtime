@@ -200,7 +200,8 @@ def render_profile(
         "required = true",
         'enabled_tools = ["eda.connections.list", "eda.connection.reset", '
         '"eda.context.resolve", "eda.capabilities", "eda.read", "eda.submit", '
-        '"eda.run_plan", "eda.job.status", "eda.job.wait", "eda.job.events"]',
+        '"eda.run_plan", "eda.run.get", "eda.job.status", "eda.job.wait", '
+        '"eda.job.events"]',
         "",
         "[[hooks.PreToolUse]]",
         'matcher = "^mcp__eda_bridge_runtime__.*$"',

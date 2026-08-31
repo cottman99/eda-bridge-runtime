@@ -20,6 +20,7 @@ EDA_TOOLS = (
     "eda_read",
     "eda_submit",
     "eda_run_plan",
+    "eda_run_get",
     "eda_job_status",
     "eda_job_wait",
     "eda_job_events",

@@ -156,6 +156,36 @@ class OriginTransport(FakeTransport):
         )
 
 
+class ReceiptTransport(FakeTransport):
+    def request(self, request):
+        self.requests.append(request)
+        return ResponseEnvelope(
+            request_id=request.request_id,
+            run_id=request.run_id,
+            status="passed",
+            result={
+                "data": {
+                    "receipt": {
+                        "protocol": "eda-runtime.run-receipt/v1",
+                        "run": {
+                            "protocol": "eda-runtime.run-view/v1",
+                            "run_id": request.payload["run_id"],
+                            "request_id": "req-original",
+                            "job_id": None,
+                            "state": "passed",
+                            "terminal": True,
+                            "updated_at": "2026-08-31T00:00:00.000+00:00",
+                            "evidence_refs": [],
+                        },
+                        "purpose": "Build bounded example",
+                        "operation": "native.batch",
+                        "response_sha256": "a" * 64,
+                    }
+                }
+            },
+        )
+
+
 def test_connection_setup_can_bind_origin_without_user_metadata():
     spec = ConnectionSpec(
         connection_id="ads-remote",
@@ -503,6 +533,7 @@ def test_mcp_supports_legacy_and_modern_discovery():
         "eda.read",
         "eda.submit",
         "eda.run_plan",
+        "eda.run.get",
         "eda.job.status",
         "eda.job.wait",
         "eda.job.events",
@@ -614,6 +645,36 @@ def test_mcp_initialize_supplies_client_identity_and_compact_run_projection():
     assert response["result"]["content"][0]["text"].endswith("ansys-one | original-run | job-one")
 
 
+def test_mcp_run_get_returns_original_compact_receipt_without_replay():
+    registry = FakeRegistry()
+    registry.transport = ReceiptTransport()
+    server = MCPRuntimeServer(registry)
+
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.run.get",
+                "arguments": {
+                    "purpose": "Recover the prior execution receipt",
+                    "run_id": "run-original",
+                    "connection_id": "ansys-one",
+                },
+            },
+        )
+    )
+
+    request = registry.transport.requests[0]
+    value = response["result"]["structuredContent"]
+    assert request.operation == "runtime.run_receipt"
+    assert request.payload == {"mutating": False, "run_id": "run-original"}
+    assert value["run"]["run_id"] == "run-original"
+    assert value["receipt"]["operation"] == "native.batch"
+    assert value["lookup_run"]["run_id"] == request.run_id
+    assert "raw" not in json.dumps(value["receipt"])
+
+
 def test_mcp_capability_discovery_is_read_only_and_summary_is_bounded():
     registry = FakeRegistry()
     server = MCPRuntimeServer(registry)
@@ -666,7 +727,7 @@ def test_mcp_stdio_bad_frame_does_not_kill_server():
     serve_mcp(source, destination, registry=FakeRegistry())
     responses = [json.loads(line) for line in destination.getvalue().splitlines()]
     assert responses[0]["error"]["code"] == -32700
-    assert len(responses[1]["result"]["tools"]) == 10
+    assert len(responses[1]["result"]["tools"]) == 11
 
 
 def test_run_plan_prevalidates_then_executes_steps_with_individual_purposes():

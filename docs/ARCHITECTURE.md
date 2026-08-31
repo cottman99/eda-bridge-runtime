@@ -70,6 +70,12 @@ Runtime adds a compact `eda-runtime.run-view/v1` projection so clients observe
 the same run identity, state, terminal flag, job identity, and path-free
 evidence references without forcing ADS and AnsysEM to share one execution
 implementation.
+The worker ledger also exposes a bounded `eda-runtime.run-receipt/v1` lookup by
+`run_id`. It returns motive, identity, state, timing, evidence references, and
+content hashes while keeping the full redacted vendor response on the worker
+host. Receipt lookup is observation only and cannot replay an operation.
+The stable projection is defined by
+[`run-receipt-v1.schema.json`](schemas/run-receipt-v1.schema.json).
 
 ## Capability growth and escape lanes
 

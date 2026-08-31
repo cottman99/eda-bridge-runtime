@@ -36,7 +36,7 @@ test("environment executable override outranks generated profile Python", () => 
   assert.deepEqual(client.args, ["mcp", "serve"]);
 });
 
-test("persistent client lists the ten installed Runtime tools", async () => {
+test("persistent client lists the installed Runtime tools", async () => {
   const client = new RuntimeClient({
     command: process.env.EDA_RUNTIME_COMMAND ?? "eda-runtime",
     timeoutMs: 10_000,
@@ -44,7 +44,7 @@ test("persistent client lists the ten installed Runtime tools", async () => {
   });
   try {
     const result = await client.listTools();
-    assert.equal(result.tools.length, 10);
+    assert.equal(result.tools.length, 11);
     assert.deepEqual(
       result.tools.map((tool) => tool.name),
       [
@@ -55,6 +55,7 @@ test("persistent client lists the ten installed Runtime tools", async () => {
         "eda.read",
         "eda.submit",
         "eda.run_plan",
+        "eda.run.get",
         "eda.job.status",
         "eda.job.wait",
         "eda.job.events",

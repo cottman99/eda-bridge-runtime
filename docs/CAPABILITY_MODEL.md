@@ -50,7 +50,8 @@ Every advertised operation must be classified as one of:
 
 1. **Bridge infrastructure** — installation discovery, Context, connection,
    workspace/project/session identity, lifecycle, jobs, reconciliation,
-   staging, rollback, promotion, audit, and artifact/evidence handling.
+   staging, rollback, promotion, audit, compact run receipts, and
+   artifact/evidence handling.
 2. **Generic native execution** — official Python, AEL, or native batches inside
    an exact Context and a governed effect boundary. This is the main extension
    path for vendor functionality.

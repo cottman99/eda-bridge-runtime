@@ -30,7 +30,7 @@ or a second audit database.
 
 The generated daily launcher now loads the Runtime extension and the administrator-selected
 Runtime/ADS/AnsysEM Skills itself. Engineers run one command and do not repeat extension or Skill
-flags. It disables every built-in tool except read while explicitly retaining all ten Runtime
+flags. It disables every built-in tool except read while explicitly retaining all eleven Runtime
 tools; shell, write, and edit are absent. An authentication-free RPC acceptance observed ten
 Runtime tools, two configured EDA connections, and a 181.4 ms status refresh while preserving the
 empty credential file unchanged.
@@ -106,7 +106,7 @@ Skills. It does not receive shell, edit, or write as an alternate route around R
 
 The reviewed Pi package in this repository contains:
 
-- a native Pi extension that exposes only the ten Runtime tools;
+- a native Pi extension that exposes only the eleven Runtime tools;
 - the Runtime control Skill and references to selected vendor Skills;
 - optional Pi lifecycle enrichment; the Runtime already records the mandatory base facts;
 - a small status view for active connection, Run state, and elapsed time.

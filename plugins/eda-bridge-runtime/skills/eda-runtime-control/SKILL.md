@@ -68,6 +68,9 @@ Runtime merely because SSH is absent.
   observation after reconnecting and incremental
   `eda.job.events` only for diagnostic detail; never resubmit merely because SSH or the conversation
   disconnected.
+- When only a prior `run_id` remains after reconnecting, use `eda.run.get` once to recover its
+  compact worker-ledger receipt. Do not search chat history, scan raw ledgers, or resubmit the
+  operation. The receipt intentionally omits the stored raw customer result.
 - Read the compact `run` projection for both synchronous and durable work. Its
   state is the EDA operation state; the outer status of a status-query call is
   only the success of that observation.

@@ -370,6 +370,7 @@ def test_codex_hook_accepts_protocol_native_mcp_names(tmp_path):
     [
         ("eda_read", "eda.read"),
         ("eda_run_plan", "eda.run_plan"),
+        ("eda_run_get", "eda.run.get"),
         ("eda_job_wait", "eda.job.wait"),
     ],
 )

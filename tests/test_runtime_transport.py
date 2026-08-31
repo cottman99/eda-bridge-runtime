@@ -88,6 +88,45 @@ def test_missing_adapter_is_audited_failure(tmp_path):
     assert runtime.ledger.verify(request.run_id)
 
 
+def test_runtime_returns_compact_receipt_without_mirroring_raw_result(tmp_path):
+    runtime = make_runtime(tmp_path)
+    source = read_request()
+    source_response = runtime.execute(source)
+    lookup = RequestEnvelope(
+        purpose="Recover prior execution receipt",
+        target={"eda": "fake"},
+        operation="runtime.run_receipt",
+        payload={"mutating": False, "run_id": source_response.run_id},
+    )
+
+    response = runtime.execute(lookup)
+    receipt = response.result["data"]["receipt"]
+
+    assert response.status == "passed"
+    assert receipt["protocol"] == "eda-runtime.run-receipt/v1"
+    assert receipt["run"]["run_id"] == source_response.run_id
+    assert receipt["purpose"] == source.purpose
+    assert receipt["operation"] == "inspect"
+    assert receipt["ledger"]["finalized"] is True
+    assert receipt["ledger"]["verified"] is True
+    assert len(receipt["response_sha256"]) == 64
+    assert "value" not in json.dumps(receipt)
+
+
+def test_runtime_receipt_lookup_fails_closed_for_unknown_run(tmp_path):
+    runtime = make_runtime(tmp_path)
+    response = runtime.execute(
+        RequestEnvelope(
+            purpose="Recover missing execution receipt",
+            target={"eda": "fake"},
+            operation="runtime.run_receipt",
+            payload={"mutating": False, "run_id": "run_missing"},
+        )
+    )
+    assert response.status == "failed"
+    assert response.error["code"] == "run_not_found"
+
+
 def test_json_lines_server_uses_same_envelope(tmp_path):
     runtime = make_runtime(tmp_path)
     request = read_request()
