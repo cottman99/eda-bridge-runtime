@@ -14,6 +14,15 @@
 - Report knowledge, official API reach, generic execution, default support, and
   validated workflows as separate coverage dimensions.
 
+## 0.1.0a35 — upgrade-safe Agent profiles and derived native bookkeeping
+
+- Launch generated Codex and Pi Runtime profiles through the installer Python
+  module so persistent Windows MCP sessions no longer lock the pip-managed
+  `eda-runtime.exe` during an upgrade; preserve explicit executable overrides.
+- Derive `native.batch` program hashes and deterministic batch identifiers at
+  the trusted Runtime boundary while keeping effect, scope, transaction,
+  limits, and engineering validation explicit and fail-closed.
+
 ## 0.1.0a34 — cross-platform semantic experience hashes
 
 - Normalize text line endings before hashing experience Markdown so Linux LF and
