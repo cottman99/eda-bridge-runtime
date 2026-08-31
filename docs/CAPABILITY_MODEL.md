@@ -104,6 +104,16 @@ program, artifacts, timeout, and output bound. Vendor Bridges remain
 responsible for enforcing those declarations against their real workspace or
 project format.
 
+`batch_id`, `program.sha256`, and `validation.program.sha256` are derived fields.
+An Agent may omit them: trusted Runtime recomputes program digests from the
+exact UTF-8 source and materializes a deterministic bounded batch identifier from
+the rest of the normalized request. A supplied identifier is preserved, while a
+supplied fingerprint must match. Runtime does not derive effect, scope, paths,
+transaction policy, limits, or engineering validation. Capability descriptors
+for this generic lane may declare `agent_required` separately from
+`derived_fields` so an Agent need not manufacture those bookkeeping values; this
+is descriptive metadata and does not weaken Runtime validation.
+
 ## Route order
 
 Use this order:

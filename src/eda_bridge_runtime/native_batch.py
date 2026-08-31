@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import json
 import re
 from typing import Any
 
@@ -80,7 +81,6 @@ def _program(value: Any, *, name: str, entrypoint: str) -> dict[str, str]:
     program = _exact_object(value, name=name, fields={"language", "source", "sha256"})
     language = str(program.get("language") or "")
     source = program.get("source")
-    digest = str(program.get("sha256") or "")
     if not _IDENTIFIER.fullmatch(language):
         raise ValueError(f"{name}.language must be a bounded identifier")
     if not isinstance(source, str) or not source.strip():
@@ -91,11 +91,33 @@ def _program(value: Any, *, name: str, entrypoint: str) -> dict[str, str]:
     if "\x00" in source:
         raise ValueError(f"{name}.source contains a null byte")
     actual = hashlib.sha256(encoded).hexdigest()
-    if not _SHA256.fullmatch(digest) or digest != actual:
+    if "sha256" in program and (
+        not isinstance(program["sha256"], str)
+        or not _SHA256.fullmatch(program["sha256"])
+        or program["sha256"] != actual
+    ):
         raise ValueError(f"{name}.sha256 does not match source")
     if language == "python" and not re.search(rf"^def {entrypoint}\s*\(", source, re.MULTILINE):
         raise ValueError(f"{name}.source must define {entrypoint}(...)")
-    return {"language": language, "source": source, "sha256": digest}
+    return {"language": language, "source": source, "sha256": actual}
+
+
+def _derive_batch_id(plan: dict[str, Any]) -> str:
+    material = {key: value for key, value in plan.items() if key != "batch_id"}
+    material["program"] = {key: value for key, value in plan["program"].items() if key != "sha256"}
+    validation = dict(plan["validation"])
+    if validation["program"] is not None:
+        validation["program"] = {
+            key: value for key, value in validation["program"].items() if key != "sha256"
+        }
+    material["validation"] = validation
+    canonical = json.dumps(
+        material,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return "batch-" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _paths(value: Any, *, name: str) -> list[str]:
@@ -152,7 +174,6 @@ def validate_native_batch(value: Any) -> dict[str, Any]:
     )
     required = {
         "schema_version",
-        "batch_id",
         "runtime",
         "effect",
         "program",
@@ -166,9 +187,10 @@ def validate_native_batch(value: Any) -> dict[str, Any]:
         raise ValueError("native batch is missing: " + ", ".join(missing))
     if plan["schema_version"] != NATIVE_BATCH_SCHEMA:
         raise ValueError(f"unsupported native batch schema: {plan['schema_version']}")
-    for field in ("batch_id", "runtime"):
-        if not _IDENTIFIER.fullmatch(str(plan[field])):
-            raise ValueError(f"{field} must be a bounded identifier")
+    if "batch_id" in plan and not _IDENTIFIER.fullmatch(str(plan["batch_id"])):
+        raise ValueError("batch_id must be a bounded identifier")
+    if not _IDENTIFIER.fullmatch(str(plan["runtime"])):
+        raise ValueError("runtime must be a bounded identifier")
     effect = str(plan["effect"])
     if effect not in {"observe", "staged_mutation"}:
         raise ValueError("effect must be observe or staged_mutation")
@@ -264,7 +286,7 @@ def validate_native_batch(value: Any) -> dict[str, Any]:
                 "staged mutations require source fingerprints, fresh reopen, and validation code"
             )
 
-    return {
+    normalized = {
         **plan,
         "effect": effect,
         "program": program,
@@ -287,3 +309,7 @@ def validate_native_batch(value: Any) -> dict[str, Any]:
         },
         "limits": {"timeout_seconds": timeout, "max_output_bytes": max_output},
     }
+    normalized["batch_id"] = (
+        str(plan["batch_id"]) if "batch_id" in plan else _derive_batch_id(normalized)
+    )
+    return normalized

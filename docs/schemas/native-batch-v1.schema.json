@@ -4,10 +4,13 @@
   "title": "Governed official EDA native batch v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "batch_id", "runtime", "effect", "program", "scope", "transaction", "validation", "limits"],
+  "required": ["schema_version", "runtime", "effect", "program", "scope", "transaction", "validation", "limits"],
   "properties": {
     "schema_version": {"const": "eda.native-batch/v1"},
-    "batch_id": {"$ref": "#/$defs/identifier"},
+    "batch_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Optional caller identifier. When omitted, trusted Runtime materializes a deterministic batch-<sha256> identifier from the normalized request, excluding derived fingerprint fields."
+    },
     "runtime": {"$ref": "#/$defs/identifier"},
     "effect": {"enum": ["observe", "staged_mutation"]},
     "program": {"$ref": "#/$defs/program"},
@@ -72,11 +75,15 @@
     "program": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["language", "source", "sha256"],
+      "required": ["language", "source"],
       "properties": {
         "language": {"$ref": "#/$defs/identifier"},
         "source": {"type": "string", "minLength": 1, "maxLength": 131072},
-        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Optional caller assertion. Trusted Runtime always recomputes this derived field from the exact UTF-8 source and rejects a supplied mismatch."
+        }
       }
     },
     "paths": {
