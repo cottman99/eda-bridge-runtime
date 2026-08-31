@@ -17,6 +17,10 @@ profile keeps its normal execution tools.
 The installer also discovers MCP servers inherited from the user's global Codex config and disables
 all of them inside this profile except `eda-bridge-runtime`. This is generated isolation, not a
 hard-coded list: adding another general-purpose MCP globally cannot silently expand the EDA profile.
+By default the generated MCP and audit-hook commands use the Python interpreter running the
+installer with `-m eda_bridge_runtime.cli`. This avoids keeping the replaceable Windows
+`eda-runtime.exe` console-script open during a package upgrade. `--runtime-command` remains an exact
+executable override for administrators who intentionally manage a different launch path.
 
 ```powershell
 eda-runtime agent-profile codex install

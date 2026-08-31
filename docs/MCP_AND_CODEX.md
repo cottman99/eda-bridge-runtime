@@ -153,6 +153,13 @@ remains in the platform SSH configuration.
 
 ## Plugin source
 
+Generated Codex and Pi profiles are the upgrade-safe Windows path: their installers record the
+current wheel interpreter and launch `-m eda_bridge_runtime.cli`, including Codex audit hooks. The
+static marketplace plugin cannot reliably discover which Python interpreter owns the Runtime wheel,
+so its checked-in command remains `eda-runtime`. Before upgrading a Runtime used through that static
+path, close Codex sessions that may still have the old console-script open, then restart them after
+the upgrade. Regenerating the Codex or Pi profile after installation is the recommended workflow.
+
 The repository plugin lives at `plugins/eda-bridge-runtime`. Install the Python package first so
 that `eda-runtime` is on the host path, then install the repository marketplace and plugin:
 

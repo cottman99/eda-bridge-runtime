@@ -6,9 +6,15 @@ const DEFAULT_TIMEOUT_MS = 330_000;
 
 export class RuntimeClient {
   constructor(options = {}) {
-    this.command = options.command ?? process.env.EDA_RUNTIME_COMMAND ?? "eda-runtime";
-    this.args = options.args ?? ["mcp", "serve"];
     this.env = options.env ?? process.env;
+    const executableOverride = options.command ?? this.env.EDA_RUNTIME_COMMAND;
+    const runtimePython = this.env.EDA_RUNTIME_PYTHON;
+    this.command = executableOverride ?? runtimePython ?? "eda-runtime";
+    this.args = options.args ?? (
+      executableOverride || !runtimePython
+        ? ["mcp", "serve"]
+        : ["-m", "eda_bridge_runtime.cli", "mcp", "serve"]
+    );
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.clientInfo = options.clientInfo ?? { name: "pi-agent", version: "unknown" };
     this.child = undefined;

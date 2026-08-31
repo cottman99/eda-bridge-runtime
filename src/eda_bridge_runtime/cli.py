@@ -39,7 +39,13 @@ def _parser() -> argparse.ArgumentParser:
     codex_install = codex_profile_sub.add_parser("install")
     codex_install.add_argument("--codex-home", type=Path, default=Path.home() / ".codex")
     codex_install.add_argument("--profile-name", default="eda-runtime")
-    codex_install.add_argument("--runtime-command", default="eda-runtime")
+    codex_install.add_argument(
+        "--runtime-command",
+        help=(
+            "Exact Runtime executable override. The default uses this installer's Python "
+            "module entry point."
+        ),
+    )
     codex_install.add_argument("--approve-mutations", action="store_true")
     codex_install.add_argument("--keep-name", action="append", dest="keep_names")
     pi_profile = agent_profile_sub.add_parser("pi")
@@ -53,6 +59,13 @@ def _parser() -> argparse.ArgumentParser:
     pi_install.add_argument("--auth-provider", default="openai-codex")
     pi_install.add_argument("--node", type=Path, required=True)
     pi_install.add_argument("--pi-cli", type=Path, required=True)
+    pi_install.add_argument(
+        "--runtime-command",
+        help=(
+            "Exact Runtime executable override. The default injects this installer's Python "
+            "module entry point into the generated Pi launcher."
+        ),
+    )
     pi_install.add_argument("--vendor-skill", type=Path, action="append", default=[])
     context = sub.add_parser("context")
     context_sub = context.add_subparsers(dest="context_command", required=True)
@@ -174,6 +187,7 @@ def main(argv: list[str] | None = None) -> int:
             auth_provider=args.auth_provider,
             node=args.node,
             pi_cli=args.pi_cli,
+            runtime_command=args.runtime_command,
             vendor_skills=tuple(args.vendor_skill),
         )
         print(json.dumps(result, ensure_ascii=False, indent=2))

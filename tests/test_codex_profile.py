@@ -1,4 +1,5 @@
 import json
+import sys
 from pathlib import Path
 
 from eda_bridge_runtime import cli, codex_profile
@@ -118,6 +119,10 @@ def test_packaged_cli_installs_codex_profile(tmp_path, capsys):
     assert result["agent"] == "codex"
     assert result["enabled_skills"] == 1
     assert '[mcp_servers."node_repl"]\nenabled = false' in profile
+    assert f"command = {json.dumps(sys.executable)}" in profile
+    assert 'args = ["-m", "eda_bridge_runtime.cli", "mcp", "serve"]' in profile
+    assert "-m eda_bridge_runtime.cli hook codex-pre-tool-use" in profile
+    assert "-m eda_bridge_runtime.cli hook codex-post-tool-use" in profile
 
 
 def test_packaged_cli_creates_missing_codex_home(tmp_path, capsys):

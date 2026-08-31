@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -81,6 +82,7 @@ def install_profile(
     status_launcher: Path | None = None,
     node: Path,
     pi_cli: Path,
+    runtime_command: str | None = None,
     auth_provider: str = "openai-codex",
     vendor_skills: tuple[Path, ...] = (),
 ) -> dict[str, Any]:
@@ -103,6 +105,14 @@ def install_profile(
         raise ValueError("The selected Node executable and Pi CLI bundle must already exist.")
     if not auth_provider or any(character.isspace() for character in auth_provider):
         raise ValueError("Pi authentication provider must be one non-empty token.")
+    if runtime_command is not None and (
+        not runtime_command
+        or any(character in runtime_command for character in ('"', "%", "\r", "\n"))
+    ):
+        raise ValueError(
+            "Runtime command must be non-empty and cannot contain quotes, batch expansion, "
+            "or newlines."
+        )
     package_root = runtime_extension_root()
     runtime_skill = package_root / "skills/eda-runtime-control/SKILL.md"
     selected_skills = (runtime_skill, *(path.expanduser().resolve() for path in vendor_skills))
@@ -152,6 +162,13 @@ def install_profile(
     launch_arguments.extend(["--no-builtin-tools", "--tools", ",".join(enabled_tools)])
     if any("%" in value or "\n" in value or "\r" in value for value in launch_arguments):
         raise ValueError("Pi launcher paths must not contain batch expansion characters.")
+    runtime_environment = (
+        [f'set "EDA_RUNTIME_COMMAND={runtime_command}"', 'set "EDA_RUNTIME_PYTHON="']
+        if runtime_command is not None
+        else ['set "EDA_RUNTIME_COMMAND="', f'set "EDA_RUNTIME_PYTHON={sys.executable}"']
+    )
+    if any("%" in value or "\n" in value or "\r" in value for value in runtime_environment):
+        raise ValueError("Runtime launch paths must not contain batch expansion characters.")
     command = "\n".join(
         [
             "@echo off",
@@ -160,6 +177,7 @@ def install_profile(
             f'set "PI_CODING_AGENT_SESSION_DIR={session_dir}"',
             'set "PI_TELEMETRY=0"',
             'set "PI_SKIP_VERSION_CHECK=1"',
+            *runtime_environment,
             subprocess.list2cmdline(launch_arguments) + " %*",
             "",
         ]
@@ -223,6 +241,7 @@ def install_profile(
         "auth_state": "configured" if auth_entries else "login_required",
         "auth_unchanged": True,
         "runtime_extension": str(package_root),
+        "runtime_launch": "executable-override" if runtime_command is not None else "python-module",
         "loaded_skills": len(selected_skills),
         "builtin_tools": ["read"],
         "runtime_tools": len(EDA_TOOLS),
@@ -240,6 +259,13 @@ def main() -> int:
     parser.add_argument("--node", type=Path, required=True)
     parser.add_argument("--pi-cli", type=Path, required=True)
     parser.add_argument(
+        "--runtime-command",
+        help=(
+            "Exact Runtime executable override. The default injects this installer's Python "
+            "module entry point into the generated Pi launcher."
+        ),
+    )
+    parser.add_argument(
         "--vendor-skill",
         type=Path,
         action="append",
@@ -255,6 +281,7 @@ def main() -> int:
         status_launcher=args.status_launcher,
         node=args.node,
         pi_cli=args.pi_cli,
+        runtime_command=args.runtime_command,
         auth_provider=args.auth_provider,
         vendor_skills=tuple(args.vendor_skill),
     )

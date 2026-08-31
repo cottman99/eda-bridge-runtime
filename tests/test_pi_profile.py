@@ -1,4 +1,5 @@
 import json
+import sys
 from pathlib import Path
 
 from eda_bridge_runtime import cli, pi_profile
@@ -43,6 +44,8 @@ def test_pi_profile_update_preserves_credentials_and_unmanaged_settings(tmp_path
     assert "--no-builtin-tools --tools read,eda_context_resolve" in launcher
     assert "eda_read" in launcher
     assert "eda_run_plan" in launcher
+    assert 'set "EDA_RUNTIME_COMMAND="' in launcher
+    assert f'set "EDA_RUNTIME_PYTHON={sys.executable}"' in launcher
     assert launcher.endswith(" %*\n")
     login_launcher = (tmp_path / "pi-eda-login.cmd").read_text(encoding="utf-8")
     assert "--no-extensions --no-skills --no-tools --no-context-files" in login_launcher
@@ -53,6 +56,29 @@ def test_pi_profile_update_preserves_credentials_and_unmanaged_settings(tmp_path
     assert "eda-runtime-control" not in status_launcher
     assert result["status_launcher"].endswith("pi-eda-status.cmd")
     assert result["auth_provider"] == "openai-codex"
+    assert result["runtime_launch"] == "python-module"
+
+
+def test_pi_profile_preserves_exact_runtime_executable_override(tmp_path):
+    node = tmp_path / "node.exe"
+    pi_bundle = tmp_path / "cli.js"
+    node.write_bytes(b"node")
+    pi_bundle.write_bytes(b"pi")
+    launcher = tmp_path / "pi-eda.cmd"
+
+    result = pi_profile.install_profile(
+        profile_dir=tmp_path / "profile",
+        session_dir=tmp_path / "sessions",
+        launcher=launcher,
+        node=node,
+        pi_cli=pi_bundle,
+        runtime_command="D:/runtime/eda-runtime.exe",
+    )
+
+    text = launcher.read_text(encoding="utf-8")
+    assert 'set "EDA_RUNTIME_COMMAND=D:/runtime/eda-runtime.exe"' in text
+    assert 'set "EDA_RUNTIME_PYTHON="' in text
+    assert result["runtime_launch"] == "executable-override"
 
 
 def test_pi_profile_does_not_create_an_auth_file(tmp_path):

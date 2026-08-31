@@ -43,3 +43,8 @@ The generated launcher always loads this Runtime extension and its Runtime Skill
 vendor Skills are loaded into the same one-command profile; the engineer does not choose them on
 each task. The normal profile keeps only Pi's built-in read tool; shell/write/edit remain disabled,
 and every EDA action still uses Runtime.
+
+The launcher also injects the Python interpreter running the installer. The persistent Pi client
+starts `python -m eda_bridge_runtime.cli mcp serve`, so a Windows package upgrade does not depend on
+replacing an open `eda-runtime.exe` console-script. Use `--runtime-command` only for an intentional
+exact executable override.

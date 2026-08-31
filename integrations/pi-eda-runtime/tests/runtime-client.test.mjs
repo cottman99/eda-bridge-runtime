@@ -8,6 +8,34 @@ test("default client timeout exceeds Runtime's bounded five-minute wait", () => 
   assert.equal(client.timeoutMs, 330_000);
 });
 
+test("generated profile Python launches the Runtime module", () => {
+  const client = new RuntimeClient({
+    env: { EDA_RUNTIME_PYTHON: "D:/Python/python.exe" },
+  });
+  assert.equal(client.command, "D:/Python/python.exe");
+  assert.deepEqual(client.args, ["-m", "eda_bridge_runtime.cli", "mcp", "serve"]);
+});
+
+test("explicit executable override keeps console-script arguments", () => {
+  const client = new RuntimeClient({
+    command: "D:/runtime/eda-runtime.exe",
+    env: { EDA_RUNTIME_PYTHON: "D:/Python/python.exe" },
+  });
+  assert.equal(client.command, "D:/runtime/eda-runtime.exe");
+  assert.deepEqual(client.args, ["mcp", "serve"]);
+});
+
+test("environment executable override outranks generated profile Python", () => {
+  const client = new RuntimeClient({
+    env: {
+      EDA_RUNTIME_COMMAND: "D:/runtime/eda-runtime.exe",
+      EDA_RUNTIME_PYTHON: "D:/Python/python.exe",
+    },
+  });
+  assert.equal(client.command, "D:/runtime/eda-runtime.exe");
+  assert.deepEqual(client.args, ["mcp", "serve"]);
+});
+
 test("persistent client lists the ten installed Runtime tools", async () => {
   const client = new RuntimeClient({
     command: process.env.EDA_RUNTIME_COMMAND ?? "eda-runtime",
