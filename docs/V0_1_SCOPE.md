@@ -14,7 +14,7 @@
 - Report knowledge, official API reach, generic execution, default support, and
   validated workflows as separate coverage dimensions.
 
-## 0.1.0a38 — inspectable native-batch capability contract
+## 0.1.0a39 — inspectable native-batch capability contract
 
 - Expose the common native-batch capability contract directly to Agents so
   they can discover the accepted program, effect, validation, and promotion

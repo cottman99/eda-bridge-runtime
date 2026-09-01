@@ -129,7 +129,7 @@ materially heavier. See the [ADS adapter's audited method and data](https://gith
 Install Runtime on the computer where the Agent runs:
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a38"
+python -m pip install "eda-bridge-runtime==0.1.0a39"
 eda-runtime doctor
 ```
 
