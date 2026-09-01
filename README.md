@@ -117,6 +117,13 @@ typed ADS and AnsysEM work, a real generated-input Momentum solve, and a
 one-turn cross-EDA workflow. Sanitized acceptance evidence is maintained in
 [Acceptance](docs/ACCEPTANCE.md).
 
+A separate 2026-09-01 ADS 2027 comparison tested the current Runtime MCP plus
+current Runtime/ADS Skills against the official ADS MCP with three fresh runs
+per Agent and case. Runtime passed 22/24 overall and all 18/18 knowledge runs;
+the official surface passed 18/24 overall and all 6/6 execution runs. Runtime's
+successful governed native batch had a 2.379 s median, but its Agent path was
+materially heavier. See the [ADS adapter's audited method and data](https://github.com/cottman99/ads-agent-bridge/blob/main/docs/BENCHMARK_ADS2027_HEADLESS_AC.md).
+
 ## Start with one Agent profile
 
 Install Runtime on the computer where the Agent runs:

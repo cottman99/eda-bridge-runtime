@@ -104,6 +104,13 @@ AEDT 生命周期占主导的任务主要受 EDA 本身耗时限制。这是工�
 操作、真实 Momentum 求解，以及一次跨 EDA 协作。脱敏后的真实主机
 验收记录见 [Acceptance](docs/ACCEPTANCE.md)。
 
+另一组 2026-09-01 ADS 2027 对比，把当前 Runtime MCP + Runtime/ADS Skills
+与官方 ADS MCP 分别交给两个 Agent，每个任务重复三次。Runtime 总体通过
+22/24、知识任务通过 18/18；官方路径总体通过 18/24、执行任务通过 6/6。
+Runtime 成功的受治理原生批处理中位数为 2.379 秒，但 Agent 使用路径明显
+更重。方法与审计数据见
+[ADS adapter 对比报告](https://github.com/cottman99/ads-agent-bridge/blob/main/docs/BENCHMARK_ADS2027_HEADLESS_AC.md)。
+
 ## 从一个 Agent 配置开始
 
 在 Agent 所在的电脑安装 Runtime：
