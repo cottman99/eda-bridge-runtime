@@ -41,7 +41,9 @@ def native_batch_capability_contract() -> dict[str, Any]:
     program = {
         "required": ["language", "source"],
         "optional": ["sha256"],
-        "entrypoint": "def run(api, context)",
+        "allowed_fields": ["language", "source", "sha256"],
+        "source_must_define": "def run(api, context)",
+        "do_not_submit_fields": ["entrypoint"],
     }
     return {
         "schema_version": NATIVE_BATCH_SCHEMA,
@@ -92,7 +94,7 @@ def native_batch_capability_contract() -> dict[str, Any]:
             "observe_program": None,
             "staged_mutation_program": {
                 **program,
-                "entrypoint": "def validate(api, context)",
+                "source_must_define": "def validate(api, context)",
             },
         },
         "limits": {

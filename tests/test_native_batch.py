@@ -26,8 +26,10 @@ def test_capability_contract_exposes_complete_first_submission_shape():
         "validation",
         "limits",
     }
-    assert contract["program"]["entrypoint"] == "def run(api, context)"
-    assert contract["validation"]["staged_mutation_program"]["entrypoint"] == (
+    assert contract["program"]["source_must_define"] == "def run(api, context)"
+    assert contract["program"]["allowed_fields"] == ["language", "source", "sha256"]
+    assert contract["program"]["do_not_submit_fields"] == ["entrypoint"]
+    assert contract["validation"]["staged_mutation_program"]["source_must_define"] == (
         "def validate(api, context)"
     )
     assert contract["transaction"]["staged_mutation"] == {
