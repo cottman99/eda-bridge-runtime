@@ -6,10 +6,38 @@ from pathlib import Path
 import pytest
 
 from eda_bridge_runtime.native_batch import (
+    native_batch_capability_contract,
     validate_native_batch,
     validate_operation_class,
     validate_python_program_policy,
 )
+
+
+def test_capability_contract_exposes_complete_first_submission_shape():
+    contract = native_batch_capability_contract()
+    assert contract["schema_version"] == "eda.native-batch/v1"
+    assert set(contract["required"]) == {
+        "schema_version",
+        "runtime",
+        "effect",
+        "program",
+        "scope",
+        "transaction",
+        "validation",
+        "limits",
+    }
+    assert contract["program"]["source_must_define"] == "def run(api, context)"
+    assert contract["program"]["allowed_fields"] == ["language", "source", "sha256"]
+    assert contract["program"]["do_not_submit_fields"] == ["entrypoint"]
+    assert contract["validation"]["staged_mutation_program"]["source_must_define"] == (
+        "def validate(api, context)"
+    )
+    assert contract["transaction"]["staged_mutation"] == {
+        "strategy": "adapter_staging",
+        "source_fingerprints": "one SHA-256 per declared source read path",
+        "fresh_reopen": True,
+        "promotion": "on_validation",
+    }
 
 
 def _program(entrypoint: str, body: str = "return {'status': 'passed'}") -> dict[str, str]:

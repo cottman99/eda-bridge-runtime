@@ -20,6 +20,7 @@ from .live_edit import LIVE_EDIT_SCHEMA, validate_live_edit
 from .native_batch import (
     NATIVE_BATCH_SCHEMA,
     OPERATION_CLASSES,
+    native_batch_capability_contract,
     validate_native_batch,
     validate_python_program_policy,
 )
@@ -51,6 +52,7 @@ __all__ = [
     "project_run",
     "parse_experience_asset",
     "NATIVE_BATCH_SCHEMA",
+    "native_batch_capability_contract",
     "OPERATION_CLASSES",
     "validate_native_batch",
     "validate_compiled_shortcut_binding",

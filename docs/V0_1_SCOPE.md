@@ -14,6 +14,15 @@
 - Report knowledge, official API reach, generic execution, default support, and
   validated workflows as separate coverage dimensions.
 
+## 0.1.0a38 — inspectable native-batch capability contract
+
+- Expose the common native-batch capability contract directly to Agents so
+  they can discover the accepted program, effect, validation, and promotion
+  boundaries without inventing vendor-specific routing layers.
+- Package bounded wait guidance and an explicit native program contract for
+  Codex and Pi Agent, and link the audited ADS Runtime-versus-official-MCP
+  comparison.
+
 ## 0.1.0a37 — shared supervised live-edit envelope
 
 - Add the vendor-neutral `eda.live-edit/v1` envelope for one idempotent patch,

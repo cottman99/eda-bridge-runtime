@@ -45,6 +45,10 @@ For a new `eda_read` or `eda_submit`, request its bounded `wait` option when com
 avoiding a second Agent turn. Use `eda_job_wait` to resume a job already returned to the Agent.
 Use `eda_job_status` only for a single observation after reconnecting and `eda_job_events` only
 when event detail is needed for diagnosis.
+Runtime `wait.timeout_ms` is 1,000..300,000 ms and `poll_interval_ms` is
+100..5,000 ms. A vendor operation may declare a longer timeout; do not copy that
+value into Runtime wait. Use a bounded wait and resume an accepted non-terminal
+job with `eda_job_wait`.
 When only a prior `run_id` remains, use `eda_run_get` once to recover the compact worker-ledger
 receipt. It does not replay work and intentionally omits the stored raw customer result.
 
