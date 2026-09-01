@@ -68,6 +68,10 @@ Runtime merely because SSH is absent.
   observation after reconnecting and incremental
   `eda.job.events` only for diagnostic detail; never resubmit merely because SSH or the conversation
   disconnected.
+- Runtime `wait.timeout_ms` is bounded to 1,000..300,000 ms and
+  `poll_interval_ms` to 100..5,000 ms. The vendor operation's own timeout may be
+  longer; do not copy that value into Runtime wait. Use the maximum bounded wait
+  when appropriate, then resume an accepted non-terminal job with `eda.job.wait`.
 - When only a prior `run_id` remains after reconnecting, use `eda.run.get` once to recover its
   compact worker-ledger receipt. Do not search chat history, scan raw ledgers, or resubmit the
   operation. The receipt intentionally omits the stored raw customer result.
