@@ -29,6 +29,80 @@ _DANGEROUS_CALLS = frozenset(
 )
 
 
+def native_batch_capability_contract() -> dict[str, Any]:
+    """Return the exact public shape an Agent needs before its first submission.
+
+    This is deliberately compact rather than a second validation path.  The
+    validator below remains authoritative; adapters embed this description in
+    their existing ``native.batch`` capability so an Agent does not have to
+    discover required fields by submitting invalid mutations.
+    """
+
+    program = {
+        "required": ["language", "source"],
+        "optional": ["sha256"],
+        "entrypoint": "def run(api, context)",
+    }
+    return {
+        "schema_version": NATIVE_BATCH_SCHEMA,
+        "required": [
+            "schema_version",
+            "runtime",
+            "effect",
+            "program",
+            "scope",
+            "transaction",
+            "validation",
+            "limits",
+        ],
+        "optional": ["batch_id"],
+        "effect": ["observe", "staged_mutation"],
+        "program": program,
+        "scope": {
+            "required": [
+                "resource_kind",
+                "selectors",
+                "read_paths",
+                "write_paths",
+                "artifacts",
+            ]
+        },
+        "transaction": {
+            "required": [
+                "strategy",
+                "source_fingerprints",
+                "fresh_reopen",
+                "promotion",
+            ],
+            "observe": {
+                "strategy": "none",
+                "source_fingerprints": {},
+                "fresh_reopen": False,
+                "promotion": "none",
+            },
+            "staged_mutation": {
+                "strategy": "adapter_staging",
+                "source_fingerprints": "one SHA-256 per declared source read path",
+                "fresh_reopen": True,
+                "promotion": "on_validation",
+            },
+        },
+        "validation": {
+            "required": ["program", "required_artifacts"],
+            "observe_program": None,
+            "staged_mutation_program": {
+                **program,
+                "entrypoint": "def validate(api, context)",
+            },
+        },
+        "limits": {
+            "required": ["timeout_seconds", "max_output_bytes"],
+            "timeout_seconds": [1, 86_400],
+            "max_output_bytes": [1_024, 16_777_216],
+        },
+    }
+
+
 def validate_operation_class(value: Any) -> str:
     operation_class = str(value or "")
     if operation_class not in OPERATION_CLASSES:
