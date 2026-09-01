@@ -116,7 +116,7 @@ Runtime 成功的受治理原生批处理中位数为 2.379 秒，但 Agent 使�
 在 Agent 所在的电脑安装 Runtime：
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a37"
+python -m pip install "eda-bridge-runtime==0.1.0a38"
 eda-runtime doctor
 ```
 
