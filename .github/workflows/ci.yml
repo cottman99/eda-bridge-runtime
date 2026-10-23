@@ -19,6 +19,7 @@ jobs:
       - run: uv lock --check
 
   test:
+    name: ${{ matrix.os == 'ubuntu-latest' && 'test' || 'test Windows' }} (${{ matrix.python-version }})
     strategy:
       fail-fast: false
       matrix:
