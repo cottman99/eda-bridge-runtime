@@ -75,7 +75,7 @@ class ExecutionLedger:
         material = {
             "target": request.target,
             "operation": request.operation,
-            "payload": redact(request.payload),
+            "payload": request.payload,
             "expected_effect": request.expected_effect,
         }
         canonical = json.dumps(material, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
@@ -86,6 +86,7 @@ class ExecutionLedger:
             raise ValueError("idempotency key is required")
         fingerprint = self.request_fingerprint(request)
         with self._lock, self._connection:
+            self._connection.execute("BEGIN IMMEDIATE")
             row = self._connection.execute(
                 "SELECT * FROM idempotency_state WHERE idempotency_key = ?",
                 (request.idempotency_key,),

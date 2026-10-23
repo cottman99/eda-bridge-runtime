@@ -1,6 +1,6 @@
 {
   "name": "eda-bridge-runtime",
-  "version": "0.1.0-alpha.39",
+  "version": "0.2.0-alpha.1",
   "description": "Stable local and SSH execution path for EDA agent bridges",
   "author": {
     "name": "Pengfei Li",
@@ -9,7 +9,13 @@
   "homepage": "https://github.com/cottman99/eda-bridge-runtime",
   "repository": "https://github.com/cottman99/eda-bridge-runtime",
   "license": "MIT",
-  "keywords": ["eda", "runtime", "ads", "ansys", "mcp"],
+  "keywords": [
+    "eda",
+    "runtime",
+    "ads",
+    "ansys",
+    "mcp"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "EDA Bridge Runtime",

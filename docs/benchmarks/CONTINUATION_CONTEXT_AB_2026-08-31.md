@@ -51,7 +51,7 @@ The real acceptance found three successive contract gaps that unit substitutes
 had not exposed:
 
 1. ADS Bridge 0.1.0a43 returned only a general workspace/lifecycle Context from
-   `workspace.create`, so the first `native.batch` could not use the advertised
+   `workspace.create`, so the first `native.execute` could not use the advertised
    low-token path.
 2. Version 0.1.0a44 returned the separate content-bound Context, but the Adapter
    tried to expand it as a lifecycle record before inspecting its role.

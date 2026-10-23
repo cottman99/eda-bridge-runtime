@@ -16,6 +16,7 @@ from collections import deque
 from collections.abc import Callable, Sequence
 from typing import Any, TextIO
 
+from .errors import ExecutionError
 from .protocol import HANDSHAKE_PROTOCOL, RequestEnvelope, ResponseEnvelope, new_id
 
 
@@ -315,11 +316,19 @@ def serve_json_lines(
             else:
                 response = handler(RequestEnvelope.from_dict(data)).to_dict()
         except Exception as exc:
+            facts = (
+                exc.to_dict()
+                if isinstance(exc, ExecutionError)
+                else {
+                    "code": type(exc).__name__,
+                    "message": str(exc)[:500],
+                }
+            )
             response = ResponseEnvelope(
                 request_id=str(data.get("request_id") or new_id("req")),
                 run_id=str(data.get("run_id") or new_id("run")),
-                status="failed",
-                error={"code": type(exc).__name__, "message": str(exc)[:500]},
+                status="uncertain" if facts.get("execution_uncertain") else "failed",
+                error=facts,
             ).to_dict()
         output_stream.write(json.dumps(response, separators=(",", ":")) + "\n")
         output_stream.flush()

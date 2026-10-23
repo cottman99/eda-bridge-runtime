@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import sys
@@ -280,10 +281,11 @@ TOOLS = [
     },
     {
         "name": "eda.capabilities",
-        "title": "Discover EDA Capabilities",
+        "title": "Describe Core EDA Operation Contracts",
         "description": (
-            "Read typed operations when the selected Skill and Context do not already establish "
-            "the operation contract, or when a capability digest is stale. Does not mutate the EDA."
+            "Read core infrastructure, live, and native operation contracts when the selected "
+            "Skill and Context do not already establish one, or when a contract digest is stale. "
+            "Experience-bound implementations are omitted. Does not mutate the EDA."
         ),
         "inputSchema": _object_schema(
             {
@@ -292,6 +294,11 @@ TOOLS = [
                 "context": {"type": "string"},
                 "connection_id": _CONNECTION_ID_SCHEMA,
                 "eda": _EDA_SELECTOR_SCHEMA,
+                "operation": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": ("Optional exact core operation id; returns only that contract"),
+                },
             },
             ["purpose"],
         ),
@@ -480,6 +487,25 @@ TOOLS = [
         "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
     },
     {
+        "name": "eda.job.cancel",
+        "title": "Cancel Durable EDA Job",
+        "description": (
+            "Cancel queued work or request cooperative cancellation of running work. "
+            "Active vendor calls may finish; uncertain work is never replayed."
+        ),
+        "inputSchema": _object_schema(
+            {
+                "purpose": {"type": "string", "minLength": 3, "maxLength": 240},
+                "job_id": {"type": "string"},
+                "connection_id": _CONNECTION_ID_SCHEMA,
+                "eda": _EDA_SELECTOR_SCHEMA,
+                "idempotency_key": {"type": "string"},
+            },
+            ["purpose", "job_id", "idempotency_key"],
+        ),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False, "openWorldHint": False},
+    },
+    {
         "name": "eda.job.events",
         "title": "Read Durable EDA Job Events",
         "description": "Read incremental durable-job events after a cursor without replaying work.",
@@ -496,6 +522,43 @@ TOOLS = [
         "annotations": {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
     },
 ]
+
+
+def _core_operation_contracts_view(
+    response: dict[str, Any], operation_id: str | None = None
+) -> dict[str, Any]:
+    """Hide experience-bound implementations from ordinary Agent discovery.
+
+    Runtime caches the complete adapter response before this projection, so
+    deterministic safety checks and direct compatibility calls retain the full
+    contract. An Agent learns a certified workflow from its experience asset,
+    not from the default operation catalogue.
+    """
+
+    projected = copy.deepcopy(response)
+    result = projected.get("result")
+    data = result.get("data") if isinstance(result, dict) else None
+    capabilities = data.get("capabilities") if isinstance(data, dict) else None
+    operations = capabilities.get("operations") if isinstance(capabilities, dict) else None
+    if not isinstance(operations, list):
+        return projected
+    core_operations = [
+        operation
+        for operation in operations
+        if not isinstance(operation, dict)
+        or operation.get("operation_class") not in {"certified-workflow", "acceptance-probe"}
+    ]
+    if operation_id:
+        core_operations = [
+            operation
+            for operation in core_operations
+            if isinstance(operation, dict) and operation.get("id") == operation_id
+        ]
+    capabilities["operations"] = core_operations
+    capabilities["contract_view"] = "core-exact" if operation_id else "core"
+    if operation_id:
+        capabilities["operation_selector"] = operation_id
+    return projected
 
 
 class MCPRuntimeServer:
@@ -688,6 +751,10 @@ class MCPRuntimeServer:
                 payload = dict(arguments["payload"])
                 metadata = self._operation_metadata.get(spec.connection_id, {}).get(operation)
                 if name == "eda.read":
+                    if operation == "native.execute":
+                        raise ValueError(
+                            "native.execute always uses eda.submit, including observe programs"
+                        )
                     if metadata is None:
                         preflight = self._call(
                             "eda.capabilities",
@@ -724,6 +791,9 @@ class MCPRuntimeServer:
                     "runtime.job_events" if name == "eda.job.events" else "runtime.job_status"
                 )
                 payload = {"mutating": False, "job_id": str(arguments["job_id"])}
+                if name == "eda.job.cancel":
+                    operation = "runtime.job_cancel"
+                    payload["mutating"] = True
                 if name == "eda.job.events":
                     payload["after_cursor"] = int(arguments.get("after_cursor", 0))
             target = {"eda": spec.eda}
@@ -786,6 +856,10 @@ class MCPRuntimeServer:
             raise
         if name == "eda.capabilities":
             self._remember_capabilities(spec.connection_id, response_value)
+            response_value = _core_operation_contracts_view(
+                response_value,
+                str(arguments["operation"]) if arguments.get("operation") else None,
+            )
         lookup_run = project_run(response_value)
         receipt = _receipt_from_response(response_value) if name == "eda.run.get" else None
         projected = receipt["run"] if receipt is not None else lookup_run

@@ -3,7 +3,7 @@
 ## Product promise
 
 Runtime gives local and SSH EDA Bridges one request, identity, transport, job,
-ledger, compact run-receipt, transaction, and evidence envelope. It defines the governed native batch
+ledger, compact run-receipt, transaction, and evidence envelope. It defines the governed native program
 contract and the independent Bootstrap Experience Library contract without
 implementing a second ADS, AEDT, or future-vendor API.
 
@@ -29,7 +29,7 @@ future service.
 
 - full Python and Pi integration tests plus Ruff;
 - clean wheel contents and a fresh installation check;
-- native-batch schema, fingerprint, scope, transaction, timeout, validation,
+- native-program schema, fingerprint, scope, transaction, timeout, validation,
   and failure-path tests;
 - experience schema, frontmatter, manifest hash, degraded-library, and
   compiled-shortcut binding tests;
@@ -42,7 +42,11 @@ future service.
 
 ## Deliberately unclaimed
 
-AST policy lint and declared scope are accidental-risk controls, not a hostile
+Syntax checks and declared scope are accidental-risk controls, not a hostile
 code sandbox. Runtime does not decide engineering correctness, select vendor
 semantics, or guarantee that an experience remains current without version and
 runtime verification.
+
+## Compiled workflow independence
+
+Release checks bind reviewed workflow code to the packaged experience hash. At execution time, code validates its own compiled version/profile contract without reading Markdown. Missing or changed assets affect advisory eligibility only. Native execution and retained compiled workflows remain callable through the same Worker admission path.

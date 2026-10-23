@@ -1,96 +1,52 @@
 ---
 name: eda-runtime-control
-description: Use captured EDA context and the stable EDA Bridge Runtime path for ADS, AnsysEM, and other registered EDA bridges; applies to inspection, edits, simulations, durable jobs, and local or SSH execution.
+description: Operate exact local or SSH EDA targets through the shared native execution, knowledge, durable job and evidence contracts.
 ---
 
 # EDA Runtime Control
 
-Use the Runtime MCP tools as the normal execution path. Local and SSH targets follow the
-same workflow; transport selection comes from the connection registry, not from shell command
-assembly in the conversation.
+Use Runtime tools for EDA work. Every call includes a concise `purpose`.
+Local and SSH routes use the same Worker rules. A copied `EDA_CONTEXT` identifies
+the selected target; use the task's authorization rather than asking again for
+ordinary authorized operations.
 
-This Skill and its MCP server run on the Agent host. A separate EDA host runs
-the selected vendor adapter service and EDA bridge. If both roles share one
-machine, keep the same workflow and select a local connection; do not bypass
-Runtime merely because SSH is absent.
+1. Preserve the selected installation, version, session, project and design.
+   If the task and Context establish a known contract, execute directly.
+   Use exact-operation capabilities only for missing or stale contract information.
+2. Use version-matched official docs/examples or installed SDK signatures to resolve
+   unknown API usage. Experience is optional advice. A missing wrapper, missing MD
+   or failed search is not proof that the API is unavailable or unauthorized.
+3. Submit official Python with `native.execute`, schema `eda.native-program/v1`.
+   Choose `runtime`, `mode` and `effect` independently. Both observe and mutate
+   programs use `eda.submit` and a stable `idempotency_key`; arbitrary Python never
+   uses `eda.read`. Normal imports and installed SDK dependencies are available.
+4. Verify the requested result using native readback, durable output or the declared
+   validation program. Report execution and engineering validation separately.
 
-## Route quickly
+GUI Context normally selects `mode: live` in that session. Choose background or
+offline execution for an isolated output or a task needing those modes. The Bridge
+reports which modes its backend implements. Worker admission serializes conflicting
+requests across connection aliases; do not run an older writer on the same target.
 
-- Treat a copied `EDA_CONTEXT` as a bounded execution snapshot, not merely an opaque locator. When
-  it and the selected vendor Skill establish one typed operation, call `eda.submit` directly; the
-  Runtime resolves the origin and the adapter validates freshness inside that request.
-- Use `eda.context.resolve` with one concise `purpose` only to inspect a Context without executing, diagnose an invalid or
-  ambiguous binding, or expose its bounded snapshot to the user.
-- Without context, call `eda.connections.list` with one concise `purpose`. If exactly one connection matches the requested
-  EDA, use it. Ask one short question only when multiple connections remain genuinely ambiguous.
-- Call `eda.capabilities` only when the operation is not established by the selected Skill or
-  Context, its capability digest is stale, or a prior response reports an unsupported operation.
-  Do not make it a routine preflight.
-- If the user has no existing project, select the matching advertised `*.create` operation, create
-  one isolated non-existing target, and continue with the returned `EDA_CONTEXT`. Do not search for
-  a reference project or ask the user to maintain routing metadata merely to start from scratch.
-- State a concise concrete `purpose` on every Runtime call. Add `expected_effect` when changing a
-  design. Runtime records the agent/client metadata automatically.
+`eda.read` serves registered observations such as `docs.query`, `docs.get` and
+session status. Knowledge preparation is automatic and independent of execution.
+Request only the evidence needed; inspect the source kind and version. If documentation
+is insufficient, use a bounded native observation to inspect the installed SDK.
 
-## Execute safely
+Accepted jobs are pending. Use bounded inline `wait` or `eda.job.wait`, then status,
+events or `eda.run.get` after reconnecting. Preserve the original idempotency key.
+Never replay an uncertain mutation with a new key. Cancellation uses `eda.job.cancel`;
+a request to cancel an active vendor call does not prove that it stopped.
 
-- For vendor semantics, establish exact Context, query version-matched official
-  docs, retrieve only matching experience and anti-pattern assets, then use an
-  eligible asset-bound compiled shortcut or governed native execution. Assets
-  are advisory Markdown and never executable. Missing assets do not block the
-  native lane, and a new vendor API use does not justify a new wrapper.
-- Prefer a compiled shortcut only while its asset id/version/hash,
-  applicability, parameter schema, and runtime health match. Otherwise use the
-  governed native fallback and retain its receipt.
+Use `eda.run_plan` for 2..16 already-decided ordered steps on one connection. Each
+step needs its own purpose and each mutation a stable key. Plan views are read-only.
+`result_view` uses known RFC 6901 pointers; omit it while exploring an unknown result.
+Runtime wait bounds are 1,000..300,000 ms, polling 100..5,000 ms. A wait timeout
+does not cancel the vendor task.
 
-- Prefer an eligible asset-bound shortcut or governed native adapter operation. Inspect capabilities once only when support is uncertain; do not
-  repeat doctor, environment, or full-state probes when the connection and target are unchanged.
-- Use `eda.read` for an intended non-mutating operation so the Agent client can authorize a
-  statically read-only tool. Runtime mechanically discovers missing safety metadata and rejects
-  unknown or mutating operations before execution; the Agent should not spend a separate turn on
-  that preflight. Keep `eda.submit` for mutations and unresolved safety classes. When the
-  response contract is already known and the task needs only a few facts from a large result, add
-  `result_view` selectors using RFC 6901 JSON Pointers relative to the Bridge result. Use only
-  deterministic `value`, `count`, or `exists` modes; omit the view when exploration needs the full
-  response. The same view is available on a terminal `eda.job.wait` and on read-only plan steps.
-  Runtime rejects plan views on mutations before execution. Never guess a pointer.
-- When 2..16 typed operations are already decided, ordered, and share one connection, use one
-  `eda.run_plan` call instead of spending an Agent turn per step. Give every step its own concise
-  `purpose`; give every mutating step its own stable `idempotency_key`; request `wait` only where a
-  later step depends on a durable result. Runtime validates the whole plan before its first
-  mutation, then stops at the first failed or non-terminal unawaited step. Do not use a plan for a
-  single operation, open-ended diagnosis, branching engineering judgment, or unrelated targets.
-- For a mutation, use one stable `idempotency_key` for the same intended change. A retry observes
-  the same operation instead of starting a duplicate.
-- An accepted durable job is not a completed job. For a new `eda.read` or `eda.submit`, request its
-  bounded `wait` option when the task can wait for completion, avoiding a second Agent turn. Use
-  `eda.job.wait` to resume a job already returned to the Agent. Use `eda.job.status` only for one
-  observation after reconnecting and incremental
-  `eda.job.events` only for diagnostic detail; never resubmit merely because SSH or the conversation
-  disconnected.
-- Runtime `wait.timeout_ms` is bounded to 1,000..300,000 ms and
-  `poll_interval_ms` to 100..5,000 ms. The vendor operation's own timeout may be
-  longer; do not copy that value into Runtime wait. Use the maximum bounded wait
-  when appropriate, then resume an accepted non-terminal job with `eda.job.wait`.
-- When only a prior `run_id` remains after reconnecting, use `eda.run.get` once to recover its
-  compact worker-ledger receipt. Do not search chat history, scan raw ledgers, or resubmit the
-  operation. The receipt intentionally omits the stored raw customer result.
-- Read the compact `run` projection for both synchronous and durable work. Its
-  state is the EDA operation state; the outer status of a status-query call is
-  only the success of that observation.
-- Keep small corrections in the same candidate workspace. Create a frozen revision only at an
-  explicit promotion or delivery gate.
-- Use a verified native API or bounded script only when the adapter advertises that lane. Treat GUI
-  automation as a bounded fallback. If an operation genuinely has no typed Runtime route, record
-  one bounded fact with `eda-runtime audit bypass`: concise purpose, lane, reason, and outcome only;
-  never copy the raw shell command or GUI input into the ledger.
-- When a result includes an `eda-runtime.resource/v1` object, retain its returned release fields for
-  the active task and use its declared typed `release_operation` when the resource is no longer
-  needed. Release only `runtime-owned` resources. Never close, kill, or claim a reused or user-owned
-  EDA application merely because it is visible.
-- After a Bridge or Runtime upgrade, use `eda.connection.reset` once to close only the
-  Runtime-owned transport. The next explicit operation starts a fresh local or SSH Bridge process;
-  the EDA application is not closed or modified.
+Only release resources explicitly returned as `runtime-owned`, using their returned
+release fields. Keep user-owned and reused GUI sessions open. After upgrading,
+`eda.connection.reset` refreshes the Runtime transport without closing EDA.
 
-Do not place credentials, customer paths, raw shell commands, or task-specific geometry into the
-public Runtime configuration, plugin, or Skill.
+Do not place private project paths, manuals, credentials or task geometry in public
+configuration, Skills or experience assets.

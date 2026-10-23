@@ -15,6 +15,12 @@
 
 ![One engineering request reaches local or remote EDA work and returns a verified result](docs/assets/readme/runtime-engineer-workflow-v3.png)
 
+## Use official ADS and Ansys APIs through one execution path
+
+Runtime 0.2.0a1 keeps target ownership, retry identity, cancellation and readback together. Install either vendor Bridge independently. Official Python stays available when Markdown or experience assets are absent.
+
+[October release acceptance](https://github.com/cottman99/eda-bridge-runtime/blob/v0.2.0a1/docs/VALIDATION_2026-10-23_NATIVE_CORE.md) · [Native execution and migration](docs/NATIVE_EXECUTION.md). The circuit, solver and timing examples below are the separately dated historical acceptance baselines.
+
 ## One conversation can reach real, editable EDA results
 
 Ask in normal engineering language. The vendor Bridge performs the ADS or AEDT
@@ -121,7 +127,7 @@ A separate 2026-09-01 ADS 2027 comparison tested the current Runtime MCP plus
 current Runtime/ADS Skills against the official ADS MCP with three fresh runs
 per Agent and case. Runtime passed 22/24 overall and all 18/18 knowledge runs;
 the official surface passed 18/24 overall and all 6/6 execution runs. Runtime's
-successful governed native batch had a 2.379 s median, but its Agent path was
+successful governed native program had a 2.379 s median, but its Agent path was
 materially heavier. See the [ADS adapter's audited method and data](https://github.com/cottman99/ads-agent-bridge/blob/main/docs/BENCHMARK_ADS2027_HEADLESS_AC.md).
 
 ## Start with one Agent profile
@@ -129,7 +135,7 @@ materially heavier. See the [ADS adapter's audited method and data](https://gith
 Install Runtime on the computer where the Agent runs:
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a39"
+python -m pip install "eda-bridge-runtime==0.2.0a1"
 eda-runtime doctor
 ```
 
@@ -190,3 +196,7 @@ and evidence behavior do not split into two systems.
 `eda-bridge-runtime` is public alpha software. Begin with disposable work and
 review the vendor Bridge's capability and evidence boundary before using it on
 important projects.
+
+## Native execution upgrade
+
+This breaking alpha introduces `native.execute` / `eda.native-program/v1`. Upgrade Runtime and each selected Bridge together. Each Bridge installs Runtime automatically; installing the other Bridge is optional. Reconnect Agent clients and reload the ADS addon on its next normal application launch. See [native execution architecture](docs/NATIVE_EXECUTION.md) for modes, knowledge preparation, coordination and migration.

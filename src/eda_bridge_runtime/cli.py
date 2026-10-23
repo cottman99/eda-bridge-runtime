@@ -32,6 +32,20 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=__version__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("doctor")
+    resources = sub.add_parser("resources")
+    resource_sub = resources.add_subparsers(dest="resource_command", required=True)
+    resource_sub.add_parser("status")
+    reconcile = resource_sub.add_parser("reconcile")
+    reconcile.add_argument("--resource", required=True)
+    reconcile.add_argument("--owner", required=True)
+    reconcile.add_argument("--fencing-token", type=int, required=True)
+    reconcile.add_argument(
+        "--observation",
+        type=Path,
+        required=True,
+        help="JSON evidence of a fresh vendor observation proving execution stopped",
+    )
+    reconcile.add_argument("--purpose", required=True)
     agent_profile = sub.add_parser("agent-profile")
     agent_profile_sub = agent_profile.add_subparsers(dest="agent_profile_command", required=True)
     codex_profile = agent_profile_sub.add_parser("codex")
@@ -136,6 +150,32 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "resources":
+        import time
+
+        from .connections import runtime_home
+        from .lease import Lease, LeaseStore
+
+        store = LeaseStore(runtime_home() / "resources.sqlite3")
+        if args.resource_command == "status":
+            print(json.dumps({"resources": store.status()}))
+            return 0
+        evidence = json.loads(args.observation.read_text(encoding="utf-8"))
+        if (
+            evidence.get("resource") != args.resource
+            or evidence.get("execution_stopped") is not True
+            or not 0 <= time.time() - float(evidence.get("observed_at_unix", 0)) <= 300
+            or not evidence.get("vendor_observation")
+        ):
+            raise ValueError(
+                "Reconciliation needs matching target evidence from the last five minutes"
+            )
+        changed = store.reconcile(
+            Lease(args.resource, args.owner, args.fencing_token, 0),
+            observation=json.dumps({"purpose": args.purpose, "evidence": evidence}),
+        )
+        print(json.dumps({"status": "reconciled" if changed else "unchanged"}))
+        return 0 if changed else 2
     if args.command in {"mcp", "hook"}:
         _configure_protocol_stdio()
     if args.command == "doctor":

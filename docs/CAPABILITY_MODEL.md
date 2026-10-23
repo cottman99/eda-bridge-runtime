@@ -13,7 +13,8 @@ an ordinary new vendor-API use require a Bridge release.
 Capability therefore comes primarily from this loop:
 
 ```text
-version-matched official documentation
+closest applicable experience
+        -> version-matched official docs for unresolved or changed behavior
         -> Agent writes official vendor code
         -> governed native execution in exact EDA Context
         -> independent readback, validation, and evidence
@@ -52,7 +53,7 @@ Every advertised operation must be classified as one of:
    workspace/project/session identity, lifecycle, jobs, reconciliation,
    staging, rollback, promotion, audit, compact run receipts, and
    artifact/evidence handling.
-2. **Generic native execution** — official Python, AEL, or native batches inside
+2. **Generic native execution** — official Python, AEL, or native programs inside
    an exact Context and a governed effect boundary. This is the main extension
    path for vendor functionality.
 3. **Certified workflow** — an asset-bound compiled shortcut for a
@@ -63,13 +64,34 @@ Every advertised operation must be classified as one of:
    because it is callable.
 
 Certified workflows remain valuable. They are shortcuts and quality baselines,
-not the only way to reach EDA functionality.
+not the only way to reach EDA functionality. An Agent discovers one through the
+applicable experience asset; the bare operation list must not anchor the Agent
+to wrappers as the vendor's capability boundary.
+
+Adapter operation descriptors are deterministic request, safety, and lifecycle
+contracts. They answer "how may this callable route be invoked safely?", not
+"what can this EDA product do?" Explicit descriptor discovery is diagnostic
+metadata, not a routine semantic routing gate.
+
+Runtime retains the complete descriptor set internally for deterministic safety
+checks and compatibility calls. Ordinary Agent discovery projects only core
+infrastructure, live-edit, and generic-native contracts. Certified workflows
+and acceptance probes are absent from that view. A certified implementation
+becomes model-visible only when the exact `experience.get` result returns its
+binding.
+
+When the operation id is already known but its typed input contract is not,
+`eda.capabilities` accepts that exact operation selector and projects one core
+descriptor. This is response minimization, not semantic routing or a capability
+boundary; the complete descriptor cache remains available internally for
+deterministic validation.
 
 The execution surface therefore has three distinct parts: core infrastructure
-primitives, asset-bound compiled shortcuts, and universal governed native
-execution. Infrastructure needs no experience binding. Every engineering
-command-group shortcut does, and must fall back to governed native execution
-when its asset is absent, deprecated, drifted, inapplicable, or unhealthy.
+primitives, compiled workflows, and universal governed native execution. Release
+validation binds each compiled workflow to reviewed experience. Runtime validates
+the compiled version/profile contract; missing or drifted Markdown removes its
+advisory recommendation, not its executable availability. Inapplicable compiled
+contracts use the native route.
 
 ## What generic native execution must govern
 
@@ -98,16 +120,16 @@ not a growing vocabulary of `add_instance`, `add_wire`, plot types, or solver
 cases.
 
 The first shared wire contract is
-[`eda.native-batch/v1`](schemas/native-batch-v1.schema.json). It validates the
+[`eda.native-program/v1`](schemas/native-program-v1.schema.json). It validates the
 program fingerprint, official runtime selector, observe-versus-staged effect,
 declared read/write paths, source fingerprints, fresh-reopen policy, validation
 program, artifacts, timeout, and output bound. Vendor Bridges remain
 responsible for enforcing those declarations against their real workspace or
 project format.
 
-`batch_id`, `program.sha256`, and `validation.program.sha256` are derived fields.
+`program_id`, `program.sha256`, and `validation.program.sha256` are derived fields.
 An Agent may omit them: trusted Runtime recomputes program digests from the
-exact UTF-8 source and materializes a deterministic bounded batch identifier from
+exact UTF-8 source and materializes a deterministic program identifier from
 the rest of the normalized request. A supplied identifier is preserved, while a
 supplied fingerprint must match. Runtime does not derive effect, scope, paths,
 transaction policy, limits, or engineering validation. Capability descriptors
@@ -119,12 +141,16 @@ is descriptive metadata and does not weaken Runtime validation.
 
 Use this order:
 
-1. a maintained certified workflow when it exactly matches the task;
-2. governed official native execution generated from version-matched docs;
-3. a bounded vendor script lane when the governed contract cannot yet express
-   the required lifecycle;
+1. the official same-session live API when the user copied GUI Context;
+2. governed official native execution, reusing applicable experience and using
+   version-matched docs only for unresolved or changed behavior;
+3. an experience-referenced certified workflow only when its exact binding
+   matches and same-task evidence shows a concrete advantage;
 4. bounded GUI assistance only after official API routes are genuinely absent;
 5. manual external action.
+
+Every official script uses `native.execute`; a lifecycle gap is an explicit
+unsupported-mode result, not a reason to retain a parallel executor.
 
 Do not add a new certified workflow merely to avoid improving the generic
 execution envelope. Promote a recipe only when frequency, complexity,
@@ -137,3 +163,7 @@ meaningful engineering effort and has a versioned contract, deterministic
 targeting, safe retries, independent readback, real-runtime evidence, and a
 clear support boundary. A single missing vendor method, plot kind, component,
 or geometry primitive is not sufficient justification.
+
+## Compiled workflow independence
+
+Release checks bind reviewed workflow code to the packaged experience hash. At execution time, code validates its own compiled version/profile contract without reading Markdown. Missing or changed assets affect advisory eligibility only. Native execution and retained compiled workflows remain callable through the same Worker admission path.

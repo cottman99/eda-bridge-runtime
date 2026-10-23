@@ -12,6 +12,12 @@
 
 ![一个工程请求到达本机或远程 EDA，并返回经过验证的结果](docs/assets/readme/runtime-engineer-workflow-v3.png)
 
+## 通过同一执行路径使用 ADS 和 Ansys 官方 API
+
+Runtime 0.2.0a1 统一管理目标占用、重试、取消和结果回读。两个 Bridge 可以分别选装；缺少 Markdown 或经验资料时，官方 Python 执行仍然可用。
+
+[10 月版本验收](https://github.com/cottman99/eda-bridge-runtime/blob/v0.2.0a1/docs/VALIDATION_2026-10-23_NATIVE_CORE.md) · [执行方式与迁移](docs/NATIVE_EXECUTION.md)。下方电路、求解和耗时示例保留各自标注日期的历史验收结果。
+
 ## 一段对话可以到达真实、可编辑的 EDA 结果
 
 用户只需要使用正常的工程语言。厂商 Bridge 负责 ADS 或 AEDT 操作，
@@ -116,7 +122,7 @@ Runtime 成功的受治理原生批处理中位数为 2.379 秒，但 Agent 使�
 在 Agent 所在的电脑安装 Runtime：
 
 ```console
-python -m pip install "eda-bridge-runtime==0.1.0a39"
+python -m pip install "eda-bridge-runtime==0.2.0a1"
 eda-runtime doctor
 ```
 

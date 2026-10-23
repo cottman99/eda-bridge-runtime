@@ -1,7 +1,7 @@
 import pytest
 
 from eda_bridge_runtime.live_edit import LIVE_EDIT_SCHEMA, validate_live_edit
-from eda_bridge_runtime.native_batch import validate_operation_class
+from eda_bridge_runtime.native_program import validate_operation_class
 
 
 def _patch():

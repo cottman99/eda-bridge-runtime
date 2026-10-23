@@ -24,6 +24,7 @@ EDA_TOOLS = (
     "eda_job_status",
     "eda_job_wait",
     "eda_job_events",
+    "eda_job_cancel",
 )
 
 
