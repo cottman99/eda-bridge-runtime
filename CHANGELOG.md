@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0a2 - 2026-10-23
+
+- Copy readable Context JSON containing the selected project, design, version and session.
+- Continue accepting existing Base64 v1/v2 Contexts with the same checksum validation.
+- Reconnect Agent MCP clients after upgrading to read the new multiline format.
+
 ## 0.2.0a1 - 2026-10-23
 
 - Use official Python through one `native.execute` contract with independent live/background/offline modes and observe/mutate effects.

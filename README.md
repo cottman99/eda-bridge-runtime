@@ -17,7 +17,12 @@
 
 ## Use official ADS and Ansys APIs through one execution path
 
-Runtime 0.2.0a1 keeps target ownership, retry identity, cancellation and readback together. Install either vendor Bridge independently. Official Python stays available when Markdown or experience assets are absent.
+Runtime 0.2.0a2 keeps target ownership, retry identity, cancellation and readback together. Install either vendor Bridge independently. Official Python stays available when Markdown or experience assets are absent.
+
+Copied `EDA_CONTEXT:v2:` values now contain readable JSON. You can see the project,
+design, software version and live session before handing the context to an Agent.
+The checksum detects accidental edits; it is not encryption. Existing Base64
+contexts remain accepted, and private project paths stay on the EDA host.
 
 [October release acceptance](https://github.com/cottman99/eda-bridge-runtime/blob/v0.2.0a1/docs/VALIDATION_2026-10-23_NATIVE_CORE.md) · [Native execution and migration](docs/NATIVE_EXECUTION.md). The circuit, solver and timing examples below are the separately dated historical acceptance baselines.
 
@@ -135,7 +140,7 @@ materially heavier. See the [ADS adapter's audited method and data](https://gith
 Install Runtime on the computer where the Agent runs:
 
 ```console
-python -m pip install "eda-bridge-runtime==0.2.0a1"
+python -m pip install "eda-bridge-runtime==0.2.0a2"
 eda-runtime doctor
 ```
 

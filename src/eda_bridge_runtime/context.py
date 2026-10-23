@@ -111,15 +111,19 @@ class EDAContext:
             "payload": payload,
             "checksum": hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:24],
         }
-        data = json.dumps(wrapper, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        data = json.dumps(wrapper, ensure_ascii=False, indent=2)
         if len(data.encode("utf-8")) > MAX_CONTEXT_BYTES:
             raise ValueError("EDA context exceeds the bounded payload limit")
+        if self.protocol == "eda-context/v2":
+            return CONTEXT_PREFIX_V2 + "\n" + data
         encoded = base64.urlsafe_b64encode(data.encode("utf-8")).decode("ascii").rstrip("=")
-        prefix = CONTEXT_PREFIX_V1 if self.protocol == "eda-context/v1" else CONTEXT_PREFIX_V2
-        return prefix + encoded
+        return CONTEXT_PREFIX_V1 + encoded
 
     @classmethod
     def decode(cls, token: str) -> EDAContext:
+        token = token.strip()
+        if len(token.encode("utf-8")) > MAX_CONTEXT_BYTES * 2:
+            raise ValueError("EDA context exceeds the bounded payload limit")
         if token.startswith(CONTEXT_PREFIX_V2):
             prefix = CONTEXT_PREFIX_V2
             expected_protocol = "eda-context/v2"
@@ -128,12 +132,19 @@ class EDAContext:
             expected_protocol = "eda-context/v1"
         else:
             raise ValueError("not a supported EDA_CONTEXT token")
-        encoded = token[len(prefix) :]
+        encoded = token[len(prefix) :].strip()
         padded = encoded + "=" * (-len(encoded) % 4)
         try:
-            wrapper = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
+            data = (
+                encoded
+                if encoded.startswith("{")
+                else base64.urlsafe_b64decode(padded).decode("utf-8")
+            )
+            wrapper = json.loads(data)
             payload = wrapper["payload"]
             claimed = wrapper["checksum"]
+            if not isinstance(payload, dict):
+                raise ValueError("context payload must be an object")
         except (ValueError, KeyError, TypeError) as exc:
             raise ValueError("invalid EDA_CONTEXT token") from exc
         canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)

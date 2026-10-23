@@ -1,3 +1,5 @@
+import base64
+import json
 from dataclasses import replace
 
 import pytest
@@ -48,6 +50,32 @@ def test_context_v1_remains_decodable():
     token = legacy.encode()
     assert token.startswith("EDA_CONTEXT:v1:")
     assert EDAContext.decode(token).protocol == "eda-context/v1"
+
+
+def test_context_v2_is_readable_unicode_json_and_legacy_encoding_still_works():
+    context = EDAContext(
+        eda="example",
+        target_kind="design",
+        locator={"context_id": "ctx-demo"},
+        display_name="演示工程:Layout1",
+        target={"project_name": "演示工程", "design": "Layout1"},
+    )
+    text = context.encode()
+    assert '"project_name": "演示工程"' in text
+    assert '"design": "Layout1"' in text
+    wrapper = text.removeprefix("EDA_CONTEXT:v2:").strip()
+    assert json.loads(wrapper)["payload"]["target"] == context.target
+    old_token = "EDA_CONTEXT:v2:" + base64.urlsafe_b64encode(wrapper.encode()).decode().rstrip("=")
+    assert EDAContext.decode(old_token) == context
+    assert EDAContext.decode("\n" + text + "\n") == context
+
+
+def test_plain_context_checks_integrity_and_size():
+    context = EDAContext(eda="example", target_kind="design", locator={"id": "one"})
+    with pytest.raises(ValueError, match="checksum"):
+        EDAContext.decode(context.encode().replace('"one"', '"two"'))
+    with pytest.raises(ValueError, match="bounded"):
+        EDAContext.decode("EDA_CONTEXT:v2:" + " " * 40000 + "{}")
 
 
 def test_origin_id_is_stable_per_eda(tmp_path):
