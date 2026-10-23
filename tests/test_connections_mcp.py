@@ -178,7 +178,7 @@ class ReceiptTransport(FakeTransport):
                             "evidence_refs": [],
                         },
                         "purpose": "Build bounded example",
-                        "operation": "native.batch",
+                        "operation": "native.execute",
                         "response_sha256": "a" * 64,
                     }
                 }
@@ -259,8 +259,26 @@ class CapabilityAwareTransport(FakeTransport):
                 "data": {
                     "capabilities": {
                         "operations": [
-                            {"id": "project.inspect", "mutates": False},
-                            {"id": "project.create", "mutates": True},
+                            {
+                                "id": "project.inspect",
+                                "mutates": False,
+                                "operation_class": "bridge-infrastructure",
+                            },
+                            {
+                                "id": "project.create",
+                                "mutates": True,
+                                "operation_class": "bridge-infrastructure",
+                            },
+                            {
+                                "id": "layout.build",
+                                "mutates": True,
+                                "operation_class": "certified-workflow",
+                            },
+                            {
+                                "id": "layout.synthetic_probe",
+                                "mutates": False,
+                                "operation_class": "acceptance-probe",
+                            },
                         ]
                     }
                 }
@@ -536,6 +554,7 @@ def test_mcp_supports_legacy_and_modern_discovery():
         "eda.run.get",
         "eda.job.status",
         "eda.job.wait",
+        "eda.job.cancel",
         "eda.job.events",
     ]
     read_tool = next(item for item in tools if item["name"] == "eda.read")
@@ -670,13 +689,14 @@ def test_mcp_run_get_returns_original_compact_receipt_without_replay():
     assert request.operation == "runtime.run_receipt"
     assert request.payload == {"mutating": False, "run_id": "run-original"}
     assert value["run"]["run_id"] == "run-original"
-    assert value["receipt"]["operation"] == "native.batch"
+    assert value["receipt"]["operation"] == "native.execute"
     assert value["lookup_run"]["run_id"] == request.run_id
     assert "raw" not in json.dumps(value["receipt"])
 
 
 def test_mcp_capability_discovery_is_read_only_and_summary_is_bounded():
     registry = FakeRegistry()
+    registry.transport = CapabilityAwareTransport()
     server = MCPRuntimeServer(registry)
     response = server.handle(
         _rpc(
@@ -694,9 +714,47 @@ def test_mcp_capability_discovery_is_read_only_and_summary_is_bounded():
     request = registry.transport.requests[0]
     assert request.operation == "runtime.capabilities"
     assert request.payload == {"mutating": False}
+    contracts = response["result"]["structuredContent"]["response"]["result"]["data"][
+        "capabilities"
+    ]
+    assert contracts["contract_view"] == "core"
+    assert [item["id"] for item in contracts["operations"]] == [
+        "project.inspect",
+        "project.create",
+    ]
+    assert "layout.build" in server._operation_metadata["ansys-one"]
+    assert "layout.synthetic_probe" in server._operation_metadata["ansys-one"]
     text = response["result"]["content"][0]["text"]
     assert text == f"EDA Runtime result: passed | ansys-one | {request.run_id}"
     assert json.dumps(response["result"]["structuredContent"], sort_keys=True) not in text
+
+
+def test_mcp_capability_discovery_can_project_one_exact_core_contract():
+    registry = FakeRegistry()
+    registry.transport = CapabilityAwareTransport()
+    server = MCPRuntimeServer(registry)
+    response = server.handle(
+        _rpc(
+            1,
+            "tools/call",
+            {
+                "name": "eda.capabilities",
+                "arguments": {
+                    "purpose": "Read only the project creation contract",
+                    "connection_id": "ansys-one",
+                    "operation": "project.create",
+                },
+            },
+        )
+    )
+
+    capabilities = response["result"]["structuredContent"]["response"]["result"]["data"][
+        "capabilities"
+    ]
+    assert capabilities["contract_view"] == "core-exact"
+    assert capabilities["operation_selector"] == "project.create"
+    assert [item["id"] for item in capabilities["operations"]] == ["project.create"]
+    assert "layout.build" in server._operation_metadata["ansys-one"]
 
 
 def test_exact_connection_id_ignores_redundant_agent_eda_alias():
@@ -727,7 +785,7 @@ def test_mcp_stdio_bad_frame_does_not_kill_server():
     serve_mcp(source, destination, registry=FakeRegistry())
     responses = [json.loads(line) for line in destination.getvalue().splitlines()]
     assert responses[0]["error"]["code"] == -32700
-    assert len(responses[1]["result"]["tools"]) == 11
+    assert len(responses[1]["result"]["tools"]) == 12
 
 
 def test_run_plan_prevalidates_then_executes_steps_with_individual_purposes():

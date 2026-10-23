@@ -15,12 +15,15 @@ class AdapterResult:
     status: str
     result: dict[str, Any] = field(default_factory=dict)
     artifacts: tuple[dict[str, Any], ...] = ()
+    error: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
 class AdapterContext:
     emit: Callable[[str, dict[str, Any]], None]
     fencing_token: int | None = None
+    assert_current: Callable[[], None] = lambda: None
+    admission: dict[str, Any] = field(default_factory=dict)
 
 
 class Adapter(ABC):

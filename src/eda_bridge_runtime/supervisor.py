@@ -7,6 +7,8 @@ import subprocess
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
+from .cancellation import cancellation_scope
+from .errors import error_facts
 from .jobs import JobStore
 from .protocol import RequestEnvelope, ResponseEnvelope
 
@@ -55,19 +57,21 @@ def run_job_worker(
     handler: Callable[[RequestEnvelope], ResponseEnvelope],
 ) -> ResponseEnvelope:
     job = store.get(job_id)
-    if job["state"] not in {"queued", "orphaned"}:
+    if job["state"] != "queued":
         raise ValueError(f"job is not runnable from state {job['state']}")
     store.transition(job_id, "running", {"event": "worker.started", "pid": os.getpid()})
     request = store.request(job_id)
     try:
-        response = handler(request)
+        with cancellation_scope(lambda: store.cancellation_requested(job_id)):
+            response = handler(request)
     except Exception as exc:
+        facts = error_facts(exc)
         response = ResponseEnvelope(
             request_id=request.request_id,
             run_id=request.run_id,
-            status="failed",
-            error={"code": type(exc).__name__, "message": str(exc)},
+            status="uncertain" if facts.get("execution_uncertain") else "failed",
+            error=facts,
         )
-    terminal = "passed" if response.status == "passed" else "failed"
+    terminal = response.status if response.status in {"passed", "uncertain"} else "failed"
     store.transition(job_id, terminal, response.to_dict())
     return response

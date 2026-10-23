@@ -14,6 +14,11 @@ from eda_bridge_runtime.ledger import ExecutionLedger
 from eda_bridge_runtime.protocol import RUN_VIEW_PROTOCOL
 
 
+@pytest.fixture(autouse=True)
+def isolate_host_version(monkeypatch):
+    monkeypatch.delenv("CODEX_VERSION", raising=False)
+
+
 def _event(tool_call_id="tool-one"):
     return {
         "session_id": "session-one",

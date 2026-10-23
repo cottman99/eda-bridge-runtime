@@ -14,6 +14,11 @@ Runtime job mechanics rather than a new orchestration layer.
 For an intended read, missing vendor safety metadata is acquired as an internal preflight on the
 same connection. The Runtime—not the Agent—proves that the operation is non-mutating before the
 vendor call, while explicit capability discovery remains available for engineering exploration.
+Here, discovery returns callable operation and safety contracts. It is not a
+claim that the listed operations exhaust the vendor API.
+For a known operation, discovery can project only that one core contract. This
+reduces model context without adding a router or changing the internally cached
+descriptor set.
 
 When the Agent has already decided a short deterministic sequence,
 `eda.run_plan` submits the typed steps through the same kernel and transport.
@@ -53,9 +58,11 @@ See [Deployment roles](DEPLOYMENT_ROLES.md) for host placement.
 
 The optional [Bootstrap Experience Library](EXPERIENCE_LIBRARY.md) is advisory
 package data beside this execution path, not a fourth responsibility domain.
-Skills may consult it after version-matched official documentation. Runtime and
-vendor adapters never depend on it to execute, never mutate it from a receipt,
-and never infer engineering success from a technically successful call.
+Skills consult the closest applicable experience first and use version-matched
+official documentation only to fill missing, changed, or contradicted behavior.
+Runtime and vendor adapters never depend on experience to execute, never mutate
+it from a receipt, and never infer engineering success from a technically
+successful call.
 
 ## Reliability model
 

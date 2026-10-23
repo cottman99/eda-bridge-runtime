@@ -138,9 +138,16 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
   register(
     "eda_capabilities",
     "eda.capabilities",
-    "Discover EDA Capabilities",
-    "Read typed operations only when Context and the selected Skill do not already establish them.",
-    Type.Object({ purpose: Type.String({ minLength: 3, maxLength: 240 }), ...TargetFields }),
+    "Describe Core EDA Operation Contracts",
+    "Read core infrastructure, live, and native operation contracts only when Context and the selected Skill do not already establish one; experience-bound implementations are omitted.",
+    Type.Object({
+      purpose: Type.String({ minLength: 3, maxLength: 240 }),
+      operation: Type.Optional(Type.String({
+        minLength: 1,
+        description: "Exact core operation id when only one contract is needed.",
+      })),
+      ...TargetFields,
+    }),
   );
   register(
     "eda_read",
@@ -260,6 +267,20 @@ export default function piEdaRuntime(pi: ExtensionAPI) {
       purpose: Type.String({ minLength: 3, maxLength: 240 }),
       job_id: Type.String(),
       after_cursor: Type.Optional(Type.Integer({ minimum: 0 })),
+      connection_id: Type.Optional(Type.String()),
+      eda: Type.Optional(Type.String()),
+    }),
+  );
+
+  register(
+    "eda_job_cancel",
+    "eda.job.cancel",
+    "Cancel EDA Job",
+    "Cancel queued work or request cancellation of running work; verify uncertain vendor state before another write.",
+    Type.Object({
+      purpose: Type.String({ minLength: 3, maxLength: 240 }),
+      job_id: Type.String(),
+      idempotency_key: Type.String(),
       connection_id: Type.Optional(Type.String()),
       eda: Type.Optional(Type.String()),
     }),

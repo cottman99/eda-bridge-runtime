@@ -9,7 +9,7 @@ automation, or publish vendor documentation.
 ## Ansys Electronics Desktop 2026 R1
 
 The Agent first verified the official PyAEDT `VariableManager.set_variable`
-signature, then submitted official Python through `eda.native-batch/v1`.
+signature, then submitted official Python through `eda.native-program/v1`.
 
 | Gate | Retained result |
 | --- | --- |

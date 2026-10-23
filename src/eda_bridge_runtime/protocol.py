@@ -19,7 +19,7 @@ HANDSHAKE_PROTOCOL = "eda-runtime.handshake/v1"
 RUN_VIEW_PROTOCOL = "eda-runtime.run-view/v1"
 RUN_RECEIPT_PROTOCOL = "eda-runtime.run-receipt/v1"
 RESOURCE_VIEW_PROTOCOL = "eda-runtime.resource-view/v1"
-TERMINAL_RUN_STATES = frozenset({"passed", "failed", "cancelled"})
+TERMINAL_RUN_STATES = frozenset({"passed", "failed", "cancelled", "uncertain"})
 
 
 def utc_now() -> str:
@@ -130,6 +130,8 @@ class RequestEnvelope:
 
     @property
     def is_mutating(self) -> bool:
+        if self.operation in {"native.execute", "runtime.job_cancel"}:
+            return True
         return bool(self.payload.get("mutating", True))
 
     def require_idempotency(self) -> None:
@@ -165,7 +167,7 @@ class ResponseEnvelope:
     completed_at: str = field(default_factory=utc_now)
 
     def __post_init__(self) -> None:
-        if self.status not in {"accepted", "running", "passed", "failed", "cancelled"}:
+        if self.status not in {"accepted", "running", "passed", "failed", "cancelled", "uncertain"}:
             raise ValueError(f"invalid response status: {self.status}")
         if self.status == "failed" and not self.error:
             raise ValueError("failed response requires error")

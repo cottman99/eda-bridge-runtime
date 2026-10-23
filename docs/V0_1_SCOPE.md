@@ -4,7 +4,7 @@
 
 - Follow `CAPABILITY_MODEL.md`: Runtime and vendor Bridges are infrastructure
   around official EDA APIs, not a second implementation of those APIs.
-- Add a common governed native batch/transaction contract before expanding more
+- Add a common governed native program/transaction contract before expanding more
   scene-specific operations. It must bind exact Context, official runtime,
   declared effects, scope, timeout/cancellation, staging, idempotency, ledger,
   readback, artifact validation, and promotion.
@@ -14,9 +14,9 @@
 - Report knowledge, official API reach, generic execution, default support, and
   validated workflows as separate coverage dimensions.
 
-## 0.1.0a39 — inspectable native-batch capability contract
+## 0.1.0a39 — inspectable native-program capability contract
 
-- Expose the common native-batch capability contract directly to Agents so
+- Expose the common native-program capability contract directly to Agents so
   they can discover the accepted program, effect, validation, and promotion
   boundaries without inventing vendor-specific routing layers.
 - Package bounded wait guidance and an explicit native program contract for
@@ -44,7 +44,7 @@
 - Launch generated Codex and Pi Runtime profiles through the installer Python
   module so persistent Windows MCP sessions no longer lock the pip-managed
   `eda-runtime.exe` during an upgrade; preserve explicit executable overrides.
-- Derive `native.batch` program hashes and deterministic batch identifiers at
+- Derive `native.execute` program hashes and deterministic batch identifiers at
   the trusted Runtime boundary while keeping effect, scope, transaction,
   limits, and engineering validation explicit and fail-closed.
 
@@ -57,7 +57,7 @@
 
 ## 0.1.0a33 — governed native execution and bootstrap experience assets
 
-- Add the vendor-neutral `eda.native-batch/v1` contract for exact-context,
+- Add the vendor-neutral `eda.native-program/v1` contract for exact-context,
   effect-declared, scope-bounded official API execution with validation and
   auditable receipts.
 - Publish an advisory Bootstrap Experience Library contract whose assets remain

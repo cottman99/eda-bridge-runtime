@@ -165,6 +165,25 @@ def test_json_lines_handshake_rejects_unsupported_version(tmp_path):
     assert json.loads(destination.getvalue())["selected"] is None
 
 
+def test_json_lines_preserves_structured_admission_error():
+    from eda_bridge_runtime.errors import ExecutionError
+
+    def handler(_request):
+        raise ExecutionError(
+            "idempotency_conflict",
+            "Different request",
+            phase="admission",
+            evidence={"owner": "first"},
+        )
+
+    destination = io.StringIO()
+    serve_json_lines(io.StringIO(json.dumps(read_request().to_dict()) + "\n"), destination, handler)
+    error = json.loads(destination.getvalue())["error"]
+    assert error["code"] == "idempotency_conflict"
+    assert error["phase"] == "admission"
+    assert error["evidence"] == {"owner": "first"}
+
+
 def test_mutation_is_not_executed_twice_for_same_key(tmp_path):
     runtime = Runtime(ExecutionLedger(tmp_path / "ledger.sqlite3"))
     adapter = CountingAdapter()

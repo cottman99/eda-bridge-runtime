@@ -42,6 +42,9 @@ def test_lease_fencing_rejects_stale_owner(tmp_path):
     store = LeaseStore(tmp_path / "leases.sqlite3")
     stale = store.acquire("eda:slot-1", "worker-a", ttl_seconds=0.001)
     time.sleep(0.01)
+    with pytest.raises(RuntimeError):
+        store.acquire("eda:slot-1", "worker-b")
+    assert store.release(stale)
     current = store.acquire("eda:slot-1", "worker-b")
     assert current.fencing_token > stale.fencing_token
     assert not store.release(stale)
@@ -111,4 +114,26 @@ def test_pid_probe_treats_generic_os_error_as_dead(monkeypatch):
         raise OSError("invalid pid")
 
     monkeypatch.setattr("eda_bridge_runtime.jobs.os.kill", invalid_pid)
-    assert jobs._pid_is_alive(123) is False
+    assert jobs._pid_is_alive(2147483647) is False
+
+
+def test_recovery_uses_running_owner_after_duplicate_spawn(tmp_path, monkeypatch):
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    job_id = store.submit(request())["job_id"]
+    store.transition(job_id, "running", {"event": "worker.started", "pid": 101})
+    # A competing submitter records its losing process after the winner started.
+    store.record_event(job_id, {"event": "worker.spawned", "pid": 102})
+    monkeypatch.setattr("eda_bridge_runtime.jobs._pid_is_alive", lambda pid: pid == 101)
+    assert store.recover_orphans() == []
+    assert store.get(job_id)["state"] == "running"
+    store.transition(job_id, "passed", {"observed": "winner completed"})
+
+
+def test_recovery_waits_for_every_queued_spawn(tmp_path, monkeypatch):
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    job_id = store.submit(request())["job_id"]
+    store.record_event(job_id, {"event": "worker.spawned", "pid": 101})
+    store.record_event(job_id, {"event": "worker.spawned", "pid": 102})
+    monkeypatch.setattr("eda_bridge_runtime.jobs._pid_is_alive", lambda pid: pid == 101)
+    assert store.recover_orphans() == []
+    assert store.get(job_id)["state"] == "queued"

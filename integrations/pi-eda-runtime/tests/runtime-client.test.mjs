@@ -38,13 +38,13 @@ test("environment executable override outranks generated profile Python", () => 
 
 test("persistent client lists the installed Runtime tools", async () => {
   const client = new RuntimeClient({
-    command: process.env.EDA_RUNTIME_COMMAND ?? "eda-runtime",
+    command: process.env.EDA_RUNTIME_COMMAND,
     timeoutMs: 10_000,
     clientInfo: { name: "pi-agent-test", version: "0.84.4" },
   });
   try {
     const result = await client.listTools();
-    assert.equal(result.tools.length, 11);
+    assert.equal(result.tools.length, 12);
     assert.deepEqual(
       result.tools.map((tool) => tool.name),
       [
@@ -58,6 +58,7 @@ test("persistent client lists the installed Runtime tools", async () => {
         "eda.run.get",
         "eda.job.status",
         "eda.job.wait",
+        "eda.job.cancel",
         "eda.job.events",
       ],
     );

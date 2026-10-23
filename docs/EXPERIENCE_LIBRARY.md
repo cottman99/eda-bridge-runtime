@@ -30,16 +30,23 @@ drift-check assets, but the Bridge execution core must not depend on it.
 ```text
 user intent
   -> exact EDA Context
-  -> version-matched official documentation
-  -> matching experience assets and anti-patterns
+  -> primary engineering operation
+  -> exact matching experience and anti-pattern
+  -> version-matched official documentation for gaps only
   -> Agent-generated official native plan
   -> governed Bridge execution
   -> operation receipt and independent validation
 ```
 
 An experience asset is advice that can be questioned or outdated. It is not an
-API, authorization, capability declaration, or proof of success. The Agent must
-still verify official references and the actual Context.
+API, authorization, capability declaration, or proof of success. Select it by
+the operation that produces the engineering outcome, not by an infrastructure
+prerequisite that the workflow itself may prescribe. When vendor version,
+profile, and operation are exact, `experience.get` may resolve the unique asset
+directly from those metadata selectors; zero or multiple matches fail rather
+than invoking semantic ranking. The Agent must still verify the actual Context
+and use official references for behavior the selected experience does not
+establish.
 
 ## Asset and manifest contract
 
@@ -71,8 +78,9 @@ and schema, exact asset content hash, implementation version, applicability,
 effect class, parameter schema, validation contract, and the
 `governed_native_execution` fallback. A shortcut is preferred only while its
 asset is `validated` or `preferred`, its hash and applicability match, and its
-runtime probe is healthy. Deprecated or drifted assets automatically make the
-shortcut ineligible.
+runtime probe is healthy. Deprecated or drifted assets remove the advisory
+recommendation. The compiled workflow remains callable when its own version and
+profile contract matches; execution never reads the Markdown library.
 
 Markdown is never executed. A controlled release-time registration binds an
 eligible asset to reviewed product code. The operation receipt records the
@@ -80,3 +88,7 @@ asset identity and hash, implementation version, expanded-plan hash or bounded
 summary, native-call evidence, and validation result. With no shortcut, the
 Agent follows the same official documentation and asset through governed native
 execution.
+
+## Compiled workflow independence
+
+Release checks bind reviewed workflow code to the packaged experience hash. At execution time, code validates its own compiled version/profile contract without reading Markdown. Missing or changed assets affect advisory eligibility only. Native execution and retained compiled workflows remain callable through the same Worker admission path.

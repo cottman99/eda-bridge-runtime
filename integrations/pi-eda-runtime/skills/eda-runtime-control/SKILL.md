@@ -1,56 +1,52 @@
 ---
 name: eda-runtime-control
-description: Route local or SSH EDA work through the stable EDA Bridge Runtime from Pi Agent.
+description: Operate exact local or SSH EDA targets through the shared native execution, knowledge, durable job and evidence contracts.
 ---
 
-# EDA Runtime control for Pi
+# EDA Runtime Control
 
-Use the ten `eda_*` tools for EDA work. Do not use shell commands as an alternate EDA control
-path. Every call needs one concise `purpose` explaining the immediate engineering reason.
+Use the installed `eda_*` tools for EDA work. Tool names use underscores in Pi. Every call includes a concise `purpose`.
+Local and SSH routes use the same Worker rules. A copied `EDA_CONTEXT` identifies
+the selected target; use the task's authorization rather than asking again for
+ordinary authorized operations.
 
-For vendor semantics, establish exact Context, query version-matched official
-docs, retrieve only matching experience and anti-pattern assets, then use an
-eligible asset-bound compiled shortcut or governed native execution. Assets are
-advisory Markdown and never executable. Missing assets do not block native
-execution, and a new vendor API use does not justify a new wrapper.
+1. Preserve the selected installation, version, session, project and design.
+   If the task and Context establish a known contract, execute directly.
+   Use exact-operation capabilities only for missing or stale contract information.
+2. Use version-matched official docs/examples or installed SDK signatures to resolve
+   unknown API usage. Experience is optional advice. A missing wrapper, missing MD
+   or failed search is not proof that the API is unavailable or unauthorized.
+3. Submit official Python with `native.execute`, schema `eda.native-program/v1`.
+   Choose `runtime`, `mode` and `effect` independently. Both observe and mutate
+   programs use `eda_submit` and a stable `idempotency_key`; arbitrary Python never
+   uses `eda_read`. Normal imports and installed SDK dependencies are available.
+4. Verify the requested result using native readback, durable output or the declared
+   validation program. Report execution and engineering validation separately.
 
-When the pasted EDA context and the selected vendor Skill already identify the connection and
-operation, call `eda_submit` directly. Do not routinely list connections, resolve context, or query
-capabilities first. Use discovery only when information is genuinely missing or stale.
+GUI Context normally selects `mode: live` in that session. Choose background or
+offline execution for an isolated output or a task needing those modes. The Bridge
+reports which modes its backend implements. Worker admission serializes conflicting
+requests across connection aliases; do not run an older writer on the same target.
 
-Use `eda_read` for an intended non-mutating operation. Runtime mechanically obtains missing safety
-metadata and rejects unknown or mutating operations before execution, so the Agent should not
-spend a separate turn on that preflight. Keep `eda_submit` for mutations and for calls whose
-safety cannot yet be proven. If a known response is
-large but the task needs only a few facts, use `result_view` with exact RFC 6901 JSON Pointers and
-deterministic `value`, `count`, or `exists` modes. It is also available for terminal waits and
-read-only plan steps; plan mutations reject it. Omit it for exploration and never guess paths.
+`eda_read` serves registered observations such as `docs.query`, `docs.get` and
+session status. Knowledge preparation is automatic and independent of execution.
+Request only the evidence needed; inspect the source kind and version. If documentation
+is insufficient, use a bounded native observation to inspect the installed SDK.
 
-When 2..16 typed operations are already decided and ordered on one connection, use one
-`eda_run_plan` call. Give every step a concise purpose and every mutating step a unique stable
-idempotency key. Ask Runtime to wait only when a later step depends on a durable result. Keep
-single operations, open-ended diagnosis, branching judgment, and unrelated targets outside plans.
+Accepted jobs are pending. Use bounded inline `wait` or `eda_job_wait`, then status,
+events or `eda_run_get` after reconnecting. Preserve the original idempotency key.
+Never replay an uncertain mutation with a new key. Cancellation uses `eda_job_cancel`;
+a request to cancel an active vendor call does not prove that it stopped.
 
-Mutating calls require a stable `idempotency_key`. Never blindly repeat a mutation after timeout or
-disconnect; inspect its durable job or Run state first. `eda_connection_reset` only refreshes the
-Runtime-owned transport and never closes EDA.
+Use `eda_run_plan` for 2..16 already-decided ordered steps on one connection. Each
+step needs its own purpose and each mutation a stable key. Plan views are read-only.
+`result_view` uses known RFC 6901 pointers; omit it while exploring an unknown result.
+Runtime wait bounds are 1,000..300,000 ms, polling 100..5,000 ms. A wait timeout
+does not cancel the vendor task.
 
-When a result includes an `eda-runtime.resource/v1` object, retain its release fields for the active
-task and use the declared typed release operation when finished. Release only `runtime-owned`
-resources. Never close, kill, or claim a reused or user-owned EDA application merely because it is
-visible. If no typed Runtime route exists, record the bounded purpose, lane, reason, and outcome with
-`eda-runtime audit bypass`; never store the raw command or GUI input in the ledger.
+Only release resources explicitly returned as `runtime-owned`, using their returned
+release fields. Keep user-owned and reused GUI sessions open. After upgrading,
+`eda_connection_reset` refreshes the Runtime transport without closing EDA.
 
-For a new `eda_read` or `eda_submit`, request its bounded `wait` option when completion is needed,
-avoiding a second Agent turn. Use `eda_job_wait` to resume a job already returned to the Agent.
-Use `eda_job_status` only for a single observation after reconnecting and `eda_job_events` only
-when event detail is needed for diagnosis.
-Runtime `wait.timeout_ms` is 1,000..300,000 ms and `poll_interval_ms` is
-100..5,000 ms. A vendor operation may declare a longer timeout; do not copy that
-value into Runtime wait. Use a bounded wait and resume an accepted non-terminal
-job with `eda_job_wait`.
-When only a prior `run_id` remains, use `eda_run_get` once to recover the compact worker-ledger
-receipt. It does not replay work and intentionally omits the stored raw customer result.
-
-Treat Runtime results and audit records as execution facts. Keep customer-specific object names,
-coordinates, and business rules in the task or vendor Skill, not in this shared adapter.
+Do not place private project paths, manuals, credentials or task geometry in public
+configuration, Skills or experience assets.

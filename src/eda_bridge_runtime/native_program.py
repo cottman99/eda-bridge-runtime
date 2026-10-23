@@ -8,7 +8,7 @@ import json
 import re
 from typing import Any
 
-NATIVE_BATCH_SCHEMA = "eda.native-batch/v1"
+NATIVE_PROGRAM_SCHEMA = "eda.native-program/v1"
 OPERATION_CLASSES = frozenset(
     {
         "bridge-infrastructure",
@@ -24,17 +24,14 @@ _SHA256 = re.compile(r"[a-f0-9]{64}")
 _MAX_PROGRAM_BYTES = 131_072
 _MAX_PATHS = 64
 _MAX_ARTIFACTS = 64
-_DANGEROUS_CALLS = frozenset(
-    {"breakpoint", "compile", "eval", "exec", "input", "open", "__import__"}
-)
 
 
-def native_batch_capability_contract() -> dict[str, Any]:
+def native_program_capability_contract() -> dict[str, Any]:
     """Return the exact public shape an Agent needs before its first submission.
 
     This is deliberately compact rather than a second validation path.  The
     validator below remains authoritative; adapters embed this description in
-    their existing ``native.batch`` capability so an Agent does not have to
+    their existing ``native.execute`` capability so an Agent does not have to
     discover required fields by submitting invalid mutations.
     """
 
@@ -46,10 +43,11 @@ def native_batch_capability_contract() -> dict[str, Any]:
         "do_not_submit_fields": ["entrypoint"],
     }
     return {
-        "schema_version": NATIVE_BATCH_SCHEMA,
+        "schema_version": NATIVE_PROGRAM_SCHEMA,
         "required": [
             "schema_version",
             "runtime",
+            "mode",
             "effect",
             "program",
             "scope",
@@ -57,8 +55,9 @@ def native_batch_capability_contract() -> dict[str, Any]:
             "validation",
             "limits",
         ],
-        "optional": ["batch_id"],
-        "effect": ["observe", "staged_mutation"],
+        "optional": ["program_id"],
+        "effect": ["observe", "mutate"],
+        "mode": ["live", "background", "offline"],
         "program": program,
         "scope": {
             "required": [
@@ -82,17 +81,23 @@ def native_batch_capability_contract() -> dict[str, Any]:
                 "fresh_reopen": False,
                 "promotion": "none",
             },
-            "staged_mutation": {
+            "mutate": {
                 "strategy": "adapter_staging",
                 "source_fingerprints": "one SHA-256 per declared source read path",
                 "fresh_reopen": True,
                 "promotion": "on_validation",
             },
+            "live_mutate": {
+                "strategy": "none or vendor_transaction when implemented by the backend",
+                "source_fingerprints": {},
+                "fresh_reopen": False,
+                "promotion": "none",
+            },
         },
         "validation": {
             "required": ["program", "required_artifacts"],
             "observe_program": None,
-            "staged_mutation_program": {
+            "mutate_program": {
                 **program,
                 "source_must_define": "def validate(api, context)",
             },
@@ -112,42 +117,12 @@ def validate_operation_class(value: Any) -> str:
     return operation_class
 
 
-def validate_python_program_policy(
-    source: str, *, allowed_import_prefixes: tuple[str, ...]
-) -> None:
-    """Reject common accidental escapes before a vendor runner executes Python.
-
-    This is a policy lint, not a hostile-code sandbox. Vendor adapters must also
-    enforce staging, scope fingerprints, lifecycle, and output limits.
-    """
-
+def validate_python_program(source: str) -> None:
+    """Validate syntax only. SDK availability and host policy are separate facts."""
     try:
-        tree = ast.parse(source)
+        ast.parse(source)
     except SyntaxError as exc:
         raise ValueError(f"official Python program has invalid syntax: {exc.msg}") from exc
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            modules = [alias.name for alias in node.names]
-        elif isinstance(node, ast.ImportFrom):
-            modules = [node.module or ""]
-        else:
-            modules = []
-        for module in modules:
-            if not any(
-                module == prefix or module.startswith(prefix + ".")
-                for prefix in allowed_import_prefixes
-            ):
-                raise ValueError(f"official Python program imports undeclared module: {module}")
-        if (
-            isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Name)
-            and node.func.id in _DANGEROUS_CALLS
-        ):
-            raise ValueError(f"official Python program calls forbidden builtin: {node.func.id}")
-        if isinstance(node, ast.Name) and node.id.startswith("__"):
-            raise ValueError("official Python program uses a forbidden dunder name")
-        if isinstance(node, ast.Attribute) and node.attr.startswith("__"):
-            raise ValueError("official Python program uses a forbidden dunder attribute")
 
 
 def _exact_object(value: Any, *, name: str, fields: set[str]) -> dict[str, Any]:
@@ -181,11 +156,13 @@ def _program(value: Any, *, name: str, entrypoint: str) -> dict[str, str]:
         raise ValueError(f"{name}.sha256 does not match source")
     if language == "python" and not re.search(rf"^def {entrypoint}\s*\(", source, re.MULTILINE):
         raise ValueError(f"{name}.source must define {entrypoint}(...)")
+    if language == "python":
+        validate_python_program(source)
     return {"language": language, "source": source, "sha256": actual}
 
 
-def _derive_batch_id(plan: dict[str, Any]) -> str:
-    material = {key: value for key, value in plan.items() if key != "batch_id"}
+def _derive_program_id(plan: dict[str, Any]) -> str:
+    material = {key: value for key, value in plan.items() if key != "program_id"}
     material["program"] = {key: value for key, value in plan["program"].items() if key != "sha256"}
     validation = dict(plan["validation"])
     if validation["program"] is not None:
@@ -199,7 +176,7 @@ def _derive_batch_id(plan: dict[str, Any]) -> str:
         separators=(",", ":"),
         sort_keys=True,
     )
-    return "batch-" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return "program-" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _paths(value: Any, *, name: str) -> list[str]:
@@ -236,16 +213,17 @@ def _artifacts(value: Any) -> list[str]:
     return normalized
 
 
-def validate_native_batch(value: Any) -> dict[str, Any]:
-    """Validate and normalize one generic official-runtime batch envelope."""
+def validate_native_program(value: Any) -> dict[str, Any]:
+    """Validate and normalize one generic official-runtime program envelope."""
 
     plan = _exact_object(
         value,
-        name="native batch",
+        name="native program",
         fields={
             "schema_version",
-            "batch_id",
+            "program_id",
             "runtime",
+            "mode",
             "effect",
             "program",
             "scope",
@@ -257,6 +235,7 @@ def validate_native_batch(value: Any) -> dict[str, Any]:
     required = {
         "schema_version",
         "runtime",
+        "mode",
         "effect",
         "program",
         "scope",
@@ -266,16 +245,19 @@ def validate_native_batch(value: Any) -> dict[str, Any]:
     }
     missing = sorted(name for name in required if name not in plan)
     if missing:
-        raise ValueError("native batch is missing: " + ", ".join(missing))
-    if plan["schema_version"] != NATIVE_BATCH_SCHEMA:
-        raise ValueError(f"unsupported native batch schema: {plan['schema_version']}")
-    if "batch_id" in plan and not _IDENTIFIER.fullmatch(str(plan["batch_id"])):
-        raise ValueError("batch_id must be a bounded identifier")
+        raise ValueError("native program is missing: " + ", ".join(missing))
+    if plan["schema_version"] != NATIVE_PROGRAM_SCHEMA:
+        raise ValueError(f"unsupported native program schema: {plan['schema_version']}")
+    if "program_id" in plan and not _IDENTIFIER.fullmatch(str(plan["program_id"])):
+        raise ValueError("program_id must be a bounded identifier")
     if not _IDENTIFIER.fullmatch(str(plan["runtime"])):
         raise ValueError("runtime must be a bounded identifier")
     effect = str(plan["effect"])
-    if effect not in {"observe", "staged_mutation"}:
-        raise ValueError("effect must be observe or staged_mutation")
+    mode = str(plan["mode"])
+    if mode not in {"live", "background", "offline"}:
+        raise ValueError("mode must be live, background, or offline")
+    if effect not in {"observe", "mutate"}:
+        raise ValueError("effect must be observe or mutate")
     program = _program(plan["program"], name="program", entrypoint="run")
 
     scope = _exact_object(
@@ -354,23 +336,39 @@ def validate_native_batch(value: Any) -> dict[str, Any]:
         raise ValueError("limits.max_output_bytes must be between 1024 and 16777216")
 
     if effect == "observe":
+        if artifacts:
+            raise ValueError("Publishing artifacts requires mutate with declared output paths")
         if write_paths or strategy != "none" or promotion != "none" or fingerprints:
             raise ValueError(
-                "observe batches cannot declare writes, staging, promotion, or fingerprints"
+                "observe programs cannot declare writes, staging, promotion, or fingerprints"
             )
-    else:
+    elif mode in {"background", "offline"}:
         if not read_paths or not write_paths:
             raise ValueError("staged mutations require declared read and write paths")
         if strategy != "adapter_staging" or promotion != "on_validation":
             raise ValueError("staged mutations require adapter_staging and on_validation")
-        if not fingerprints or not fresh_reopen or normalized_validation is None:
+        if (
+            set(fingerprints) != set(read_paths)
+            or not fresh_reopen
+            or normalized_validation is None
+        ):
             raise ValueError(
                 "staged mutations require source fingerprints, fresh reopen, and validation code"
             )
+    else:
+        if strategy not in {"none", "vendor_transaction"} or promotion != "none":
+            raise ValueError(
+                "live mutations require an in-session recovery strategy, not promotion"
+            )
+        if not read_paths or not write_paths or normalized_validation is None:
+            raise ValueError("live mutations require declared targets and independent validation")
+        if fresh_reopen:
+            raise ValueError("live execution cannot promise a fresh reopen of the active session")
 
     normalized = {
         **plan,
         "effect": effect,
+        "mode": mode,
         "program": program,
         "scope": {
             "resource_kind": str(scope["resource_kind"]),
@@ -391,7 +389,7 @@ def validate_native_batch(value: Any) -> dict[str, Any]:
         },
         "limits": {"timeout_seconds": timeout, "max_output_bytes": max_output},
     }
-    normalized["batch_id"] = (
-        str(plan["batch_id"]) if "batch_id" in plan else _derive_batch_id(normalized)
+    normalized["program_id"] = (
+        str(plan["program_id"]) if "program_id" in plan else _derive_program_id(normalized)
     )
     return normalized
